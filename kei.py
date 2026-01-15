@@ -125,9 +125,9 @@ class kei_output(object):
         self.out_ds['zm'] = ('zm'),zm
         self.out_ds['zm'].attrs['units'] = 'm'
         self.out_ds['zm'].attrs['long_name'] = 'layer midpoint depth'
-        self.out_ds['nni'] = ('nni'),np.arange(nni,dtype=np.int)
-        self.out_ds['nns'] = ('nns'),np.arange(nns,dtype=np.int)
-        self.out_ds['nflx'] = ('nflx'),np.arange(nflx,dtype=np.int)
+        self.out_ds['nni'] = ('nni'),np.arange(nni,dtype=int)
+        self.out_ds['nns'] = ('nns'),np.arange(nns,dtype=int)
+        self.out_ds['nflx'] = ('nflx'),np.arange(nflx,dtype=int)
         # add dimension var meta
         for v in ['zm','nni','nns','nflx']:
             self.out_ds[v].attrs['units'] = output_var_data_meta[v]['units']
@@ -154,7 +154,7 @@ class kei_output(object):
         #         self.out_ds[v] = ('f_time'),np.full(len_f_time,np.nan,np.float32)
         #         self.vars_1D[v] = self.out_ds[v].__array__()  # is this the best way?
         #     elif output_vars[v]['dim'] == 'int':
-        #         self.out_ds[v] = ('f_time'),np.full(len_f_time,0,np.int32)
+        #         self.out_ds[v] = ('f_time'),np.full(len_f_time,0,32)
         #         self.vars_int[v] = self.out_ds[v].__array__()  # is this the best way?
         #     elif output_vars[v]['dim'] == 'zm':
         #         self.out_ds[v] = ('zm','f_time'),np.full((len_zm,len_f_time),np.nan,np.float32)
@@ -387,7 +387,7 @@ class kei_simulation(object):
         kei.link.kei_compute_init()
 
         # init output
-        now_str = datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S')
+        now_str = datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S') # can edit this section to change naming of file
         self.output_path = os.path.join(output_path,run_name + '_' + now_str)
         self.out_vars = list(output_var_data.keys()) if out_vars is None else out_vars
         if not os.path.exists(self.output_path):
@@ -433,7 +433,27 @@ class kei_simulation(object):
 if __name__ == '__main__':
 
     params = kei_parameters()
-    kf_ds = kei_forcing(r'/Users/blsaenz/KEI_run/DATA1/kf_200_100_2000.nc',start_date='2000-01-01', freq='H',legacy_nc=True)
-    k = kei_simulation(kf_ds,t_start='2000-01-15',t_end='2000-08-15')
-    k.compute(params,r'/Users/blsaenz/temp/keipy_output',run_name='keipytest5')
+    #kf_ds = kei_forcing('/Users/crczajka/Desktop/UVA/KEI/forcing_data/exp_55/kf_10_11_exp55.nc',start_date='2011-01-01', freq='H',legacy_nc=True)
+    #k = kei_simulation(kf_ds,t_start='2011-01-01',t_end='2011-12-31')
+    #k.compute(params,r'/Users/crczajka/Desktop/UVA/KEI/keipy_output',run_name='keipy11_exp55')
+    kf_ds = kei_forcing(r'/Users/crczajka/Desktop/UVA/KEI/forcing_data/kf_300_07_iron.nc',start_date='2007-01-01', freq='H',legacy_nc=True)
+    k = kei_simulation(kf_ds,t_start='2007-01-01 00:00:00',t_end='2008-12-31 23:00:00')
+    k.compute(params,r'/Users/crczajka/Desktop/UVA/KEI/keipy_output',run_name='keipy_0708_dust_ice')
+    # example wind manipulations
 
+# ------------------------------------
+
+# HOURLY
+
+# winds > 15 m/s -> +15 m/s
+
+#    ws = np.sqrt(kf_ds['tau_x']**2 + kf_ds['tau_y']**2)
+
+#    ws_scale_factor = (ws+15)/ws
+
+#    kf_ds['tau_x'][ws>=15.0] *= ws_scale_factor[ws>=15.0]
+
+#    kf_ds['tau_y'][ws>=15.0] *= ws_scale_factor[ws>=15.0]
+    
+#    k = kei_simulation(kf_ds,t_start='2007-01-01 00:00:00',t_end='2012-01-01')
+#    k.compute(params,r'/Users/crczajka/Desktop/UVA/KEI/keipy_output',run_name='keipy0711_wind_exp54')

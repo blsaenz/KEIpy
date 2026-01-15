@@ -127,3 +127,12 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# OS generated files
+.DS_Store
+
+# Compiled object files
+*.o
+
+# Go module files (or other .mod files)
+*.mod

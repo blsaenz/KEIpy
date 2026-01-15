@@ -19,7 +19,7 @@ module kei_ecocommon
           dbl_kind = 8;
 
      integer (kind=int_kind), parameter :: &
-          ecosys_tracer_cnt = 24
+          ecosys_tracer_cnt = 25
 
      ! number of vertical layers
      ! sourced using equivalence to kei_parameters, for code compatibility
@@ -59,7 +59,8 @@ module kei_ecocommon
       diazFe_ind  = 21,  & ! diazotroph iron
       don_ind     = 22,  & ! dissolved organic nitrogen
       dofe_ind    = 23,  & ! dissolved organic iron
-      dop_ind     = 24     ! dissolved organic phosphorus
+      dop_ind     = 24,  & ! dissolved organic phosphorus
+      poc_ind     = 25   ! particulate organic carbon - CC added 10/14
 
     character (len = 8), dimension(ecosys_tracer_cnt), &
       parameter :: eco_tracer_name = (/ &
@@ -86,7 +87,8 @@ module kei_ecocommon
         'diazFe  ', &
         'DON     ', &
         'DOFe    ', &
-        'DOP     ' /)
+        'DOP     ', &
+        'POC     '/)
 
 !-----------------------------------------------------------------------
 !     terms that may be of interest to output
@@ -106,6 +108,7 @@ module kei_ecocommon
         P_iron_REMIN_tavg, graze_sp_tavg, graze_diat_tavg, &
         graze_tot_tavg, sp_loss_tavg, diat_loss_tavg, zoo_loss_tavg, &
         sp_agg_tavg, diat_agg_tavg, photoC_sp_tavg, photoC_diat_tavg, &
+        PAR_in_tavg, PAR_out_tavg, &
         tot_prod_tavg, DOC_prod_tavg, DOC_remin_tavg, Fe_scavenge_tavg, &
         sp_N_lim_tavg, sp_Fe_lim_tavg, sp_PO4_lim_tavg, &
         sp_light_lim_tavg, diat_N_lim_tavg, diat_Fe_lim_tavg, &
@@ -122,7 +125,9 @@ module kei_ecocommon
        real (kind=real_kind), dimension(km) :: &
           tot_prod, diat_Fe_lim, diat_light_lim, graze_diat, graze_tot, &
           diat_N_lim, diat_P_lim, diat_Si_lim, sp_N_lim, sp_P_lim, sp_Fe_lim, &
-          graze_sp, sp_light_lim
+          graze_sp, sp_light_lim, sp_loss, diat_loss, diaz_loss, &
+          diat_agg,sp_agg, FG_CO2, POC_PROD, POC_REMIN, DOC_prod, DOC_remin, &
+          CaCO3_PROD, CaCO3_REMIN, dust_FLUX_IN ! updated 10/21 CC
 
 !-----------------------------------------------------------------------
 !     forcing variables required for ecosys module
@@ -130,6 +135,7 @@ module kei_ecocommon
 
 		real (kind=dbl_kind), parameter :: &
 		 atm_co2_const = 400.0_dbl_kind, &  ! default constant CO2
+         !atm_co2_const = 388.0_dbl_kind, &  ! default constant CO2 ! TEST CC 9/23 - 0708-381, 0809- 383, 1112- 388
 		 ap_const = 1.0_dbl_kind             ! default constant air pressure (atm)
 
 		real(kind=dbl_kind) :: &
@@ -146,9 +152,9 @@ module kei_ecocommon
 
 		! restoring nutrient climatology switches
 		logical, parameter :: &
-			lrest_po4 = .false. , &        ! po4 climatological restoring switch
-			lrest_no3 = .false. , &        ! no3 climatological restoring switch
-			lrest_sio3 = .false. , &       ! sio3 climatological restoring switch
+			lrest_po4 = .false. , &        ! po4 climatological restoring switch, changed for test 1/15/24
+			lrest_no3 = .false. , &        ! no3 climatological restoring switch,  changed for test 1/15/24
+			lrest_sio3 = .false. , &       ! sio3 climatological restoring switch, changed for test 1/15/24
 			lflux_gas_co2 = .true., &      ! atmospheric co2 flux switch
 		  lflux_gas_o2 = .true., &       ! atmospheric o2 flux switch
 		  lsource_sink = .true.          ! T = compute ecosys, F = inorganic only

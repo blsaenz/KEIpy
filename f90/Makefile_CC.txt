@@ -11,8 +11,8 @@ ifeq ($(FC),ifort)
 	#BUG := -g -O0 -traceback -fpe:0 -debug all -C -fp-model source -assume minus0
 	BUG := -g -O2 -traceback -fpe:0 -debug all -xSSE4.2 -ip -fp-model source -align -assume minus0
 
-	MKL_INC = /usr/local/Cellar/lapack/3.12.1/include
-	MKL_LIB = /usr/local/Cellar/lapack/3.12.1/lib
+	MKL_INC = /usr/local/opt/lapack/include
+	MKL_LIB = /usr/local/opt/lapack/lib
   LAPACK = -L$(MKL_LIB) -I$(MKL_INC) -lmkl_lapack95_lp64 $(MKL_LIB)/libmkl_intel_lp64.a $(MKL_LIB)/libmkl_sequential.a $(MKL_LIB)/libmkl_core.a $(MKL_LIB)/libmkl_sequential.a $(MKL_LIB)/libmkl_core.a $(MKL_LIB)/libmkl_sequential.a $(MKL_LIB)/libmkl_core.a -lpthread
 
 endif
@@ -33,8 +33,8 @@ ifeq ($(FC),"gfortran")
 	#LAPACK = -framework Accelerate
 
 	#
-	MKL_INC = /usr/local/Cellar/lapack/3.12.1/include
-	MKL_LIB = /usr/local/Cellar/lapack/3.12.1/lib
+	MKL_INC = /usr/local/opt/lapack/include
+	MKL_LIB = /usr/local/opt/lapack/lib
   LAPACK = -L$(MKL_LIB) -I$(MKL_INC) -lblas -llapack
 
 endif

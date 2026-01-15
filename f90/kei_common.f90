@@ -363,7 +363,7 @@
       sal_correction_rate = 0.
       sw_scale_factor = 1.0  ! 1 = use full shortwave
 
-      f_wct = 0 ! default no data assimilation
+      f_wct = 1 ! default no data assimilation ! CAT TEMP TEST, normally 0
       wct_interp = -999.
 
       RETURN

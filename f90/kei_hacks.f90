@@ -59,8 +59,8 @@ MODULE kei_hacks
     fe_offset = 0., &    ! negative to use pre-estimated pycnocline fe levels below, positive for m lower
     bio_offset = 0., &    ! m lower
     alk_spike_value = 3000.0, &
-    meltwater_fe = 0.0      ! nm
-!      meltwater_fe = 12.0e-9
+     meltwater_fe = 0.      ! nm
+   !  meltwater_fe = 12.0e-9 ! uncommented by CC 11/17
   INTEGER, PARAMETER :: &
     alk_spike_timestep = 480+4344, &
     alk_spike_level_start = 0, &
@@ -70,14 +70,15 @@ MODULE kei_hacks
 !     sea ice fe/algal profile concentrations during ice melt
 !-----------------------------------------------------------------------
 
-    LOGICAL, PARAMETER :: use_year_ice_advance = .false.
+    LOGICAL, PARAMETER :: use_year_ice_advance = .false. ! CC changed to true 11/19
 
     ! Fixed ice chla & Fe concentrations, for dumping into ocean during melt
     real (kind=dbl_kind), parameter :: &
-      ice_diatChl = 0.  , &      ! mgchla/m^2 (meiners et al 2012) / 0.6 m = mg/m^3
+      ice_diatChl = 0.  , & ! KEEP THIS AT 0 !!!!!
 !      ice_diatChl = 25.6  / 0.6, &     ! mg chla/m^2 (meiners et al 2012) / 0.6 m = mmol/m^3
-!      ice_fe = 6.              ! nm
-      ice_fe = 0.              ! nm
+!      ice_fe = 6.              ! nm (
+!      ice_fe = 12.  ! CC testing, needs to be in mmol m3
+      ice_fe = 0.    ! nm KEEP THIS AT 0 !!!!!
 
 !-----------------------------------------------------------------------
 !     variables used in adding a static krill grazer (not yet implemented)
@@ -96,7 +97,7 @@ MODULE kei_hacks
 
     SUBROUTINE hacks_init()
         ! overwrite in some eddy heat at depth during certain periods
-        assimilate_ts_hack = .false.   ! assimilate deep t profile (LTER mooring data)
+        assimilate_ts_hack = .true.   ! assimilate deep t profile (LTER mooring data)
         assimilate_ts_stop = .true.   ! only assimilate deep t profile for 1st X steps simulation
         assimilate_ts_fixed = .false.  ! restore deep t profile to a single fixed profile
         eddy_hack = .false.            ! use this to do some temporary deep heating - this is sort of a old hack, need to carefully figure out what it does

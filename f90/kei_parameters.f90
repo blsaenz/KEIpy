@@ -12,7 +12,7 @@ MODULE kei_parameters
   INTEGER, PARAMETER :: NX = 1
   INTEGER, PARAMETER :: NY = 1
   INTEGER, PARAMETER :: NVEL = 2
-  INTEGER, PARAMETER :: NSCLR = 2+24
+  INTEGER, PARAMETER :: NSCLR = 2+25 ! CC updated 10/23
   INTEGER, PARAMETER :: NVP1 = NVEL+1
   INTEGER, PARAMETER :: NSP1 = NSCLR+1
   INTEGER, PARAMETER :: NSB = 1 ! NSCLR-2
@@ -52,7 +52,7 @@ MODULE kei_parameters
 
   INTEGER, PARAMETER :: maxmodeadv = 6
 
-  INTEGER, PARAMETER :: forcing_var_cnt = 16
+  INTEGER, PARAMETER :: forcing_var_cnt = 18
 
   CHARACTER (len = 8), DIMENSION(forcing_var_cnt), &
     PARAMETER :: forcing_var_name = (/ &
@@ -71,7 +71,9 @@ MODULE kei_parameters
       'divu    ', &
       'ic      ', &
       'ain     ', &
-      'aout    ' /)
+      'aout    ', &
+      'runoff  ', &
+      'icefe   ' /)
 
   INTEGER, PARAMETER :: &
       date_f_ind = 1,     &  ! date forcing field
@@ -89,7 +91,9 @@ MODULE kei_parameters
       divu_f_ind = 13,    &  ! ice divergence forcing field
       ic_f_ind = 14,      &  ! ice concentration (fraction 0-1)
       ain_f_ind = 15,     &  ! ice advection in (fraction 0-1)
-      aout_f_ind = 16        ! ice advection out (fraction 0-1)
+      aout_f_ind = 16,    &  ! ice advection out (fraction 0-1)
+      runoff_f_ind = 17,  &  ! glacial runoff forcing field (mmol Fe/m2/s)- CC added 1/05/26
+      icefe_f_ind = 18       ! sea ice iron  forcing field (mmol Fe/m2/s)- CC added 1/05/26
 
 !   TYPE kei_forcing_type
 !     INTEGER :: &

@@ -107,10 +107,10 @@ module kei_eco
 
   real(kind=dbl_kind), parameter ::      &
       PCref = 3.0_dbl_kind * dps, & !max phyto C-spec. grth rate at tref (1/sec)
-  !    PCrefSp = 3.0_dbl_kind * dps, & !max phyto C-spec. grth rate at tref (1/sec) - original
-  !    PCrefDiat = 3.0_dbl_kind * dps, & !max phyto C-spec. grth rate at tref (1/sec) - original
-   PCrefSp = 4.0_dbl_kind * dps, & ! CC exp54 - final
-   PCrefDiat = 3.4_dbl_kind * dps, & ! CC exp54- final
+ !     PCrefSp = 4.5_dbl_kind * dps, & !max phyto C-spec. grth rate at tref (1/sec) - original
+ !     PCrefDiat = 4.5_dbl_kind * dps, & !max phyto C-spec. grth rate at tref (1/sec) - original
+      PCrefSp = 4.0_dbl_kind * dps, & ! CC exp54 - final
+      PCrefDiat = 3.4_dbl_kind * dps, & ! CC exp54- final
  !    sp_mort    = 0.1_dbl_kind   * dps, & !sphyto mort rate (1/sec) ! original
  !     sp_mort2   = 0.009_dbl_kind * dps, & !sphyto quad. mort rate (1/sec/((mmol C/m3)) ! ben test
 !      diat_mort  = 0.1_dbl_kind   * dps, & !diatom mort rate (1/sec) ! original
@@ -145,7 +145,7 @@ module kei_eco
        fe_max_scale1      = 3.0_dbl_kind,     & !unitless scaling coeff.
        fe_max_scale2      = 6.0_dbl_kind/1.4e-3_dbl_kind,& !unitless scaling coeff.
        fe_diff_rate       = 2.3148e-6_dbl_kind,&!fe diffusion rate
-                                                !   (nmolFe/cm2/sec) -> ACTUALLY IN MMOL ??
+                                                !   (nmolFe/cm2/sec)
        f_fescav_P_iron    = 0.1_dbl_kind        !fraction of Fe scavenging
                                                 !        to particulate Fe
 
@@ -248,13 +248,20 @@ module kei_eco
   real(kind=dbl_kind), parameter ::    &
       thres_z1          = 100.0e2_dbl_kind, & !threshold = C_loss_thres for z shallower than this (cm)
       thres_z2          = 200.0e2_dbl_kind, & !threshold = 0 for z deeper than this (cm)
-     loss_thres_sp     = 0.1_dbl_kind, & !small phyto conc. where losses go to zero - final
-      loss_thres_diat   = 0.5_dbl_kind, & !diat conc. where losses go to zero - final
-      loss_thres_zoo    = 0.3_dbl_kind,  & !zoo conc. where losses go to zero - final
+!      loss_thres_sp     = 0.003_dbl_kind, & !small phyto conc. where losses go to zero - original
+ !    loss_thres_sp     = 0.03_dbl_kind, & ! CC test exp 10/29 - final
+
+     loss_thres_sp     = 0.1_dbl_kind, & !small phyto conc. where losses go to zero - ben increased
+      loss_thres_diat   = 0.5_dbl_kind, & !diat conc. where losses go to zero - original
+!     loss_thres_diat   = 0.3_dbl_kind, & !diat conc. where losses go to zero - ben increased, final
+!     loss_thres_zoo    = 0.3_dbl_kind,  & !zoo conc. where losses go to zero - final
+      loss_thres_zoo    = 0.3_dbl_kind,  & !zoo conc. where losses go to zero ! CC exp 41
+
       loss_thres_diaz   = 0.01_dbl_kind,  & !diaz conc. where losses go to zero
       loss_thres_diaz2  = 0.001_dbl_kind, & !diaz conc. thres at low temp
       diaz_temp_thres   = 15.0_dbl_kind,  & !Temp. where diaz conc thres drops
       CaCO3_temp_thres1 = 1.0_dbl_kind,   & !upper temp threshold for CaCO3 prod
+ !   CaCO3_temp_thres1 = 2.0_dbl_kind,   & !upper temp threshold for CaCO3 prod
       CaCO3_temp_thres2 = -2.0_dbl_kind,  & !lower temp threshold
       CaCO3_sp_thres    = 3.0_dbl_kind      ! bloom condition thres (mmolC/m3)
 
@@ -400,6 +407,7 @@ CONTAINS
          atm_co2 =  atm_co2_const  ! atmospheric CO2 concentration (
          ap = ap_const*1013.25e+3_dbl_kind      ! dyne / cm^2
 
+
 !-----------------------------------------------------------------------
 !     hacks
 !-----------------------------------------------------------------------
@@ -429,9 +437,7 @@ CONTAINS
               t_eco,          & ! SST = sea surface temperature (C)
               s_eco,          & ! SSS = sea surface salinity (psu)
               TRACER_MODULE,  & ! SURF_VALS = surface ecosys tracers
-              DTRACER_MODULE, & ! STF_MODULE = computed source/sink ecosys tracers (output)
-              kforce, &
-              nt) ! CC added kforce 12/16
+              DTRACER_MODULE ) ! STF_MODULE = computed source/sink ecosys tracers (output)
 
           enddo
         enddo
@@ -488,13 +494,10 @@ CONTAINS
         do k=1,km
           ! upgrade precision/shape of tracers for ecosys calculations
           if (k.eq.1) then
-            eco_inject  = ice_to_ocean_eflux ! flux of ice fe and diatchl
+            eco_inject  = ice_to_ocean_eflux
 
-            !if (nt > 8664 .and. nt < 8792) then
-            if (nt > 7392 .and. nt < 7632) then
-           !if (nt > 9600 .and. nt < 9840) then
-            !if (nt > 9480 .and. nt < 9580) then
-              eco_inject(Fe_ind) = eco_inject(Fe_ind) !+ meltwater_fe ! melt set to 0, ice flux
+            if (nt > 8664 .and. nt < 8792) then
+              eco_inject(Fe_ind) = eco_inject(Fe_ind) + meltwater_fe
             endif
 
           else
@@ -511,14 +514,15 @@ CONTAINS
               call ecosys_set_interior( &
                 k,                  & ! k = vertical level index
                 t_eco,              & ! TEMP = potential temperature (C)
-                qsw_eco,             & ! SHF_QSW_Wpm2 = penetrative solar heat flux (W/m^2)
+                qsw_eco,            & ! SHF_QSW_Wpm2 = penetrative solar heat flux (W/m^2)
+                !fice_eco,           & ! fractional ice cover -added CC 8/18
                 TRACER_MODULE,      & ! TRACER_MODULE = current tracer values
                 DTRACER_MODULE,     & ! DTRACER_MODULE = computed source/sink tracers (output)
                 NZ,                 & ! KMT = lowest valid layer (<=km)
-                dz_eco,              &  ! dz = layer thickness
+                dz_eco,             &  ! dz = layer thickness
                 dzr_eco,            & ! dzr = reciprocal of dz
                 zt_eco,             & ! zt = vert dist from sfc to midpoint of layer
-                eco_inject , par_phyto(k), fice_eco)
+                eco_inject , par_phyto(k) , fice_eco)
 
                 ! write out ecosys data
  !               PAR_in(k) = PAR_in_tavg(i,j) ! added 1/28 to test
@@ -541,14 +545,10 @@ CONTAINS
                 diaz_loss(k) = diaz_loss_tavg(i,j)
                 sp_agg(k) = sp_agg_tavg(i,j)
                 diat_agg(k) = diat_agg_tavg(i,j)
-                !pco2surf(k) = pCO2SURF_tavg(i,j) !CC 9/8
-                FG_CO2(k) = FG_CO2_tavg(i,j) !CC 10/21 replaced DpCo2
-                POC_PROD(k) = POC_PROD_tavg(i,j) !CC 10/14
-                POC_REMIN(k) = POC_REMIN_tavg(i,j) !CC 10/14
-                DOC_prod(k) = DOC_prod_tavg(i,j) !CC 10/21
-                DOC_remin(k) = DOC_remin_tavg(i,j) !CC 10/21
-                CaCO3_PROD(k) = CaCO3_PROD_tavg(i,j) !CC 10/21
-                CaCO3_REMIN(k) = CaCO3_REMIN_tavg(i,j) !CC 10/21
+   !             pco2surf(k) = pCO2SURF_tavg(i,j) !CC 7/30
+   !             dpco2(k) = DpCO2_tavg(i,j)!CC 7/30
+
+
 
 
               enddo
@@ -612,15 +612,15 @@ CONTAINS
       parm_POC_flux_ref   = 2.0e-3_dbl_kind
       parm_rest_prod_tau  = 30.0_dbl_kind * spd       ! (= 30 days)
       parm_rest_prod_z_c  = 7500_dbl_kind
-!      parm_z_umax_0       = 2.75_dbl_kind * dps ! ben: original - CC experiment 1 10/18, 12/16 moore 2004
-!      parm_diat_umax_0    = 2.07_dbl_kind * dps ! ben: original - CC experiment 1 10/1, 12/16 moore 2004
+!      parm_z_umax_0       = 2.75_dbl_kind * dps ! ben: original - CC experiment 1 10/18
+!      parm_diat_umax_0    = 2.07_dbl_kind * dps ! ben: original - CC experiment 1 10/1
 !      parm_z_umax_0       = 1.5_dbl_kind * dps  ! per wang and moore - standard,CC experiment 2 10/18
 !      parm_z_umax_0       = 0.2_dbl_kind * dps  ! sevrine recommendation
 !      parm_diat_umax_0    = 0.2_dbl_kind * dps ! wang and more , CC experiment 2 10/18
 !      parm_z_umax_0       = 1.18_dbl_kind * dps ! kim 2021 - CC experiment 4, CC experiment 8/5/25
 !      parm_diat_umax_0    = 1.18_dbl_kind * dps ! kim 2021 - CC experiment 4
      parm_z_umax_0    = 1.5_dbl_kind * dps ! original
-     parm_diat_umax_0    = 1.5_dbl_kind * dps ! original is 1.5
+     parm_diat_umax_0    = 1.5_dbl_kind * dps ! original
 
 
 !      parm_z_mort_0       = 0.1_dbl_kind * dps ! kim 2021, CC exp 24
@@ -635,12 +635,10 @@ CONTAINS
 !      parm_diat_kNH4      = 0.08_dbl_kind
       parm_sp_kNH4        = 0.01_dbl_kind
       parm_diat_kNH4      = 0.1_dbl_kind
- !     parm_sp_kFe         = 0.06e-3_dbl_kind
- !     parm_diat_kFe       = 0.16e-3_dbl_kind
- !    parm_sp_kFe         = 0.035e-6_dbl_kind ! CC TEST 12/19 - these should be mmol m/3
- !     parm_diat_kFe       = 0.08e-6_dbl_kind ! CC TEST 12/19 - these should be mmol/m3
-      parm_sp_kFe         = 0.035e-3_dbl_kind ! ORIGINAL ! units are mmol
-      parm_diat_kFe       = 0.08e-3_dbl_kind ! ORIGINAL
+!      parm_sp_kFe         = 0.06e-3_dbl_kind
+!      parm_diat_kFe       = 0.16e-3_dbl_kind
+     parm_sp_kFe         = 0.035e-3_dbl_kind ! ORIGINAL ! units are mmol
+     parm_diat_kFe       = 0.08e-3_dbl_kind ! ORIGINAL
  !     parm_diat_kFe       = 0.200_dbl_kind ! CC test 12, 10/23
       parm_diat_kSiO3     = 1.0_dbl_kind
 !      parm_diat_kSiO3     = 0.5_dbl_kind ! catherine test 10/23, exp 10
@@ -832,8 +830,8 @@ CONTAINS
 
       real(kind=dbl_kind), dimension(imt,jmt), intent(in) ::  &
         TEMP,               & ! potential temperature (C)
-        SHF_QSW_Wpm2             ! penetrative solar heat flux (W/m^2)
-
+        SHF_QSW_Wpm2        ! penetrative solar heat flux (W/m^2)
+    
       real(kind=dbl_kind), dimension(imt,jmt,ecosys_tracer_cnt), &
         intent(in) :: TRACER_MODULE    ! current tracer values
 
@@ -846,10 +844,13 @@ CONTAINS
           dz,        & ! layer thickness
           dzr,       & ! inverse later thickness
           zt          ! layer midpoint position
+
       real(kind=dbl_kind), dimension (ecosys_tracer_cnt) :: &
           eco_inject
        real(KIND=dbl_kind) :: par_phyto ! PAR that this layer experiences
        real(KIND=dbl_kind) , dimension(imt,jmt) :: fice_eco ! ice fraction
+       !real(KIND=real_kind) :: fice ! fractional ice coverage
+
 
 !-----------------------------------------------------------------------
 !     local variables
@@ -896,8 +897,7 @@ CONTAINS
         diazFe_loc,   & ! local copy of model diazFe
         DON_loc,      & ! local copy of model DON
         DOFe_loc,     & ! local copy of model DOFe
-        DOP_loc,      & ! local copy of model DOP
-        POC_loc ! CC added 10/22
+        DOP_loc       ! local copy of model DOP
 
       real(kind=dbl_kind) :: &
         z_grz_sqr,    & ! square of parm_z_grz (mmol C/m^3)^2
@@ -913,9 +913,7 @@ CONTAINS
         DOC_remin,    & ! remineralization of DOC (mmol C/m^3/sec)
         NITRIF,       & ! nitrification (NH4 -> NO3) (mmol N/m^3/sec)
         DENITRIF,     & ! denitrification (NO3 -> N2) (mmol N/m^3/sec)
-        RESTORE,      & ! restoring terms for nutrients (mmol ./m^3/sec)
-        POC_prod,     & ! CC added 10/14
-        POC_remin ! CC added 10/14
+        RESTORE      ! restoring terms for nutrients (mmol ./m^3/sec)
 
 
       real(kind=dbl_kind), dimension(imt,jmt) :: &
@@ -939,6 +937,8 @@ CONTAINS
         f_nut,        & ! nut limitation factor, modifies C fixation (non-dim)
         PCmax,        & ! max value of PCphoto at temperature TEMP (1/sec)
         PCphoto_sp,   & ! small C-specific rate of photosynth. (1/sec)
+        PCphoto_sp_ice,&  ! C-specific rate of photosynth under ice CC added 8/15
+        PCphoto_sp_avg,& ! weighted avg of C-specific phyto (open & ice)
         photoC_sp,    & ! small phyto C-fixation (mmol C/m^3/sec)
         NO3_V_sp,     & ! nitrate uptake by small phyto (mmol NO3/m^3/sec)
         NH4_V_sp,     & ! ammonium uptake by small phyto (mmol NH4/m^3/sec)
@@ -953,6 +953,8 @@ CONTAINS
         VPO4_diat,    & ! diatom C-specific PO4 uptake (non-dim)
         VSiO3_diat,   & ! C-specific SiO3 uptake for diatoms (non-dim)
         PCphoto_diat, & ! diatom C-specific rate of photosynth. (1/sec)
+        PCphoto_diat_ice,&  ! C-specific rate of photosynth under ice CC added 8/15
+        PCphoto_diat_avg,& ! weighted avg of C-specific phyto (open & ice)
         photoC_diat,  & ! diatom C-fixation (mmol C/m^3/sec)
         NO3_V_diat,   & ! nitrate uptake by diatoms (mmol NO3/m^3/sec)
         NH4_V_diat,   & ! ammonium uptake by diatoms (mmol NH4/m^3/sec)
@@ -989,7 +991,7 @@ CONTAINS
         zoo_loss_doc,  & ! zoo_loss routed to doc (mmol C/m^3/sec)
         zoo_loss_dic,  & ! zoo_loss routed to dic (mmol C/m^3/sec)
         WORK,          & ! intermediate value in photsyntheis computation (1/sec)
-        light_lim,     & ! light limitation factor
+        light_lim,     & ! light limitation factor - open water
         light_lim_ice, & ! light limitation factor - under ice (using 5% PAR) CC added 8/15
         Qsi,           & ! Diatom initial Si/C ratio (mmol Si/mmol C)
         gQsi,          & ! diatom Si/C ratio for growth (new biomass)
@@ -1036,12 +1038,10 @@ CONTAINS
         DOM_remin,     & ! fraction of DOM remineralized at current TEMP
         Fe_scavenge_rate ! annual scavenging rate of iron as % of ambient
 
-
       real(kind=dbl_kind), dimension(imt,jmt) :: & ! max of 39 continuation lines
         DON_prod,      & ! production of dissolved organic N
         DOFe_prod,     & ! produciton of dissolved organic Fe
-        DOP_prod         ! production of dissolved organic P
-       
+        DOP_prod       ! production of dissolved organic P
 
 !-----------------------------------------------------------------------
 
@@ -1091,7 +1091,6 @@ CONTAINS
       DON_loc      = max(c0, TRACER_MODULE(:,:,don_ind))
       DOFe_loc     = max(c0, TRACER_MODULE(:,:,dofe_ind))
       DOP_loc      = max(c0, TRACER_MODULE(:,:,dop_ind))
-      POC_loc      = max(c0, TRACER_MODULE(:,:,poc_ind))! CC added 10/22
 
       where (.not. LAND_MASK .or. k > KMT)
         PO4_loc      = c0
@@ -1116,7 +1115,6 @@ CONTAINS
         DON_loc      = c0
         DOFe_loc     = c0
         DOP_loc      = c0
-        POC_loc      = c0 ! CC added 10/22
       endwhere
 
 !-----------------------------------------------------------------------
@@ -1244,6 +1242,7 @@ CONTAINS
       KPARdz = (k_chl * (spChl_loc + diatChl_loc &
         + diazChl_loc) + k_h2o) * dz(k)
 
+      ! calculate this for above & below sea ice
       PAR_out = PAR_in * exp(-KPARdz)
       PAR_avg = PAR_in * (c1 - exp(-KPARdz)) / KPARdz
 
@@ -1310,16 +1309,29 @@ CONTAINS
 
       PCmax = PCrefSp * f_nut * Tfunc
 
-      light_lim = (c1 - exp((-c1 * parm_alphaChlsp * thetaC_sp * PAR_out) &
-        / (PCmax + epsTinv))) ! 8/14 CC changed PAR_avg to PAR_out
-      light_lim_ice = (c1 - exp((-c1 * parm_alphaChlsp * thetaC_sp * PAR_out * 0.05_dbl_kind) &
-       / (PCmax + epsTinv))) ! 8/14 CC changed PAR_avg to PAR_out
-    !PCphoto_sp = PCmax * light_lim
-      PCphoto_sp = (PCmax * light_lim * (c1-fice_eco)) + (PCmax * light_lim_ice &
-                  * fice_eco) ! test with 5% light transmittance thru ice
-      sp_light_lim_tavg = light_lim !* (c1-fice_eco)) + (light_lim_ice * fice_eco)
+    ! calculate light limitation for open water
+      light_lim = &
+        (c1 - exp((-c1 * parm_alphaChlsp * thetaC_sp * PAR_out) / &
+        (PCmax + epsTinv))) ! 8/14 CC changed PAR_avg to PAR_out
+    ! calculate light limitation for ice covered regions
+      light_lim_ice = &
+        (c1 - exp((-c1 * parm_alphaChlsp * thetaC_sp * PAR_out * 0.05_dbl_kind) / &
+        (PCmax + epsTinv)))
 
-      photoC_sp = PCphoto_sp * spC_loc
+     ! open water C fixation
+      PCphoto_sp = PCmax * light_lim
+     ! ice covered C fixation
+      PCphoto_sp_ice = PCmax * light_lim_ice 
+
+     ! area-weighted
+      PCphoto_sp_avg = (PCmax * light_lim * (c1-fice_eco)) + (PCmax * light_lim_ice &
+        * fice_eco) ! test with 5% light transmittance thru ice
+
+    !diat_light_lim_tavg = light_lim
+      sp_light_lim_tavg = (light_lim * (c1-fice_eco)) + (light_lim_ice * fice_eco)
+      
+      photoC_sp = PCphoto_sp_avg * spC_loc
+
 
 !-----------------------------------------------------------------------
 !     Get nutrient uptakes by small phyto based on calculated C fixation
@@ -1346,8 +1358,11 @@ CONTAINS
 !     GD 98 Chl. synth. term
 !-----------------------------------------------------------------------
 
-      WORK = parm_alphaChlsp * thetaC_sp * (PAR_out *(c1-fice_eco) + &
-(PAR_out * fice_eco * 0.05_dbl_kind))
+      !WORK = parm_alphaChlsp * thetaC_sp * PAR_out
+      ! weighted avg of WORK using 2 PARs
+      WORK = parm_alphaChldiat * thetaC_diat * ((PAR_out * (c1-fice_eco)) + &
+         (PAR_out * fice_eco * 0.05_dbl_kind)) !
+
       where (WORK > c0)
         pChl = thetaN_max_sp * PCphoto_sp / WORK
         photoacc_sp = (pChl * VNC_sp / thetaC_sp) * spChl_loc
@@ -1416,18 +1431,29 @@ CONTAINS
 
       PCmax = PCrefDiat * f_nut * Tfunc
 
+      ! calculate light limitation for open water
       light_lim = &
         (c1 - exp((-c1 * parm_alphaChldiat * thetaC_diat * PAR_out) / &
         (PCmax + epsTinv))) ! 8/14 CC changed PAR_avg to PAR_out
+      ! calculate light limitation for ice covered regions
       light_lim_ice = &
         (c1 - exp((-c1 * parm_alphaChldiat * thetaC_diat * PAR_out * 0.05_dbl_kind) / &
-        (PCmax + epsTinv))) ! 8/15 CC added
-     ! PCphoto_diat = PCmax * light_lim 
-      PCphoto_diat = (PCmax * light_lim * (c1-fice_eco)) + (PCmax * light_lim_ice &
-              * fice_eco) ! area-weighted average based on ice fraction
-      diat_light_lim_tavg = light_lim! * (c1-fice_eco)) + (light_lim_ice * fice_eco)
+        (PCmax + epsTinv)))
+    
+      ! open water C fixation
+      PCphoto_diat_avg = PCmax * light_lim
+      ! ice covered C fixation
+      PCphoto_diat_ice = PCmax * light_lim_ice
 
-      photoC_diat = PCphoto_diat * diatC_loc
+      ! area-weighted
+      !PCphoto_diat_avg = (PCmax * light_lim * (c1-fice_eco)) + (PCmax * light_lim_ice &
+             * fice_eco) ! test with 5% light transmittance thru ice
+      
+      !diat_light_lim_tavg = light_lim
+      diat_light_lim_tavg = (fice_eco)! light_lim * (c1-fice_eco)) + (light_lim_ice * fice_eco)
+      
+      photoC_diat = PCphoto_diat_avg * diatC_loc
+
 
 !-----------------------------------------------------------------------
 !     Get nutrient uptake by diatoms based on C fixation
@@ -1456,11 +1482,16 @@ CONTAINS
 !     GD 98 Chl. synth. term
 !-----------------------------------------------------------------------
 
-      WORK = parm_alphaChldiat * thetaC_diat * (PAR_out * (c1-fice_eco) + &
-        (PAR_out * fice_eco * 0.05_dbl_kind)) !! (mmol C m^2/(mg Chl W sec)) * mg Chl/(mmol C) * W --> m^2/sec
+     ! WORK = parm_alphaChldiat * thetaC_diat * PAR_out
+      ! weighted avg of work using 2 PARs
+       WORK = parm_alphaChldiat * thetaC_diat * ((PAR_out * (c1-fice_eco)) + &
+           (PAR_out * fice_eco * 0.05_dbl_kind)) ! (mmol C m^2/(mg Chl W sec)) * mg Chl/(mmol C) * W --> m^2/sec
+   
+     ! calculate this using WORK weighted avg and PCphoto weighted avg
       where (WORK > c0)
-        pChl = thetaN_max_diat * PCphoto_diat / WORK    ! mg Chl/mmol N * mmol C / (m^2/s) = mmol C * sec / (mmol N m^2)
-        photoacc_diat = (pChl * VNC_diat / thetaC_diat) * diatChl_loc  ! mmol C * sec / (mmol N m^2) * mmol N * / (mg Chl / mmol C) * mmol C =
+        pChl = thetaN_max_diat * PCphoto_diat_avg / WORK    ! mg Chl/mmol N * mmol C / (m^2/s) = mmol C * sec / (mmol N m^2)
+        photoacc_diat = (pChl * VNC_diat / thetaC_diat) * diatChl_loc
+        ! mmol C * sec / (mmol N m^2) * mmol N * / (mg Chl / mmol C) * mmol C =
 
         ! Chl/N * C / (alpha * Chl/C * PAR) * C*N/C   / Chl/C * tot_C
         ! Chl/N * C / alpha * C/Chl / PAR * C*N/C  * C/Chl * tot_C
@@ -1729,8 +1760,6 @@ CONTAINS
         * zoo_loss + diat_loss_poc + diat_agg + graze_diat_poc &
         + graze_diaz_poc
 
-      POC_remin = POC_loc * POC%remin ! CC added 10/22
-
 !-----------------------------------------------------------------------
 !     large detrital CaCO3
 !     33% of CaCO3 is remin when phyto are grazed
@@ -1942,8 +1971,6 @@ CONTAINS
 
       DTRACER_MODULE(:,:,dofe_ind) = DOFe_prod - DOFe_remin
 
-      DTRACER_MODULE(:,:,poc_ind) = POC%prod - POC%remin ! CC added 10/22
-
 !-----------------------------------------------------------------------
 !     small phyto Fe
 !-----------------------------------------------------------------------
@@ -1992,11 +2019,11 @@ CONTAINS
 !     dissolved inorganic Carbon
 !-----------------------------------------------------------------------
 
-      DTRACER_MODULE(:,:,dic_ind) = (DOC_remin + POC%remin &
+      DTRACER_MODULE(:,:,dic_ind) = DOC_remin + POC%remin &
         + P_CaCO3%remin + f_graze_CaCO3_remin * graze_sp * QCaCO3 &
         + zoo_loss_dic + sp_loss_dic + graze_sp_dic + diat_loss_dic &
         + graze_diat_dic - photoC_sp - photoC_diat - CaCO3_prod &
-        + graze_diaz_dic + diaz_loss_dic - photoC_diaz ) !* c0 ! CC added 11/14
+        + graze_diaz_dic + diaz_loss_dic - photoC_diaz
 
 !-----------------------------------------------------------------------
 !     alkalinity
@@ -2054,8 +2081,6 @@ CONTAINS
       Fe_scavenge_rate_tavg = Fe_scavenge_rate
       NITRIF_tavg           = NITRIF
       DENITRIF_tavg         = DENITRIF
-      !POC_prod_tavg         = POC%prod ! CC added 10/14
-      !POC_remin_tavg        = POC%remin ! CC added 10/14
         
 
 !-----------------------------------------------------------------------
@@ -2591,16 +2616,16 @@ CONTAINS
 !     Set history variables.
 !-----------------------------------------------------------------------
 
-      POC_FLUX_IN_tavg     = POC%sflux_in + POC%hflux_in !CC uncommented 10/14
-      POC_PROD_tavg        = POC%prod !CC uncommented 10/14
-      POC_REMIN_tavg       = POC%remin !CC uncommented 10/14
-      CaCO3_FLUX_IN_tavg   = P_CaCO3%sflux_in + P_CaCO3%hflux_in
-      CaCO3_PROD_tavg      = P_CaCO3%prod
-      CaCO3_REMIN_tavg     = P_CaCO3%remin
+!      POC_FLUX_IN_tavg     = POC%sflux_in + POC%hflux_in
+!      POC_PROD_tavg        = POC%prod
+!      POC_REMIN_tavg       = POC%remin
+!      CaCO3_FLUX_IN_tavg   = P_CaCO3%sflux_in + P_CaCO3%hflux_in
+!      CaCO3_PROD_tavg      = P_CaCO3%prod
+!      CaCO3_REMIN_tavg     = P_CaCO3%remin
 !      SiO2_FLUX_IN_tavg    = P_SiO2%sflux_in + P_SiO2%hflux_in
 !      SiO2_PROD_tavg       = P_SiO2%prod
 !      SiO2_REMIN_tavg      = P_SiO2%remin
-      dust_FLUX_IN_tavg    = dust%sflux_in + dust%hflux_in
+!      dust_FLUX_IN_tavg    = dust%sflux_in + dust%hflux_in
 !      dust_REMIN_tavg      = dust%remin
 !      P_iron_FLUX_IN_tavg  = P_iron%sflux_in + P_iron%hflux_in
 !      P_iron_PROD_tavg     = P_iron%prod
@@ -2613,7 +2638,7 @@ CONTAINS
 !***********************************************************************
 
       subroutine ecosys_set_sflux(IFRAC,ATM_PRESS,U10_SQR,SST,SSS, &
-        SURF_VALS,STF_MODULE,kforce_surf,nt_surf) ! CC added kforce 12/16
+        SURF_VALS,STF_MODULE)
 
 !-----------------------------------------------------------------------
 !     compute surface fluxes for ecosystem BGC tracers
@@ -2625,11 +2650,11 @@ CONTAINS
       !use co2calc, only : co2calc_row
       !use global_reductions, only : broadcast_scalar
       !use registry, only : named_field_get, named_field_set
-      !use kei_hacks, only : meltwater_fe
 
 !-----------------------------------------------------------------------
 !     argument declarations
 !-----------------------------------------------------------------------
+
       real (kind=dbl_kind), dimension(imt,jmt), intent(in) :: &
         IFRAC          & ! sea ice fraction (non-dimensional)
       , ATM_PRESS      & ! sea level atmospheric pressure (dyne/cm^2)
@@ -2641,11 +2666,8 @@ CONTAINS
         intent(in) :: SURF_VALS ! module tracers (fmol/cm^3)
 
       real (kind=dbl_kind), dimension(imt,jmt,ecosys_tracer_cnt), &
-        intent(inout) :: STF_MODULE ! surface fluxes (fmol/cm^2/s
+        intent(inout) :: STF_MODULE ! surface fluxes (fmol/cm^2/s)
 
-      real :: kforce_surf(forcing_var_cnt)! CC added 12/16
-
-      integer(kind=int_kind) :: nt_surf ! CC added 12/17
 !-----------------------------------------------------------------------
 !     local parameters
 !-----------------------------------------------------------------------
@@ -2654,9 +2676,7 @@ CONTAINS
           a         = 6.97e-9_dbl_kind, & ! in s/cm, from a = 0.251 cm/hr s^2/m^2 in Wannikhof 2014
           phlo_init = 5.0_dbl_kind,   & ! low bound for ph for no prev soln
           phhi_init = 9.0_dbl_kind,   & ! high bound for ph for no prev soln
-          del_ph    = 0.25_dbl_kind, & !CC 12/17 added to surface flux
-          seaice_flux = 3.9e-9_dbl_kind !dps ! sea ice concentration, input for 10 days
-          ! sea ice flux should actually be a function of maximum sea ice thickness and 5nm
+          del_ph    = 0.25_dbl_kind   ! delta-ph for prev soln
           !a         = 8.6e-9_dbl_kind,& ! a = 0.31 cm/hr s^2/m^2 in (s/cm)    -- older value
 !-----------------------------------------------------------------------
 !     local variable declarations
@@ -2801,7 +2821,6 @@ CONTAINS
          enddo
 
          STF_MODULE(:,:,dic_ind) = STF_MODULE(:,:,dic_ind) + FLUX
-
          FG_CO2_tavg = FLUX
 
 !-----------------------------------------------------------------------
@@ -2810,16 +2829,18 @@ CONTAINS
 !-----------------------------------------------------------------------
 
          !call named_field_set(sflux_co2_nf_ind, 44.0e-8_dbl_kind * FLUX)
+
       endif
 
 !      if (iron_flux%has_data) then
-!         FLUX = 0.
+         FLUX = 0.
 !      else
 !         FLUX = c0
 !      endif
-      FLUX = kforce_surf(dustf_f_ind) * parm_Fe_bioavail ! CC added kforce 12/16 to bring in atmospheric dust - 1.60 nmol daily input, De Jong et al. 2015 / CC 12/16
 
-      STF_MODULE(:,:,fe_ind) = STF_MODULE(:,:,fe_ind) + FLUX + kforce_surf(icefe_f_ind) ! CC edited 11/21 to add STF to right side, edited 1/5/26 to add runoff, decided to remove runoff, added sea ice iron forcing
+      FLUX = FLUX * parm_Fe_bioavail
+
+      STF_MODULE(:,:,fe_ind) = FLUX
       IRON_FLUX_tavg = FLUX
 
 
