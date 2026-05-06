@@ -43,8 +43,7 @@
 !!!                                     Moore et al. (CESM) Ecosystem model
 
 MODULE link
-
-
+  use kei_kinds, only: i4, r4, r8, log_kind
   !!! Use Statements and Variables/Globals/Parameters
   !!! --------------------------------------------------------------------
   USE kei_parameters
@@ -52,8 +51,9 @@ MODULE link
   USE kei_icecommon
   USE kei_ice
   USE kei_ecocommon
-  USE kei_ocncommon
+  USE kei_ocn, ONLY: init_ocn, ocnstep
   USE kei_eco
+  USE kei_fluxes, ONLY: init_flx, atmflx, calflx, o2iflx, topflx
   USE kei_hacks
   USE kei_sw
 
@@ -64,14 +64,14 @@ MODULE link
 
   !!! Internal Variables
   !!! --------------------------------------------------------------------
-  REAL, save :: &
+  real(r4), save :: &
     U(NZP1,NVEL),  &    !!! momentum
     X(NZP1,NSCLR),  &   !!! scalars
     aflx(NSFLXSP2), &   !!!
     flx(11),        &   !!! diagnostic flux data structure
     Xprev(NZP1,2)       !!! T&S before (potential) data assimilation
 
-  DOUBLE PRECISION, save :: &
+  REAL(r8), save :: &
     timed, &            !!! model time
     dtday, &            !!! time step in days
     deltat, &           !!! time step
@@ -87,18 +87,19 @@ MODULE link
     absorp_out(NZ)      ! total ecosystem shortwave irradiance absorption (1/m)
 
   ! maybe can get rid of these?
-  REAL,save :: &
+  real(r4),save :: &
     atmtemp(NPLEV),  & !!! atmospheric model level temperature (K)
     atmshum(NPLEV),  & !!! atmospheric model level specific humidity(g/g)
     atmsave(NPSAVE), & !!! misc output from atm model to be stored
     atmsaveav(NPSAVE)  !!! averaged over storage time interval
 
-  REAL, save :: kforce(forcing_var_cnt)   !!! forcing data structure - revised for f2py
+  real(r4), save :: kforce(forcing_var_cnt)   !!! forcing data structure - revised for f2py
+  real(r4), save :: absorp_ocn_step(NZ)       !!! cast for ``ocnstep`` (expects r4; ``absorp_out`` is r8)
 
   !!! counters and helper variables
-  INTEGER, save :: i,ii,jptr,nt,ns_calls,nii,iaccum,nisteps,no, &
+  integer(i4), save :: i,ii,jptr,nt,ns_calls,nii,iaccum,nisteps,no, &
     ntlast,ntimelast,estep,top_f,top_unstable
-  REAL, save :: DHCdt,DSCdt,zml,DHSdt, &
+  real(r4), save :: DHCdt,DSCdt,zml,DHSdt, &
     HCold,DHC,rho_top,rho_bot, &
     alpha,beta,exppr,v10
 
@@ -107,10 +108,10 @@ CONTAINS
 
 !!! ************************************************************************
   SUBROUTINE set_tracers(U_in,X_in)
-    REAL, INTENT(IN) :: &
+    real(r4), INTENT(IN) :: &
       U_in(NZ,NVEL),  &
       X_in(NZ,NSCLR)
-    INTEGER :: i
+    integer(i4) :: i
 
       U(1:NZ,:) = U_in
       X(1:NZ,:) = X_in
@@ -127,7 +128,7 @@ CONTAINS
 
 !!! ************************************************************************
   SUBROUTINE get_tracers(U_out,X_out)
-    REAL, INTENT(OUT) :: &
+    real(r4), INTENT(OUT) :: &
       U_out(NZ,NVEL),  &
       X_out(NZ,NSCLR)
 
@@ -138,7 +139,7 @@ CONTAINS
 
 !!! ************************************************************************
   SUBROUTINE get_sw(U_out,X_out)
-    REAL, INTENT(OUT) :: &
+    real(r4), INTENT(OUT) :: &
       U_out(NZ,NVEL),  &
       X_out(NZ,NSCLR)
 
@@ -149,7 +150,7 @@ CONTAINS
 
 !!! ************************************************************************
   SUBROUTINE get_fluxes(flux_out)
-    REAL, INTENT(OUT) :: &
+    real(r4), INTENT(OUT) :: &
       flux_out(NSFLXS,5)
 
       flux_out = sflux(:,:,0)
@@ -158,9 +159,9 @@ CONTAINS
 
 !!! ************************************************************************
   SUBROUTINE set_grid(dm_in,hm_in,zm_in)
-    REAL, INTENT(IN) :: &
+    real(r4), INTENT(IN) :: &
       dm_in(NZ), hm_in(NZ), zm_in(NZ)
-    REAL, PARAMETER :: dzp1 = 0.1
+    real(r4), PARAMETER :: dzp1 = 0.1
 
       dm(0:NZM1) = dm_in
       hm(1:NZ) = hm_in
@@ -176,7 +177,7 @@ CONTAINS
 
 !!! ************************************************************************
   SUBROUTINE set_forcing(kforce_in)
-    REAL, INTENT(IN) :: kforce_in(forcing_var_cnt)
+    real(r4), INTENT(IN) :: kforce_in(forcing_var_cnt)
 
       kforce = kforce_in
 
@@ -186,7 +187,7 @@ CONTAINS
 !!! ************************************************************************
   SUBROUTINE set_param_real(param,value)
     CHARACTER (len=*), intent(in) :: param
-    REAL, intent(in) :: value
+    real(r4), intent(in) :: value
 
     if (param == 'dlon') then
       dlon = value
@@ -207,7 +208,7 @@ CONTAINS
 !!! ************************************************************************
   SUBROUTINE set_param_int(param,value)
     CHARACTER (len=*), intent(in) :: param
-    INTEGER, intent(in) :: value
+    integer(i4), intent(in) :: value
     if (param == 'lbio') then
       lbio = value
     elseif (param == 'lsw') then
@@ -228,7 +229,7 @@ CONTAINS
 !!! ************************************************************************
   SUBROUTINE get_data_real(param,value)
     CHARACTER (len=*), intent(in) :: param
-    REAL, intent(out) :: value
+    real(r4), intent(out) :: value
 
     if (param == 'time') then
       value = time
@@ -298,7 +299,7 @@ CONTAINS
 !!! ************************************************************************
   SUBROUTINE get_data_int(param,value)
     CHARACTER (len=*), intent(in) :: param
-    INTEGER, intent(out) :: value
+    integer(i4), intent(out) :: value
 
     if (param == 'ni') then
       value = ni_cur
@@ -315,7 +316,7 @@ CONTAINS
 !!! ************************************************************************
   SUBROUTINE get_nz_data(param,nzp1_data)
     CHARACTER (len=*), intent(in) :: param
-    REAL, INTENT(OUT) :: &
+    real(r4), INTENT(OUT) :: &
       nzp1_data(NZ)
 
     ! nzp1 length
@@ -384,7 +385,7 @@ CONTAINS
 !!! ************************************************************************
   SUBROUTINE get_ice_data(param,ice_data)
     CHARACTER (len=*), intent(in) :: param
-    REAL, INTENT(OUT) :: &
+    real(r4), INTENT(OUT) :: &
       ice_data(nni)
 
     if (param == 'dzi') then
@@ -404,7 +405,7 @@ CONTAINS
 !!! ************************************************************************
   SUBROUTINE get_snow_data(param,snow_data)
     CHARACTER (len=*), intent(in) :: param
-    REAL, INTENT(OUT) :: &
+    real(r4), INTENT(OUT) :: &
       snow_data(nns)
 
     if (param == 'dzs') then
@@ -421,7 +422,7 @@ CONTAINS
 
 !!! ************************************************************************
   SUBROUTINE get_sw_data(sw_tracer_block)
-    DOUBLE PRECISION, INTENT(OUT) :: &
+    REAL(r8), INTENT(OUT) :: &
       sw_tracer_block(n_sw_outputs)
 
     CALL sw_get_outputs(sw_tracer_block)
@@ -536,9 +537,9 @@ SUBROUTINE KEI_compute_step(nt_in,doy)
   !WRITE(6,*) '*******************************'
   !WRITE(6,*)     ' BEGIN  INTEGRATION LOOP'
   !WRITE(6,*)
-  integer, intent(in) :: nt_in
-  double precision, intent(in) :: doy ! day-of-year, 1-1 Jan
-  double precision :: swh_out,mwp_out,cmag_out ! MACMODS expects doubles
+  integer(i4), intent(in) :: nt_in
+  REAL(r8), intent(in) :: doy ! day-of-year, 1-1 Jan
+  REAL(r8) :: swh_out,mwp_out,cmag_out ! MACMODS expects doubles
 
     ! transform salinity back to KPP version using sref
     X(:,2) = X(:,2) - Sref
@@ -615,7 +616,8 @@ SUBROUTINE KEI_compute_step(nt_in,doy)
     DO 200 no = 1, ndtflx, ndtocn
          ntime = nt + no
          time = startt + dtday *  ntime
-         CALL ocnstep(U,X,kforce,absorp_out) ! make absorp_out work with KPP!
+         absorp_ocn_step = real(absorp_out, kind=r4)
+         CALL ocnstep(U,X,kforce,absorp_ocn_step) ! ``ocnstep`` dummy is r4; ecosystem keeps r8 in ``absorp_out``
 
     200  CONTINUE
 
@@ -728,8 +730,8 @@ END SUBROUTINE KEI_compute_step
 
     IMPLICIT NONE
 
-    REAL :: U(NZP1,NVEL), X(NZP1,NSCLR),DHCdt,DSCdt,HCold
-    DOUBLE PRECISION :: HC(0:1),SC(0:1),HCocn,SCocn,HCice,FCice,SCice
+    real(r4) :: U(NZP1,NVEL), X(NZP1,NSCLR),DHCdt,DSCdt,HCold
+    REAL(r8) :: HC(0:1),SC(0:1),HCocn,SCocn,HCice,FCice,SCice
 
     HC(iold) =  0.0
     SC(iold) =  0.0
@@ -761,10 +763,10 @@ END SUBROUTINE KEI_compute_step
 
     implicit none
 
-    REAL, intent(in) :: t(nzp1),tsfc
-    REAL, intent(out) :: zml
-    REAL :: delt
-    INTEGER :: kz,k
+    real(r4), intent(in) :: t(nzp1),tsfc
+    real(r4), intent(out) :: zml
+    real(r4) :: delt
+    integer(i4) :: kz,k
 
     delt=0.35   !!! temperature difference for mixed layer depth
     kz=1
@@ -821,16 +823,16 @@ END SUBROUTINE KEI_compute_step
     implicit none
 
 		! inputs
-    real :: U(NZP1,NVEL), X(NZP1,NSCLR)
-    double precision :: HCice,FCice,SCice
+    real(r4) :: U(NZP1,NVEL), X(NZP1,NSCLR)
+    REAL(r8) :: HCice,FCice,SCice
 
 		! outputs
-    double precision :: HC(0:1),SC(0:1),HCocn,SCocn
-    real :: DHCdt,DSCdt
+    REAL(r8) :: HC(0:1),SC(0:1),HCocn,SCocn
+    real(r4) :: DHCdt,DSCdt
 
 		! local
-    integer :: n
-    real :: rhoCP,Szero,rhof,rhoocn,Sal,Saltice
+    integer(i4) :: n
+    real(r4) :: rhoCP,Szero,rhof,rhoocn,Sal,Saltice
 
 !                                 Ocean Heat Content
     HCocn = 0.0

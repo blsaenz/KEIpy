@@ -1,10 +1,10 @@
-module	kei_subs1D 
-
+module	kei_subs1D
+  use kei_kinds, only: i4, r4, r8, log_kind
 		implicit none
 		
-		real, private, save :: R1,R2,R3,R4,A,B,C,D,E,A1,B1,K,SR,P0,PK,Rho, &
+		real(r4), private, save :: eos_r1,eos_r2,eos_r3,eos_r4,A,B,C,D,E,A1,B1,K,SR,P0,PK,Rho, &
 		  Rho0,ABFac
-    logical, private, save :: ABFlg		
+    logical(kind=log_kind), private, save :: ABFlg		
 		
 	contains
 
@@ -83,16 +83,16 @@ module	kei_subs1D
     implicit none
 
 		! input
-    real, intent(in) :: S,T1,P
+    real(r4), intent(in) :: S,T1,P
     
     ! output
-    real, intent(out) :: Alpha,Beta,Kappa,Sig0,Sig
+    real(r4), intent(out) :: Alpha,Beta,Kappa,Sig0,Sig
 
 		! local
-    real :: K,T
-    logical :: KapFlg
+    real(r4) :: K,T
+    logical(kind=log_kind) :: KapFlg
 
-    !Common /EOS/R1,R2,R3,R4,A,B,C,D,E,A1,B1,K,SR,P0,PK,Rho,Rho0 &
+    !Common /EOS/eos_r1,eos_r2,eos_r3,eos_r4,A,B,C,D,E,A1,B1,K,SR,P0,PK,Rho,Rho0 &
     !,ABFac,ABFlg
 
 ! Check that temperature is above freezing
@@ -167,22 +167,22 @@ module	kei_subs1D
     Implicit None
 
 		! input
-    real, intent(in) :: S,T,P
+    real(r4), intent(in) :: S,T,P
     
     ! output
-    real, intent(out) :: Beta
+    real(r4), intent(out) :: Beta
 
 		! local
-    Real :: SR5,DRho,DK,DK0,DA,DB
+    real(r4) :: SR5,DRho,DK,DK0,DA,DB
 
-    !Common /EOS/R1,R2,R3,R4,A,B,C,D,E,A1,B1,K,SR,P0,PK,Rho,Rho0 &
+    !Common /EOS/eos_r1,eos_r2,eos_r3,eos_r4,A,B,C,D,E,A1,B1,K,SR,P0,PK,Rho,Rho0 &
     !,ABFac,ABFlg
 
 ! Compute the Sigma-t derivative term
 ! Note that SR is the Sq.Root of Salinity from Sig80
 
     SR5=SR*1.5
-    DRho=R2+SR5*R3+(S+S)*R4
+    DRho=eos_r2+SR5*eos_r3+(S+S)*eos_r4
     If(P == 0)Then
         Beta=DRho/Rho
         Return
@@ -233,35 +233,35 @@ module	kei_subs1D
     Implicit None
 
 		! input
-    real, intent(in) :: S,T,P
+    real(r4), intent(in) :: S,T,P
     
     ! output
-    real, intent(out) :: Alpha
+    real(r4), intent(out) :: Alpha
 
 		! local
 ! Atm. Prs. Density Terms
-    REAL :: AW,BW,K,K0,KW
+    real(r4) :: AW,BW,K,K0,KW
 ! Sigma + 1000
-    Real :: Alph0,AlphaA,AlphB,AlphK
+    real(r4) :: Alph0,AlphaA,AlphB,AlphK
 !!  "     "     "
 
 ! Common Block for the Equation Of State subroutines Alf80,Bet80,Kap80
 ! Which can utilize Intermediate sums to minimize overhead once density
 ! computed by subroutine Sig80.
 
-    !COMMON /EOS/R1,R2,R3,R4,A,B,C,D,E,A1,B1,K,SR,P0,PK,Rho,Rho0 &
+    !COMMON /EOS/eos_r1,eos_r2,eos_r3,eos_r4,A,B,C,D,E,A1,B1,K,SR,P0,PK,Rho,Rho0 &
     !,ABFac,ABFlg
 
 ! COMPUTE Alpha PURE WATER AT ATM PRESS
 
-    R1=(((.3268166E-7*T-.4480332e-5)*T+.3005055e-3)*T &
+    eos_r1=(((.3268166E-7*T-.4480332e-5)*T+.3005055e-3)*T &
     -.1819058E-1)*T+6.793952E-2
 
 ! SEAWATER Alpha AT ATM PRESS
 
-    R2=((.215500E-7*T-.247401E-5)*T+.152876E-3)*T-4.0899E-3
-    R3=-.33092E-5*T+1.0227E-4
-    Alph0=(R3*SR+R2)*S+R1
+    eos_r2=((.215500E-7*T-.247401E-5)*T+.152876E-3)*T-4.0899E-3
+    eos_r3=-.33092E-5*T+1.0227E-4
+    Alph0=(eos_r3*SR+eos_r2)*S+eos_r1
 
 ! Alpha AT ATM PRESS
 
@@ -323,16 +323,16 @@ module	kei_subs1D
 		implicit none
 
 		! input
-    real, intent(in) :: S,T,P
+    real(r4), intent(in) :: S,T,P
     
     ! output
-    logical, intent(inout) :: KapFlg ! Signals we need entry to BlkMod
-    real, intent(out) :: Kappa
+    logical(kind=log_kind), intent(inout) :: KapFlg ! Signals we need entry to BlkMod
+    real(r4), intent(out) :: Kappa
 
 		! local
-    Real :: DelK
+    real(r4) :: DelK
 
-    !Common /EOS/R1,R2,R3,R4,A,B,C,D,E,A1,B1,K,SR,P0,PK,Rho,Rho0 &
+    !Common /EOS/eos_r1,eos_r2,eos_r3,eos_r4,A,B,C,D,E,A1,B1,K,SR,P0,PK,Rho,Rho0 &
     !,ABFac,ABFlg
 
 ! If P=0 must go to Sig80 Subroutine at Entry BlkMod
@@ -383,20 +383,20 @@ module	kei_subs1D
 		implicit none
 
 		! input
-    real, intent(in) :: S,T,P
+    real(r4), intent(in) :: S,T,P
     
     ! output
-    logical, intent(inout) :: KapFlg ! Signals we need entry to BlkMod
-    real, intent(out) :: Sig0,Sig
+    logical(kind=log_kind), intent(inout) :: KapFlg ! Signals we need entry to BlkMod
+    real(r4), intent(out) :: Sig0,Sig
 
 		! local
-    Real :: AW,BW,K0,KW
+    real(r4) :: AW,BW,K0,KW
 
 ! Common Block for the Equation Of State subroutines Alf80,Bet80,Kap80
 ! Which can utilize Intermediate sums to minimize overhead once density
 ! computed by this routine.
 
-    !Common /EOS/R1,R2,R3,R4,A,B,C,D,E,A1,B1,K,SR,P0,PK,Rho,Rho0 &
+    !Common /EOS/eos_r1,eos_r2,eos_r3,eos_r4,A,B,C,D,E,A1,B1,K,SR,P0,PK,Rho,Rho0 &
     !,ABFac,ABFlg
 
 ! CONVERT PRESSURE TO BARS AND SQ ROOT SALINITY
@@ -408,17 +408,17 @@ module	kei_subs1D
 
 ! COMPUTE SIGMA PURE WATER AT ATM PRESS
 
-    R1=((((6.536332E-9*T-1.120083E-6)*T+1.001685E-4)*T &
+    eos_r1=((((6.536332E-9*T-1.120083E-6)*T+1.001685E-4)*T &
     -9.095290E-3)*T+6.793952E-2)*T-.157406
 ! Note Constant for Sigma vs. Rho!
 
 ! SEAWATER SIGMA AT ATM PRESS
 
-    R2=(((5.3875E-9*T-8.2467E-7)*T+7.6438E-5)*T-4.0899E-3)*T &
+    eos_r2=(((5.3875E-9*T-8.2467E-7)*T+7.6438E-5)*T-4.0899E-3)*T &
     +8.24493E-1
-    R3=(-1.6546E-6*T+1.0227E-4)*T-5.72466E-3
-    R4=4.8314E-4
-    Sig0=(R4*S+R3*SR+R2)*S+R1
+    eos_r3=(-1.6546E-6*T+1.0227E-4)*T-5.72466E-3
+    eos_r4=4.8314E-4
+    Sig0=(eos_r4*S+eos_r3*SR+eos_r2)*S+eos_r1
     Rho0=1000.0 + Sig0
 
 ! SIGMA AT ATM PRESS

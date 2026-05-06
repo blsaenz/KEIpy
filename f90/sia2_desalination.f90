@@ -1,6 +1,6 @@
 module sia2_desalination
 
-	use sia2_constants, only : log_kind,int_kind,real_kind,dbl_kind
+	use kei_kinds, only: i4, r4, r8, log_kind
 	
 	implicit none
 
@@ -37,34 +37,34 @@ module sia2_desalination
 		
 	! Subroutine Arguments
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			dtt_s,			&	! ice physics time step length (s)
 			t_ocn,			&	! under-ice ocean temperature (degC)
 			s_ocn					! under-ice ocean salinity (psu)
 		type(ice_type), intent(inout) :: &
 			ice						! saved ice data
-		real(kind=dbl_kind), dimension(z_max_ice), intent(in) :: &
+		real(r4), dimension(z_max_ice), intent(in) :: &
 			s_new,			&	! updated mid-step ice salinity for use in salinity calc
 			ed_w_ice			! shortwave absorption
-		real(kind=dbl_kind), dimension(z_max_pack+1), intent(in) :: &
+		real(r4), dimension(z_max_pack+1), intent(in) :: &
 			dth,				& ! inter-layer thickness
 			ki						! conductivity
-		integer(kind=int_kind), dimension(z_max_ice), intent(out) :: &
+		integer(i4), dimension(z_max_ice), intent(out) :: &
 			sldm					! was the SLDM (slush layer desalination method) active in layer?
-		real(kind=dbl_kind), dimension(z_max_ice), intent(out) :: &
+		real(r4), dimension(z_max_ice), intent(out) :: &
 			dsdt_out,		&	! was the SLDM (slush layer desalination method) active in layer?
 			lfheat				! effective heat latent heat flux due to desalination
 		
 	! Internal Variables
 	! --------------------------------------------------------------------
-		integer(kind=int_kind) :: &		
+		integer(i4) :: &		
 			ii,					& ! z dimension iterator, typically
 			z_snow,			& ! number of snow layers
 			int_z,			& ! bottom interior layer
 			sk_1,				& ! top skeletal layer
 			sk_z,				&	! bottom (skeletal) layer
 			vb_open				! highest layer that has access to ocean through "open" ice, for cw gravity purposes
-		real(kind=dbl_kind) :: &
+		real(r4) :: &
 			bv_total,		& ! total brine volume over multiple layers
 			bv_flux,		& ! total brine flux volume over multiple layers
 			dsdt1,			& ! dsdt holding var, cox/weeks gravity drainage
@@ -138,8 +138,8 @@ module sia2_desalination
 					!dsdt1 = -1.*T_grad*c_01* & ! 0.01 factor is to convert from 1/m to 1/cm
 					!(1.68E-5 - 3.37E-7*bv_mean)*dtt_s ! dsdt in ppt/s, so multiplying by sec., the minus sign gives a negative dsdt
 
-					dsdt1 = 4.2e-6_dbl_kind*dtt_s*T_grad* &
-						(max(bv_mean*c_001 - 0.05_dbl_kind,1.0e-5_dbl_kind))**(1.2) ! Petrich et al. desal rate
+					dsdt1 = 4.2e-6_r4*dtt_s*T_grad* &
+						(max(bv_mean*c_001 - 0.05_r4,1.0e-5_r4))**(1.2) ! Petrich et al. desal rate
 
 					! record instantaneous dsdt rate (psu/s) 
 					!ice%dsdt(ii) = -1.*T_grad*c_01* & ! 0.01 factor is to convert from 1/m to 1/cm
@@ -279,22 +279,22 @@ module sia2_desalination
 ! brine volume greater than bv_crit)
 ! ----------------------------------------------------------------------
 	
-	integer(kind=int_kind) pure function sia2_bv_open(ice_bv,nz,bv_crit)
+	integer(i4) pure function sia2_bv_open(ice_bv,nz,bv_crit)
 	
 		implicit none
 		
 		! Function Arguments
 		! --------------------------------------------------------------------
- 		real(kind=dbl_kind), dimension(nz), intent(in) :: &
+ 		real(r4), dimension(nz), intent(in) :: &
  			ice_bv  				! ice brine volume
- 		integer(kind=int_kind), intent(in) :: &
+ 		integer(i4), intent(in) :: &
  			nz			  				! number of ice layers
- 		real(kind=dbl_kind), intent(in) :: &
+ 		real(r4), intent(in) :: &
  			bv_crit  				! critical brine volume below which there is no brine convection
 
 		! Internal Variables
 		! --------------------------------------------------------------------
- 		integer(kind=int_kind) :: &
+ 		integer(i4) :: &
  			i
 		
 						
@@ -320,28 +320,28 @@ module sia2_desalination
 ! rate data (Petrich calculation was a revision of one originally made 
 ! by Cox and Weeks (1988) 
 ! ----------------------------------------------------------------------	
-	real(kind=dbl_kind) pure function sia2_dhdt_from_flux(F0)
+	real(r4) pure function sia2_dhdt_from_flux(F0)
 	
 		implicit none
 	
 	! Function Arguments
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			F0            	! Ice layer heat flux (W/m-2) extracted from layer (positive is freezing)
 			
 	! Function Code
 	! --------------------------------------------------------------------
-		if (F0 .ge. 210.0_dbl_kind) then
-			sia2_dhdt_from_flux = 2.e-4_dbl_kind
-		elseif (F0 .le. 57.316_dbl_kind) then
-			sia2_dhdt_from_flux = 1.449e-9_dbl_kind*F0**2 &
-				+ 3.524e-7_dbl_kind*F0 &
-				+ 5.212e-8_dbl_kind
+		if (F0 .ge. 210.0_r4) then
+			sia2_dhdt_from_flux = 2.e-4_r4
+		elseif (F0 .le. 57.316_r4) then
+			sia2_dhdt_from_flux = 1.449e-9_r4*F0**2 &
+				+ 3.524e-7_r4*F0 &
+				+ 5.212e-8_r4
 		else
-			sia2_dhdt_from_flux = 1.942e-13_dbl_kind*F0**4 &
-				- 6.e-11_dbl_kind*F0**3 &
-				+ 7.387e-9_dbl_kind*F0**2 &
-				+ 1.755e-7_dbl_kind*F0	! (cm/s) dhdt vs. F0 regression at T=-1.88 freezing temp, petrich keff
+			sia2_dhdt_from_flux = 1.942e-13_r4*F0**4 &
+				- 6.e-11_r4*F0**3 &
+				+ 7.387e-9_r4*F0**2 &
+				+ 1.755e-7_r4*F0	! (cm/s) dhdt vs. F0 regression at T=-1.88 freezing temp, petrich keff
 		endif
 	  	  
 	end function sia2_dhdt_from_flux
@@ -353,20 +353,20 @@ module sia2_desalination
 ! returns the 'stable salinity' of sea ice at a particular growth rate
 ! according to Petrich et al. 2006.
 ! ----------------------------------------------------------------------	
-	real(kind=dbl_kind) pure function sia2_keff(dhdt_cm_s)
+	real(r4) pure function sia2_keff(dhdt_cm_s)
 	
 		implicit none
 	
 	! Function Arguments
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			dhdt_cm_s            	! rate of vertical sea ice formation (cm/s)
 			
 	! Function Code
 	! --------------------------------------------------------------------
 		sia2_keff = &
-			0.19_dbl_kind*(dhdt_cm_s*7.4074e4_dbl_kind)**(0.46_dbl_kind)
-		sia2_keff = max(sia2_keff,0.12_dbl_kind)
+			0.19_r4*(dhdt_cm_s*7.4074e4_r4)**(0.46_r4)
+		sia2_keff = max(sia2_keff,0.12_r4)
 	 
 		 	  
 	end function sia2_keff

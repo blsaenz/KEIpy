@@ -52,11 +52,10 @@ SIA2_OBJ := sia2_constants.o kei_hacks.o sia2_parameters.o sia2_state.o \
 
 OBJ1D  := sia2_constants.o kei_hacks.o sia2_parameters.o sia2_state.o \
   sia2_types.o sia2_grid.o sia2_flux_heat.o sia2_desalination.o\
-  kei_ocncommon.o \
   kei_ecocommon.o \
   kei_icecommon.o \
   kei_ice.o kei_eco.o kei_init.o kei_fluxes.o \
-  kei_subs1D.o kei_atm.o kei_ocn.o kei_kpp.o \
+  kei_subs1D.o kei_atm.o kei_kpp.o kei_ocn.o \
   kei_sw.o macmods_kinds_mod.o macmods_param_mod.o macmods_util_mod.o \
   macmods_calc.o macmods_mod.o
 
@@ -80,10 +79,10 @@ kei_link_test.o: $(OBJ1D) kei_parameters.o kei_common.o kei_link.o
 	$(FC) -c $(FFLAGS) kei_link_test.f90
 kei_fluxes.o: kei_hacks.o
 	$(FC) -c $(FFLAGS) kei_fluxes.f90
-kei_ocn.o	:
-	$(FC) -c $(FFLAGS) kei_ocn.f90
-kei_kpp.o   :
+kei_kpp.o: kei_subs1D.o kei_common.o kei_parameters.o kei_kinds.o kei_icecommon.o
 	$(FC) -c $(FFLAGS) kei_kpp.f90
+kei_ocn.o: kei_kpp.o kei_common.o kei_parameters.o kei_kinds.o
+	$(FC) -c $(FFLAGS) kei_ocn.f90
 kei_subs1D.o:
 	$(FC) -c $(FFLAGS) kei_subs1D.f90
 kei_atm.o	: kei_atm.f90
@@ -102,8 +101,6 @@ kei_ecocommon.o	:
 	$(FC) -c $(FFLAGS) kei_ecocommon.f90
 kei_icecommon.o	: kei_icecommon.f90 $(SIA2_OBJ)
 	$(FC) -c $(FFLAGS) kei_icecommon.f90
-kei_ocncommon.o	:
-	$(FC) -c $(FFLAGS) kei_ocncommon.f90
 kei_common.o	: kei_icecommon.o
 	$(FC) -c $(FFLAGS) kei_common.f90
 kei_parameters.o	:

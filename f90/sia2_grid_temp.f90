@@ -1,5 +1,5 @@
 module sia2_grid
-
+  use kei_kinds, only: i4, r4, r8, log_kind
 	use sia2_constants
 	use sia2_parameters
 	use sia2_types
@@ -44,9 +44,9 @@ module sia2_grid
 	! --------------------------------------------------------------------
 		type(ice_type), intent(inout) :: &
 			ice 							  !
-		integer(kind=int_kind), intent(in) :: &
+		integer(i4), intent(in) :: &
 			iis 								!
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			hi_new,	 					& !
 			hs_new,	 					& !
 			Tair,	 						& !
@@ -55,20 +55,20 @@ module sia2_grid
 
 	! Internal Variables
 	! --------------------------------------------------------------------
-		integer(kind=int_kind) :: &
+		integer(i4) :: &
 			z_new,							&	!
 			ii,									&	!
 			int_z,							&	!
 			sk_1,								&	!
 			sk_z,								&	!
 			z_new									!
-		real(kind=dbl_kind) :: &
+		real(r4) :: &
 			tmp1,	 							& !
 			t_interface,	 			& !
 			snowfall_d,	 				& !
 			snowfall_melt,	 		& !
 			hs1	 							 !
-		real(kind=dbl_kind), dimension(z_max_ice) :: &
+		real(r4), dimension(z_max_ice) :: &
 			th_new, 						& !
 			id_new								!
 
@@ -211,31 +211,31 @@ module sia2_grid
 
 	! Subroutine Arguments
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind), intent(inout) :: &
+		real(r4), intent(inout) :: &
 			r_depth 							  !
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			h_min,	 							& !
 			h_max										!
-		integer(kind=int_kind), intent(in) :: &
+		integer(i4), intent(in) :: &
 			grid_type, 						& !
 			z_min, 								& !
 			z_max										!
 		logical(kind=log_kind), intent(in) :: &
 			ignore_h_max						!
-		real(kind=dbl_kind), dimension(z_max), intent(out) :: &
+		real(r4), dimension(z_max), intent(out) :: &
 			th_new, 							& !
 			id_new									!
-		integer(kind=int_kind), intent(out) :: &
+		integer(i4), intent(out) :: &
 			z_new								!
 	
 	! Internal Variables
 	! --------------------------------------------------------------------
-		integer(kind=int_kind) :: &
+		integer(i4) :: &
 			ii,										&	!
 			jj											!
 		logical(kind=log_kind) :: &
 			keep_growing						! 
-		integer(kind=dbl_kind) :: &
+		integer(i4) :: &
 			layer_divisor						!
 
 		keep_growing = .true.         
@@ -317,14 +317,14 @@ module sia2_grid
 						jj = z_int_max/2
 						! find divisor by which we will divide depth bins
 						! geometric series sum (minus 2 b/c top and bottom are constant)
-						layer_divisor = c2*(c1 - 1.3_dbl_kind**jj)/(c1 - 1.3_dbl_kind) - c2 
+						layer_divisor = c2*(c1 - 1.3_r4**jj)/(c1 - 1.3_r4) - c2 
 
 						! find new thicknesses
 						th_new(1) = z_th_min
 						th_new(z_new) = z_th_min
 						do ii=2,z_new/2
 								jj = ii-1
-								th_new(ii) = z_th_min + (1.3_dbl_kind**jj)/layer_divisor*r_depth
+								th_new(ii) = z_th_min + (1.3_r4**jj)/layer_divisor*r_depth
 								th_new(z_new-ii+1) = th_new(ii)
 						enddo
 
@@ -399,12 +399,12 @@ module sia2_grid
 			f												!
 		type(meta_type), intent(inout) :: &
 			m												!
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			flooded									!
-		real(kind=dbl_kind), intent(inout) :: &
+		real(r4), intent(inout) :: &
 			c_gl,									& !
 			s_gl										!
-		real(kind=dbl_kind), intent(out) :: &
+		real(r4), intent(out) :: &
 			r_depth,							& !
 			f_depth,							& !
 			t_flood,							& !
@@ -420,12 +420,12 @@ module sia2_grid
 
 	! Internal Variables
 	! --------------------------------------------------------------------
-		integer(kind=int_kind) :: &
+		integer(i4) :: &
 			ii,										& !
 			jj,										& !
 			z_snow,								& !
 			int_z										!
-		real(kind=dbl_kind) :: &
+		real(r4) :: &
 			top_f,								& !
 			bot_f,								& !
 			tmp1,									& !
@@ -503,7 +503,7 @@ module sia2_grid
 
 		 ! snow heat is assumed to be just latent heat of melting + 0.02*t*d
 			heat_mean = cw*f%t*f%d*bot_f - &
-				(ice%snow%t(z_snow)*0.02_dbl_kind + Lf)*IceD*top_f
+				(ice%snow%t(z_snow)*0.02_r4 + Lf)*IceD*top_f
 			!dz_mean = 1.
 			
 			t_flood = sia2_ice_temp(s_flood,d_mean,heat_mean)
@@ -632,12 +632,12 @@ module sia2_grid
 ! INTERNAL VARS REQUIRED:
 ! 
 ! integer :: ii,jj
-! real(kind=dbl_kind) :: interim_top,interim_bot,old_layer_top,new_layer_bot
-! real(kind=dbl_kind) :: old_layer_bot,z1,z2,dz,heat_total,dz_total
-! real(kind=dbl_kind) :: t_mean,s_mean,d_mean,bs_mean,bd_mean,bv_mean,heat_mean
-! real(kind=dbl_kind), dimension(z_max) :: t_new,s_new,d_new,bs_new,bd_new
-! real(kind=dbl_kind), dimension(z_max) :: bv_new,smalg_new
-! real(kind=dbl_kind), dimension(z_max+1) :: NO3_new,NH4_new,PO4_new,SiOH4_new
+! real(r4) :: interim_top,interim_bot,old_layer_top,new_layer_bot
+! real(r4) :: old_layer_bot,z1,z2,dz,heat_total,dz_total
+! real(r4) :: t_mean,s_mean,d_mean,bs_mean,bd_mean,bv_mean,heat_mean
+! real(r4), dimension(z_max) :: t_new,s_new,d_new,bs_new,bd_new
+! real(r4), dimension(z_max) :: bv_new,smalg_new
+! real(r4), dimension(z_max+1) :: NO3_new,NH4_new,PO4_new,SiOH4_new
 !
 ! ----------------------------------------------------------------------
 
@@ -658,18 +658,18 @@ module sia2_grid
 			f												!
 		type(meta_type), intent(inout) :: &
 			m												!
-		integer(kind=int_kind), intent (in) :: &
+		integer(i4), intent (in) :: &
 			int_z_new								!
-		real(kind=dbl_kind), dimension(z_max_ice), intent(in) :: &
+		real(r4), dimension(z_max_ice), intent(in) :: &
 			th_new,								&	!
 			id_new									!
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			t_flood,							&	!
 			s_flood,							&	!
 			flooded,							&	!
 			melt_flood,						&	!
 			dhdt_cm_s								!
-		real(kind=dbl_kind), intent(inout) :: &
+		real(r4), intent(inout) :: &
 			s_gl,									&	!
 			c_gl,									&	!
 			c_gl_sal,							&	!
@@ -680,13 +680,13 @@ module sia2_grid
 		logical(kind=log_kind) :: &
 			remapping,						&	!
 			alg_fixed  							! 
-		integer(kind=int_kind) :: &
+		integer(i4) :: &
 			ii,										&	!
 			jj,										&	!
 			int_z,								&	!
 			sk_1,									&	!
 			sk_z										!		
-		real(kind=dbl_kind) :: &
+		real(r4) :: &
 			mf_depth,  						&	! 
 			tmp1,									&	!
 			tmp2,									&	!
@@ -716,7 +716,7 @@ module sia2_grid
 			heat_mean, 							&	!
 			heat_flood  						!
 		
-		real(kind=dbl_kind), dimension(z_max_ice) :: &
+		real(r4), dimension(z_max_ice) :: &
 			d_new, 							&	!
 			t_new, 							&	!
 			s_new, 							&	!
@@ -889,7 +889,8 @@ module sia2_grid
 					! find 1st old layer that contains part of new layer, going down 
 					jj = 0
 					old_layer_bot = c0
-					do while(new_layer_top .ge. old_layer_bot .and. jj .le. sk_z)
+					! jj .lt. sk_z so jj never exceeds sk_z after jj=jj+1 (same as sia2_grid.f90).
+					do while(new_layer_top .ge. old_layer_bot .and. jj .lt. sk_z)
 						jj=jj+1
 						if (jj .eq. 43) then
 	!											print *,'jj exceeded max layers in ice remapping'
@@ -1115,24 +1116,24 @@ module sia2_grid
 			f												!
 		type(snow_type), intent(in) :: &
 			new_snow								!
-		integer(kind=int_kind), intent (in) :: &
+		integer(i4), intent (in) :: &
 			z_snow_new							!
-		real(kind=dbl_kind), dimension(z_max_snow), intent(in) :: &
+		real(r4), dimension(z_max_snow), intent(in) :: &
 			th_new								 	!
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			flooded 							 	!
-		real(kind=dbl_kind), intent(inout) :: &
+		real(r4), intent(inout) :: &
 			melt_drain							!
 	
 		! Internal Variables
 		! --------------------------------------------------------------------
 		logical(kind=log_kind) :: &
 			keep_growing  					! 
-		integer(kind=int_kind) :: &
+		integer(i4) :: &
 			ii,										&	!
 			jj,										&	!
 			z_last									!		
-		real(kind=dbl_kind) :: &
+		real(r4) :: &
 			tmp1,									&	!
 			dz,										&	!
 			z1,										&	!
@@ -1152,7 +1153,7 @@ module sia2_grid
 			snowfall_melt,  			&	!
 			heat_mean 							!
 		
-		real(kind=dbl_kind), dimension(z_max_snow) :: &
+		real(r4), dimension(z_max_snow) :: &
 			d_new, 							&	!
 			t_new, 							&	!
 			debug_z, 						&	!
@@ -1448,9 +1449,9 @@ module sia2_grid
 	! --------------------------------------------------------------------
 		type (ice_type), intent(inout) :: &
 			ice             ! ice structure
-		real(kind=dbl_kind), intent(inout) :: &
+		real(r4), intent(inout) :: &
 			F_melt          ! heat forcing (W/m^2) > 0
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			h_top,        &	! start of considered ice, in this direction specified by 'basal' (m)
 			h_bot,				&	! end of considered ice, in this direction specified by 'basal' (m) (m)
 			t_ocn						! ocean mixed layer temperature (degC)
@@ -1458,18 +1459,18 @@ module sia2_grid
 			ignore_f,     &	! switch in indicate whether to melt according to a flux (false) or not (true)
 			basal,        &	! switch in indicate sublimation (true) or melt (false)
 			subl            ! switch in indicate sublimation (true) or melt (false)
-		real(kind=dbl_kind), intent(out) :: &
+		real(r4), intent(out) :: &
 			dh_total,			&	! total ice thickness loss (m)
 			s_gl_sal				! total salt from sublimed surface layers (m)
 			
 	! Internal Variables
 	! --------------------------------------------------------------------
-		integer(kind=int_kind) :: &
+		integer(i4) :: &
 			wf,						&	! h2o flux type
 			sf,						&	! salt flux type
 			i,						&	! iterator
 			incr					  ! iteration increment
-		real(kind=dbl_kind) :: &
+		real(r4) :: &
 			dh_melt,			&	! temporary ice thickness (m)
 			h_start,			&	! start thickness of ice eligible to melt (m)
 			h_end,				&	! end thickness of ice eligible to melt (m)
@@ -1602,22 +1603,22 @@ module sia2_grid
 	! --------------------------------------------------------------------
 		type (ice_type), intent(inout) :: &
 			ice             	! ice structure
-		real(kind=dbl_kind), intent(inout) :: &
+		real(r4), intent(inout) :: &
 			F_surf          	! surface heat forcing (W/m^2) > 0
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			already_melted,	&	! ! thickness of ice already melted in this direction by other processes (m)
 			t_ocn							! ocean mixed layer temperature (degC)
 		logical(kind=log_kind), intent(in) :: &
 			ignore_f,     	&	! switch in indicate whether to melt according to a flux (false) or not (true)
 			subl            	! switch in indicate sublimation (true) or melt (false)
-		real(kind=dbl_kind), intent(out) :: &
+		real(r4), intent(out) :: &
 			dh_total					! total surface thickness loss (m)
 			
 	! Internal Variables
 	! --------------------------------------------------------------------
-		integer(kind=int_kind) :: &
+		integer(i4) :: &
 			i
-		real(kind=dbl_kind) :: &
+		real(r4) :: &
 			ya_melt,					&	! running thickness of ice already melted (m)
 			dz,								&	! thickness of layer eligible to melt (m)
 			dh_melt,					&	! temporary ice thickness (m)
@@ -1746,7 +1747,7 @@ module sia2_grid
 			
 	! Internal Variables
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind) :: &
+		real(r4) :: &
 			smalg_lost,			&	! layer mass (kg/m^2)
 			bv_mean,				&	! layer mass (kg/m^2)
 			fh20,						& ! layer mass (kg/m^2)
@@ -1908,8 +1909,8 @@ module sia2_grid
           use sia2_constants
           implicit none
 
-          real(kind=dbl_kind),intent(in) :: h_rel
-          real(kind=dbl_kind), intent(out) :: value
+          real(r4),intent(in) :: h_rel
+          real(r4), intent(out) :: value
           
           !h_rel is the height of the desired measuremnt normalized to 1.
           !i.e., h_rel = interp_height/total_height
@@ -1957,8 +1958,8 @@ module sia2_grid
           use sia2_constants
           implicit none
 
-          real(kind=dbl_kind),intent(in) :: h_rel
-          real(kind=dbl_kind), intent(out) :: value
+          real(r4),intent(in) :: h_rel
+          real(r4), intent(out) :: value
           
           !h_rel is the height of the desired measuremnt normalized to 1.
           !i.e., h_rel = interp_height/total_height

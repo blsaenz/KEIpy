@@ -26,6 +26,11 @@ from numpy import asfortranarray,ascontiguousarray
 import xarray as xr
 import pandas as pd
 
+try:
+    import cftime
+except ImportError:
+    cftime = None  # type: ignore
+
 # import local utils and fortran modules
 file_dir = os.path.dirname(__file__)
 sys.path.append(file_dir)
@@ -35,11 +40,29 @@ from kei_util import ocn_output_meta, ice_output_meta, sw_output_meta, ecosys_ou
 from kei_util import forcing_output_meta_block, sw_output_meta_block, ecosys_output_meta_block
 from kei_util import output_meta,doy_from_datetime64
 
-#try:
-from f90 import kei
-#except:
-#    print('kei not imported/available!')
-#    sys.exit()
+try:
+    from f90 import kei
+except ImportError:
+    kei = None
+
+
+def _require_fortran_kei():
+    if kei is None:
+        raise RuntimeError(
+            'The compiled Fortran extension `f90.kei` is not available. '
+            'Build it with `make -C f90 kei` using this Python environment.'
+        )
+
+
+def _scalar_int32_from_fortran(raw):
+    """Fortran ``integer(i4)`` scalars from f2py can surface as float NaN; avoid ``np.int32(nan)``."""
+    a = np.asarray(raw).reshape(())
+    if np.issubdtype(a.dtype, np.floating):
+        v = float(a)
+        if not math.isfinite(v):
+            return np.int32(-99999)
+        return np.int32(int(v))
+    return np.int32(int(a.item()))
 
 
 nf = len(forcing_idx)
@@ -75,6 +98,62 @@ class kei_parameters(object):
         pass
 
 
+def _matlab_day_hour_from_f_time(f_time_da):
+    """Calendar day + fraction-of-day for each time, without xarray ``.dt`` math.
+
+    ``f_time`` may use ``cftime`` (``xr.date_range(..., use_cftime=True)``); adding multiple
+    ``.dt.*`` expressions can trigger heavy xarray alignment. Reading scalar
+    fields from each instant avoids that.
+    """
+    tvals = np.asarray(f_time_da.values)
+    hour = np.empty(tvals.shape, dtype=np.float64)
+    day = np.empty(tvals.shape, dtype=np.float64)
+    for idx, t in np.ndenumerate(tvals):
+        # Unwrap numpy scalar object (sometimes stores cftime inside np.void)
+        if isinstance(t, np.generic) and hasattr(t, "item"):
+            try:
+                t = t.item()
+            except (ValueError, TypeError):
+                pass
+        if isinstance(t, np.datetime64):
+            ts = pd.Timestamp(t)
+            h = (
+                ts.hour
+                + ts.minute / 60.0
+                + ts.second / 3600.0
+                + ts.microsecond / 3.6e9
+            ) / 24.0
+            dm = float(ts.day)
+        elif cftime is not None and isinstance(t, cftime.datetime):
+            h = (
+                t.hour
+                + t.minute / 60.0
+                + t.second / 3600.0
+                + getattr(t, "microsecond", 0) / 3.6e9
+            ) / 24.0
+            dm = float(t.day)
+        elif hasattr(t, "hour") and hasattr(t, "day"):
+            h = (
+                int(t.hour)
+                + int(t.minute) / 60.0
+                + int(t.second) / 3600.0
+                + int(getattr(t, "microsecond", 0)) / 3.6e9
+            ) / 24.0
+            dm = float(t.day)
+        else:
+            ts = pd.Timestamp(t)
+            h = (
+                ts.hour
+                + ts.minute / 60.0
+                + ts.second / 3600.0
+                + ts.microsecond / 3.6e9
+            ) / 24.0
+            dm = float(ts.day)
+        hour[idx] = h
+        day[idx] = dm
+    return hour, day
+
+
 def kei_forcing(nc_file = None, f_dict = {}, start_date=None, freq=None, legacy_nc=False):
     ''' Reads and updates forcing data into XArray dataset, which can be fed to KEI model simulation for easy
     interpolation or whatever
@@ -94,7 +173,9 @@ def kei_forcing(nc_file = None, f_dict = {}, start_date=None, freq=None, legacy_
                 raise ValueError('f_time is not provided, and start_date and/or time_delta are not provided; need one of them')
             else:
                 f_time_len = len(ds_in['tz'][...])
-                f_time = xr.cftime_range(start=start_date,periods=f_time_len,freq=freq)
+                f_time = xr.date_range(
+                    start=start_date, periods=f_time_len, freq=freq, use_cftime=True
+                )
                 zm = ds_in['zm'][0:-1].data
             ds = util.reindex_forcing(ds_in,f_time,zm)
             ds['msl'][...] = ds['msl'][...] * 0.01  # many old forcing netCDF files are in Pa, need mbar
@@ -251,16 +332,22 @@ class kei_output(object):
 
     def store_step_outvars(self,kei,nt):
         '''Outvars are not stored or extracted in tracers blocks'''
+        # Use ``.values[...] =`` so we do not trigger xarray's alignment / index
+        # machinery on the ``f_time`` coordinate (cftime); integer label index
+        # assignment has crashed some xarray builds during the main simulation loop.
         for v in self.vars_1D:
-            self.out_ds[v][nt] = kei.link.get_data_real(v)
+            val = kei.link.get_data_real(v)
+            self.out_ds[v].values[nt] = np.float32(float(val))
         for v in self.vars_2D:
-            self.out_ds[v][:,nt] = kei.link.get_nz_data(v)
+            self.out_ds[v].values[:, nt] = kei.link.get_nz_data(v)
         for v in self.vars_ice:
-            self.out_ds[v][:,nt] = kei.link.get_ice_data(v)
+            self.out_ds[v].values[:, nt] = kei.link.get_ice_data(v)
         for v in self.vars_snow:
-            self.out_ds[v][:,nt] = kei.link.get_snow_data(v)
+            self.out_ds[v].values[:, nt] = kei.link.get_snow_data(v)
         for v in self.vars_int:
-            self.out_ds[v][nt] = kei.link.get_data_int(v)
+            self.out_ds[v].values[nt] = _scalar_int32_from_fortran(
+                kei.link.get_data_int(v)
+            )
 
     def write(self,out_filepath,Finterp,params):
 
@@ -271,22 +358,27 @@ class kei_output(object):
 
 
         # add compatibility vars for matlab plotting routines
-        self.out_ds['hour'] = self.out_ds['f_time'].dt.hour / 24.0
-        day = self.out_ds['f_time'].dt.day + self.out_ds['hour']
-        #days must be increasing always, above 365
+        hour_f, d_part = _matlab_day_hour_from_f_time(self.out_ds['f_time'])
+        self.out_ds['hour'] = ('f_time',), hour_f
+        day = d_part + hour_f
+        # days must be increasing always, above 365
         day_add = 0
-        nt = len(self.out_ds['hour'])
+        nt = len(hour_f)
         seq_days = np.zeros(nt)
         seq_days[0] = day[0]
-        for i in range(1,nt):
-            if (day[i] - day[i-1]) < 0:
-                day_add = int(seq_days[i-1])
+        for i in range(1, nt):
+            if (day[i] - day[i - 1]) < 0:
+                day_add = int(seq_days[i - 1])
             seq_days[i] = day[i] + day_add
-        self.out_ds['day'] = seq_days
+        self.out_ds['day'] = ('f_time',), seq_days
 
-        # add forcing variables to output dataset
+        # --- ``to_netcdf`` support (block 1/3): eager forcing arrays ---
+        # Goal after upgrading Python/xarray/dask: you may only need plain assignment
+        # here if lazy arrays are no longer an issue; keeping numpy avoids chunked
+        # ``out_ds`` that triggers dask paths inside xarray writers.
         for v in forcing_idx.keys():
-            self.out_ds[v] = Finterp[v]
+            da = Finterp[v]
+            self.out_ds[v] = (da.dims, np.asarray(da.values))
 
         # create encodings
         #compress_vars = list(self.vars_1D.keys()) + list(self.vars_2D.keys()) + list(forcing_idx.keys()) + \
@@ -298,8 +390,76 @@ class kei_output(object):
         for v in compress_vars:
             encoding[v] = {"dtype":np.float32,"zlib": True, "complevel": 4}
 
-        # write
-        self.out_ds.to_netcdf(out_filepath,mode='w',format='netcdf4',encoding=encoding)
+        # --- ``to_netcdf`` support (block 2/3): materialize before writing ---
+        # Delete this block if a future xarray short-circuits writers without
+        # importing ``distributed`` when nothing is chunked.
+        self.out_ds = self.out_ds.compute()
+        if any(getattr(v, "chunks", None) for v in self.out_ds.variables.values()):
+            for name, var in self.out_ds.variables.items():
+                if var.chunks is not None:
+                    self.out_ds[name] = (var.dims, np.asarray(var.values))
+
+        # --- ``to_netcdf`` support (block 3/3): monkeypatch xarray backends ---
+        #
+        # TARGET AFTER UPGRADES (replace blocks 1–3 + this patch with only this):
+        #
+        #     self.out_ds.to_netcdf(
+        #         out_filepath,
+        #         mode="w",
+        #         engine="netcdf4",
+        #         format="netcdf4",
+        #         encoding=encoding,
+        #     )
+        #
+        # WHY THIS EXISTS (circa py311 / xarray netCDF4 writer):
+        # - ``_get_netcdf_autoclose`` can call ``get_dask_scheduler()`` even when
+        #   the dataset is fully numpy.
+        # - ``NetCDF4DataStore.open`` calls ``get_write_lock(path)``, which calls
+        #   ``get_dask_scheduler()`` and may ``import dask.distributed`` (tornado),
+        #   which aborted on some stacks.
+        # The helpers below mirror upstream logic but skip dask imports when there
+        # are no chunks, and force threaded per-file locks (appropriate once data
+        # are materialized). Remove when you confirm ``to_netcdf`` no longer pulls
+        # ``distributed`` or crashes during import.
+        import xarray.backends.locks as _xr_locks
+        import xarray.backends.writers as _xr_writers
+
+        def _autoclose_without_dask_import(dataset, engine):
+            have_chunks = any(
+                v.chunks is not None for v in dataset.variables.values()
+            )
+            if not have_chunks:
+                return False
+            try:
+                from xarray.backends.locks import get_dask_scheduler
+            except Exception:
+                return False
+            scheduler = get_dask_scheduler()
+            autoclose = have_chunks and scheduler in ("distributed", "multiprocessing")
+            if autoclose and engine == "scipy":
+                raise NotImplementedError(
+                    "Writing netCDF with scipy + dask distributed is not supported."
+                )
+            return autoclose
+
+        def _write_lock_threaded(filename: str):
+            return _xr_locks._get_threaded_lock(filename)
+
+        _saved_ac = _xr_writers._get_netcdf_autoclose
+        _saved_gwl = _xr_locks.get_write_lock
+        _xr_writers._get_netcdf_autoclose = _autoclose_without_dask_import
+        _xr_locks.get_write_lock = _write_lock_threaded
+        try:
+            self.out_ds.to_netcdf(
+                out_filepath,
+                mode="w",
+                engine="netcdf4",
+                format="netcdf4",
+                encoding=encoding,
+            )
+        finally:
+            _xr_writers._get_netcdf_autoclose = _saved_ac
+            _xr_locks.get_write_lock = _saved_gwl
 
 
 class kei_simulation(object):
@@ -347,6 +507,7 @@ class kei_simulation(object):
 
         # recompile fortran module if requested, then re-import kei
         # .....  to do
+        _require_fortran_kei()
 
         # get instance of kei, perform parameter init, and query dimensions
         kei.link.kei_param_init()
@@ -364,11 +525,11 @@ class kei_simulation(object):
         n_sw_output = kei.kei_parameters.n_sw_outputs # number of MACMODS outputs
 
         # prepare & interpolate forcing
-        dt_str = '%iS'%params.p['dt']
+        dt_str = '%is' % params.p['dt']
         Finterp = self.F0[list(forcing_idx.keys())+['f_time']]
         Finterp = Finterp.sel(f_time=slice(self.t_start, self.t_end))
         Finterp = Finterp.resample({'f_time':dt_str}).interpolate()
-        nt = Finterp.dims['f_time']
+        nt = Finterp.sizes['f_time']
 
         # copy interpolated forcing into an array for fast import into kei
         Fcomp = np.zeros((nf,nt),order='F',dtype=np.float32)
@@ -465,7 +626,10 @@ class kei_simulation(object):
             #Velocity,Tracers = kei.link.get_tracers()
             Vsave[...,nt],Tsave[...,nt] = kei.link.get_tracers()
             if params.p['lsw']:
-                swSave[...,nt] = kei.link.get_sw_data()
+                # swSave[...,nt] = kei.link.get_sw_data()
+                swSave[:, nt] = np.asarray(
+                    kei.link.get_sw_data(), dtype=np.float64, order="C"
+                ).reshape(n_sw_output)
             output.store_step_outvars(kei,nt) # get individual-request outputs
 
         # write output netCDF file
@@ -487,11 +651,11 @@ if __name__ == '__main__':
     params = kei_parameters()
     params.p['lsw'] = 1
     kf_ds = kei_forcing(r'/Users/blsaenz/KEI_run/DATA1/kf_200_100_2000.nc',start_date='2000-01-01', freq='h',legacy_nc=True)
-    f_time_dim = kf_ds.dims['f_time']
+    f_time_dim = kf_ds.sizes['f_time']
     kf_ds['swh'] = ('f_time'), np.full(f_time_dim,0.5) # add swell height [m]
     kf_ds['mwp'] = ('f_time'), np.full(f_time_dim,30.) # add mean wave period [s]
     kf_ds['cmag'] = ('f_time'), np.full(f_time_dim,0.05) # add current speed  [m/s]
-    k = kei_simulation(kf_ds,t_start='2000-01-15',t_end='2000-08-15',lon=-71.53101,lat=-67.11383)
+    k = kei_simulation(kf_ds,t_start='2000-01-15',t_end='2000-02-15',lon=-71.53101,lat=-67.11383)
     k.compute(params,r'/Users/blsaenz/temp/keipy_output',run_name='keipytest_macmods')
 
 

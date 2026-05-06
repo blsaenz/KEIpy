@@ -1,5 +1,5 @@
 module kei_ice
-
+  use kei_kinds, only: i4, r4, r8, log_kind
     use kei_parameters, only: NZP1,NSCLR
     use kei_icecommon
     use kei_ecocommon, only: ice_to_ocean_eflux,ecosys_tracer_cnt, &
@@ -16,14 +16,14 @@ module kei_ice
     ! COMMON statements from ice.f
     ! ------------------------------------------------------------------
     ! Tarray
-    real, save, private  :: Tair
+    real(r4), save, private  :: Tair
 
     ! Farray
-    real, save, private  :: Flws,Fsws,Flhs,Fml,Fis,Fm,Fshs,Flwo,dhdt
+    real(r4), save, private  :: Flws,Fsws,Flhs,Fml,Fis,Fm,Fshs,Flwo,dhdt
 
     ! harray
-    integer, save, private  :: ni,ns
-    real, save, private  :: hi,hs,hfs,Aic
+    integer(i4), save, private  :: ni,ns
+    real(r4), save, private  :: hi,hs,hfs,Aic
 
     type(ice_pack_type), save :: ice_pack
 
@@ -45,9 +45,9 @@ contains
 
     implicit none
 
-    integer :: i,start_year
-    real :: tmp1,tmp2,tmp3,t_ocn,s_ocn
-    double precision :: hc_ice,fc_ice,sc_ice
+    integer(i4) :: i,start_year
+    real(r4) :: tmp1,tmp2,tmp3,t_ocn,s_ocn
+    REAL(r8) :: hc_ice,fc_ice,sc_ice
 
 
     ! initialize hc_ice (heat content) and sc_ice (salt content)
@@ -158,12 +158,12 @@ contains
 
   ! Function Arguments
   ! --------------------------------------------------------------------
-    integer, intent(in) :: &
+    integer(i4), intent(in) :: &
       nt,             & !
       nisteps
-    double precision, intent (in) :: &
+    REAL(r8), intent (in) :: &
       timed
-    real, intent(in) :: &
+    real(r4), intent(in) :: &
       tmix,           & !
       smix,           & !
       rhosw,          & !
@@ -176,26 +176,26 @@ contains
       ic,             & !
       ain,            & !
       aout
-    real, dimension(NSFLXS_local,5), intent(inout) :: &
+    real(r4), dimension(NSFLXS_local,5), intent(inout) :: &
       sflux
-    integer, intent(in) :: &
+    integer(i4), intent(in) :: &
       NSFLXS_local      !
-    double precision, intent (inout) :: &
+    REAL(r8), intent (inout) :: &
       hc_ice,         & !
       fc_ice,         & !
       sc_ice            !
-    real :: &
+    real(r4) :: &
       flx(11)   ! diagnostic flux data structure
-    real, intent(in) :: &
+    real(r4), intent(in) :: &
       X(NZP1,NSCLR)
 
 
   ! Internal Variables
   ! --------------------------------------------------------------------
-    integer :: &
+    integer(i4) :: &
       n_sia2_steps,   & !
       jjj               !
-    real :: &
+    real(r4) :: &
       s_ocn,          & !
       t_ocn,          & !
       sps,            & !
@@ -217,7 +217,7 @@ contains
       c_gl              !
 
     type(forcing_type) :: ff          ! forcing structure required by sia2 routines
-    real, dimension (n_dh) :: dh  ! array for tracking changes in ice/snow
+    real(r4), dimension (n_dh) :: dh  ! array for tracking changes in ice/snow
     type (heat_pre_calc) :: &
       pc                      ! pre-calculated surface heat flux parameters
 
@@ -457,7 +457,7 @@ contains
       ice
     type(forcing_type), intent(in) :: &
       ff
-    real, intent(in) :: &
+    real(r4), intent(in) :: &
       div,            & ! SSM/I ice divergence (fraction)
       ic,             & ! SSM/I ice fraction (fraction)
       ain,            & ! SSM/I ice advection in (fraction)
@@ -471,21 +471,21 @@ contains
       d_ocn             ! ocean surface mixed layer density (g m-3)
     type (heat_pre_calc), intent(in) :: &
       pc                      ! pre-calculated surface heat flux parameters
-    real, intent(inout) :: &
+    real(r4), intent(inout) :: &
       dh(n_dh)          ! ice thickness changes (m)
-    real :: &
+    real(r4) :: &
       flx(11)   ! diagnostic flux data structure
 
   ! Internal Variables
   ! --------------------------------------------------------------------
-    integer :: &
+    integer(i4) :: &
       i,                  & !
       z_last,             & !
       z_ice,              & !
       sldm(z_max_ice),    & ! if == 1, SLDM desal occurred in layer
       jjj                   !
 
-    real :: &
+    real(r4) :: &
       AicChg,                 & ! change in total ice fraction (fraction)
       Ts_prev,                & ! current surface temperature (degC)
       Ts_next,                & ! current surface temperature (degC)
@@ -664,7 +664,7 @@ contains
       ice
     type(forcing_type), intent(in) :: &
       ff
-    real :: &
+    real(r4) :: &
       div,            & ! SSM/I ice divergence (fraction)
       ic,             & ! SSM/I ice fraction (fraction)
       ain,            & ! SSM/I ice advection in (fraction)
@@ -674,11 +674,11 @@ contains
       Amin,           & !
       t_ocn,          & !
       s_ocn             !
-    real, intent(inout) :: &
+    real(r4), intent(inout) :: &
       Fio               ! ocean heat flux calculated from boundary layer theory
-    real, intent(inout) :: &
+    real(r4), intent(inout) :: &
       dh(n_dh)                  ! ice thickness changes
-    real, intent(out) :: &
+    real(r4), intent(out) :: &
       AicChg,                 & !
       Fm_bot                    ! mixed layer frazil production (allocated to bottom ice)
 
@@ -687,9 +687,9 @@ contains
     type(ice_type)  :: ice_new
     type(meta_type) :: m_dummy
     type(snow_type) :: new_snow_dummy
-    integer :: z_snow,int_z,i,j,sk_1,sk_z,z_new
-    real, dimension(z_max_ice) :: th_new, id_new
-    real :: lamdam,lamdaf,dA,dAn,dAdc,denN,cc1,cc2,hc_i,hc_total,Flat, &
+    integer(i4) :: z_snow,int_z,i,j,sk_1,sk_z,z_new
+    real(r4), dimension(z_max_ice) :: th_new, id_new
+    real(r4) :: lamdam,lamdaf,dA,dAn,dAdc,denN,cc1,cc2,hc_i,hc_total,Flat, &
       Flat_used,dAe,rAAm,tmp1,hi_new,dh20,dsalt,dAlgm,gsize,dA_adv_melt, &
       dmy1,dmy2,dmy3,dmy4,Ta,hs_new,Alm,Alf,dA_melt,ic_diff,daadv,fm_frac, &
       ice_af_old
@@ -1191,18 +1191,18 @@ contains
   ! --------------------------------------------------------------------
     type(ice_type), intent(inout) :: &
       ice
-    real, intent(in) :: &
+    real(r4), intent(in) :: &
       dsdt(z_max_ice),        & !
       t_next(z_max_pack+1),   & !
       ts_next                   !
-    real, intent(inout) :: &
+    real(r4), intent(inout) :: &
       fh2o,                   & !
       fsalt                     !
 
   ! Internal Variables
   ! --------------------------------------------------------------------
-    integer :: i
-    real :: dh2o,dsalt
+    integer(i4) :: i
+    real(r4) :: dh2o,dsalt
 
   ! Function Code
   ! ------------------------ --------------------------------------------
@@ -1262,7 +1262,7 @@ contains
   ! --------------------------------------------------------------------
     type(ice_type), intent(inout) :: &
       ice
-    real, intent(in) :: &
+    real(r4), intent(in) :: &
       Fe,                       & ! latent turbulent heat flux
       dtt_s,                    & ! time step in seconds
       Tair,                     & ! degC
@@ -1274,15 +1274,15 @@ contains
       Fm_bot,                   & ! mixed layer frazil production (allocated to bottom ice)
       t_ocn,                    & ! ocean mixed layer temperature (degC)
       s_ocn                       ! ocean mixed layer salinity (psu)
-    real, intent(inout) :: &
+    real(r4), intent(inout) :: &
       dh(n_dh)                  ! ice thickness changes
 
   ! Internal Variables
   ! --------------------------------------------------------------------
-    integer :: &
+    integer(i4) :: &
       z_snow,                 & !
       int_z                     !
-    real :: &
+    real(r4) :: &
       f_salt,                 & !
       h1,                     & !
       h2,                     & !
@@ -1555,19 +1555,19 @@ contains
   ! --------------------------------------------------------------------
     type(ice_type), intent(inout) :: &
       ice
-    real, intent(in) :: &
+    real(r4), intent(in) :: &
       d_ocn
-    real, intent(out) :: &
+    real(r4), intent(out) :: &
       flooded
 
   ! Internal Variables
   ! --------------------------------------------------------------------
-    logical :: &
+    logical(kind=log_kind) :: &
       porous_ice = .true.   ! are brine channels open? switch
-    integer :: &
+    integer(i4) :: &
       ii,                 & ! iterator
       vb_open               ! highest layer away from ocean where brien channels are open
-    real :: &
+    real(r4) :: &
       snow_mass,          & ! (g)
       ice_mass,           & ! (g)
       fbh_new                ! new freeboard height of ice (m)
@@ -1632,7 +1632,7 @@ contains
       ice
     type(forcing_type), intent(in) :: &
       ff
-    real, intent(inout) :: &
+    real(r4), intent(inout) :: &
       dh(n_dh)          !
 
   ! Internal Variables
@@ -1641,15 +1641,15 @@ contains
       m_dummy           ! dummy meta type for feeding sia2 functions
     type(snow_type) :: &
       new_snow          ! snow type to hold new "snow" created from drained ice
-    logical  :: &
+    logical(kind=log_kind)  :: &
       did_flood,      & !
       flood_1x,       & !
       did_drain         !
-    integer :: &
+    integer(i4) :: &
       i,              & ! iterator
       j,              & ! iterator
       z_new             !
-    real :: &
+    real(r4) :: &
       th_diff,          & ! change in total ice thickness
       th_new(z_max_ice),          & !
       id_new(z_max_ice),          & !
@@ -1840,23 +1840,23 @@ contains
   ! --------------------------------------------------------------------
     type(ice_type), intent(inout) :: &
       ice               ! ice
-    real, dimension (NSFLXS_local,5), intent(inout) :: &
+    real(r4), dimension (NSFLXS_local,5), intent(inout) :: &
       sflux             ! external flux matrix
-    integer, intent(in) :: &
+    integer(i4), intent(in) :: &
       NSFLXS_local      ! sflux parameter
-    real, intent(inout) :: &
+    real(r4), intent(inout) :: &
       hc_old,         & !
       hc_new            !
-    real, intent(in) :: &
+    real(r4), intent(in) :: &
       dti               !
-    real :: &
+    real(r4) :: &
       flx(11)   ! diagnostic flux data structure
-    real, intent(in) :: &
+    real(r4), intent(in) :: &
       X(NZP1,NSCLR)
 
   ! Internal Variables
   ! --------------------------------------------------------------------
-    real :: &
+    real(r4) :: &
       Fin,            & !
       Fbmelt,         & !
       Fbcon,          & !
@@ -1866,7 +1866,7 @@ contains
       dice = -1.8,    & ! solar extinction depth for ice (m-1)
       dsnw = -15.,    & ! solar extinction depth for snow (m-1)
       QSNW              !
-    double precision :: &
+    REAL(r8) :: &
       ratio,            & !
       dHCice            !
 
@@ -2055,14 +2055,14 @@ contains
   ! --------------------------------------------------------------------
     type (ice_type), intent(in) :: &
       ice             ! ice structure
-    real, intent(out) :: &
+    real(r4), intent(out) :: &
       hc_ice,          & ! heat content of ice and snow (J relative to 0 deg C)
       fc_ice,          & ! fresh water content of ice and snow(kg/m^2)
       sc_ice             ! salt content of ice (kg/m^2)
 
   ! Internal Variables
   ! --------------------------------------------------------------------
-    real :: &
+    real(r4) :: &
       temp              ! dunny var for sia2_hc subroutine call
 
     call sia2_hc(ice,temp,hc_ice) ! temp returned is ice hc w/out snow
@@ -2092,7 +2092,7 @@ contains
   ! --------------------------------------------------------------------
     type (ice_pack_type), intent(in) :: &
       ice_pack           ! ice structure
-    real, intent(out) :: &
+    real(r4), intent(out) :: &
       hc_ice,          & ! heat content of ice and snow (J relative to 0 deg C)
       fc_ice,          & ! fresh water content of ice and snow(kg/m^2)
       sc_ice             ! salt content of ice (kg/m^2)
@@ -2124,9 +2124,9 @@ contains
 
   ! Internal Variables
   ! --------------------------------------------------------------------
-     integer :: &
+     integer(i4) :: &
       i,j
-     real :: &
+     real(r4) :: &
       hc_ice, &             ! ice heat
       hc_total, &           ! total snow+ice heat
       fc_ice, &             ! fresh ice mass total
@@ -2152,7 +2152,7 @@ contains
       s_mass_mean, &        ! mean salt (kg m-2)
       ice_mass_mean,  &     ! mean ice mass (J/g)
       snow_mass_mean        ! mean snow mass (J/g)
-    real(kind=dbl_kind), dimension(n_flx) :: &
+    real(r4), dimension(n_flx) :: &
       flux
 
     th_af_sum = c0
@@ -2272,27 +2272,20 @@ contains
     use sia2_parameters, only: &
       z_sk           !
     use sia2_types
-
-    interface
-     real pure function qsat(mode, TK)
-     implicit none
-     integer, intent(in) :: mode
-     real, intent(in) :: TK
-     end function qsat
-    end interface
+    use kei_fluxes, only: qsat
 
   ! Function Arguments
   ! --------------------------------------------------------------------
     type (ice_type), intent(in) :: &
       ice             ! ice structure
-    integer :: &
+    integer(i4) :: &
       nt              ! timestep
   ! Internal Variables
   ! --------------------------------------------------------------------
   ! sw albedos : ice-solid, ice-melt, snow-solid, snow-melt
-    integer :: &
+    integer(i4) :: &
       ialb,i,j
-    real :: &
+    real(r4) :: &
       ! albsw(4) = (/ 0.75     , 0.66    , 0.85      , 0.75     /), & -- old values
       albsw(4) = (/ 0.41     , 0.41    , 0.81      , 0.75     /), &  ! -- this and below from Brant et al. 2005
       albsw_cloudy(4) = (/ 0.45     , 0.45    , 0.87      , 0.82     /), &

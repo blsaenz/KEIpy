@@ -1,3 +1,25 @@
+module kei_ocn
+  use kei_kinds, only: i4, r4, r8, log_kind
+  use kei_parameters
+  use kei_common
+  use kei_kpp, only: vmix, swfrac
+  private
+  public :: ocnstep, init_ocn
+
+  ! Former ``kei_ocncommon`` state (merged into ``kei_ocn``).
+  real(r4), save :: hmixd(0:1)         ! storage arrays for extrapolations
+  real(r4), save :: Us(NZP1,NVEL ,0:1) !  ..      ..     ..  ..
+  real(r4), save :: Xs(NZP1,NSCLR,0:1) ! ..      ..     ..  ..
+  integer(i4), save :: old, new      ! extrapolation index for Us,Xs,hmixd
+
+  real(r4), save :: qsw_absorbed(NZ)
+
+  ! Common tridiagonal matrix factors (set in "init ocn")
+  real(r4), save :: tri(0:NZtmax,0:1,NGRID)    ! dt/dz/dz factors in trid. matrix
+
+
+contains
+
     SUBROUTINE  ocnstep (U,X,kforce,absorp_in)
 !-----------------------------------------------------------------------
 ! Note in this version:
@@ -22,18 +44,15 @@
 !              16 Nov      - jan : latest version
 !              16 Nov 1994 - wgl : new KPP codes no temporary grid
 
-    use kei_parameters
-    use kei_common
-		use kei_ocncommon
 
 		implicit none
 
     !integer, parameter :: imt = NX*NY
 
 ! Input/Output
-    real :: U(NZP1,NVEL), X(NZP1,NSCLR)
-    real :: kforce(forcing_var_cnt)
-    real :: absorp_in(NZ)
+    real(r4) :: U(NZP1,NVEL), X(NZP1,NSCLR)
+    real(r4) :: kforce(forcing_var_cnt)
+    real(r4) :: absorp_in(NZ)
 
 ! Local Common Blocks -- relocated to module
 
@@ -46,16 +65,16 @@
 
 ! Local
 
-    real :: Un(NZP1,NVEL),      & !  new profiles
+    real(r4) :: Un(NZP1,NVEL),      & !  new profiles
     Xn(NZP1,NSCLR),     & !  ..  ..
     hmixe,              & ! estimated hmix (integration input )
     hmixn,              & ! new comp. hmix (    ..      output)
     tol                   ! tolerance in hmix iteration
-    integer :: &
+    integer(i4) :: &
     iter                ! number of iterations
 
-	integer :: k,l,n,kmixn,kmixe,jwtype
-	real :: deltaz,rhonot,sw_frac
+	integer(i4) :: k,l,n,kmixn,kmixe,jwtype
+	real(r4) :: deltaz,rhonot,sw_frac
 
 ! Estimate new profiles by extrapolation
     do 20 k=1,NZP1
@@ -212,35 +231,31 @@
 
 !     Written  19 March 1991 - jan
 
-    use kei_parameters
-    use kei_common
-		use kei_ocncommon
 
 		implicit none
 
 ! Input
-    real ::  Uo(nzi+1,NVEL), Xo(nzi+1,NSCLR), & !  old profiles
+    real(r4) ::  Uo(nzi+1,NVEL), Xo(nzi+1,NSCLR), & !  old profiles
     z(nzi+1),h(nzi+1),d(0:nzi)
-    integer :: intri,                         & !  index for tri.diag. coeff
+    integer(i4) :: intri,                         & !  index for tri.diag. coeff
     nzi, &
     kmixe
 ! Output
-    real ::  Un(nzi+1,NVEL), Xn(nzi+1,NSCLR)  ! new profiles
+    real(r4) ::  Un(nzi+1,NVEL), Xn(nzi+1,NSCLR)  ! new profiles
 
 ! Common tridiagonal matrix factors (set in "init ocn") -- relocated to module
 !    real :: tri(0:NZtmax,0:1,NGRID)    ! dt/dz/dz factors in trid. matrix
 !    common/ trifac / tri
 ! Local
-    real :: cu (NZtmax), & ! upper coeff for (k-1) on k line of trid.matrix
+    real(r4) :: cu (NZtmax), & ! upper coeff for (k-1) on k line of trid.matrix
     cc (NZtmax), & !  central ...     (k  ) ..
     cl (NZtmax), & !  lower .....     (k-1) ..
     rhs(NZtmax)    ! right-hand-side terms
-		integer :: i,n,imode
-		real :: frot,ghatflux
+		integer(i4) :: i,n,imode
+		real(r4) :: frot,ghatflux
 
 
-! Compute biological fluxes: wXNT(0:nzi,3-nsclr)
-    ! if ( LBIO ) call biomain(Xn)
+! Compute biological fluxes: wXNT(0:nzi,3-nsclr) — ecosystem code uses ``kei_eco``, not legacy bio stubs.
 
 ! ********************************************************************
 ! U and V solution of tridiagonal matrix
@@ -311,18 +326,16 @@
 !     Compute coefficients for tridiagonal matrix (dimension=nzi).
 !     Note: cu(1) = 0. and cl(nzi) = 0. are necessary conditions.
 !-----
-    use kei_parameters
-		use kei_ocncommon
 
 		implicit none
 
 ! Input
-    real :: diff(0:nzi)   ! diffusivity profile on interfaces
-    integer :: nzi,     & ! dimension of field
+    real(r4) :: diff(0:nzi)   ! diffusivity profile on interfaces
+    integer(i4) :: nzi,     & ! dimension of field
     ind      ! index for tri-coefficients: = kmixo for t-grid,
 !                                                    =     1 for p-grid.
 ! Output
-    real :: cu(nzi),    & !  upper coeff. for (k-1) on k line of trid.matrix
+    real(r4) :: cu(nzi),    & !  upper coeff. for (k-1) on k line of trid.matrix
     cc(nzi),    & !  central ...      (k  ) ..
     cl(nzi)     ! lower .....      (k-1) ..
 ! Common tridiagonal factors (set in "init ocn<") -- relocated to module
@@ -330,7 +343,7 @@
 !    common/ trifac / tri
 
 ! Local
-		integer :: i
+		integer(i4) :: i
 
 
 ! In the surface layer
@@ -360,32 +373,30 @@
 !     Note: surface layer needs +dto/h(1) * surfaceflux
 !           bottom  ..... ..... +dto/h(nzi)*diff(nzi)/dzb(nzi)*yo(nzi+1)
 
-    use kei_parameters
-		use kei_ocncommon
 
 		implicit none
 
 
 ! Input
-    real :: dto           ! timestep interval (seconds)
-    real :: h(nzi+1),     & !  layer thickness
+    real(r4) :: dto           ! timestep interval (seconds)
+    real(r4) :: h(nzi+1),     & !  layer thickness
     yo(nzi+1),    & !  old profile
     ntflux(0:nzi),& !  non-turbulent flux = wXNT(0:nzi,1:2)
     diff(0:nzi),  & !  diffusivity profile on interfaces
     ghat(nzi),    & !  ghat turbulent flux
     sturflux,     & !  surface turbulent (kinematic) flux = wX(0,n)
     ghatflux      ! surface flux for ghat: includes solar flux
-    integer :: nzi,       & !  dimension of field
+    integer(i4) :: nzi,       & !  dimension of field
     ind        ! index for tri-coefficients:=kmixo for t-grid,
 !                                                     =    1 for p-grid
 ! Output
-    real :: rhs(nzi)      ! right hand side
+    real(r4) :: rhs(nzi)      ! right hand side
 ! Common tridiagonal factors (set in "init ocn") -- relocated to module
 !    real :: tri(0:NZtmax,0:1,NGRID)    ! dt/dz/dz factors in trid. matrix
 !    common/ trifac / tri
 
 ! Local
-		integer :: i
+		integer(i4) :: i
 
 ! In the surface layer (dto/h(1)=tri(0,1,ind)
     rhs(1)= yo(1) + dto/h(1) * &
@@ -412,6 +423,7 @@
     subroutine rhsmod(jsclr,mode,A,time, &
     dto,dpy,km,dm,nzi,rho,cp,h,z,rhs)
 
+
 !     Modify rhs to correct scalar, jsclr,
 !     for advection according to mode
 ! mode = 1 : Steady upper layer horizontal advection
@@ -426,17 +438,17 @@
 !        7 : Seasonal thermocline horizontal advection to 1.5 dm
 
 ! Input
-    real :: h(nzi+1),     & !  layer thickness
+    real(r4) :: h(nzi+1),     & !  layer thickness
     z(nzi+1),     & !  z grid levels (added as input on 7-1-93)
     rhs(nzi),     & !  right hand side from tridrhs
     rho(nzi),     & !  density
     cp (nzi)      ! specific heat
-    DOUBLE PRECISION :: time        ! time in days from jan 1 of any year.
-    real :: dto,          & !  ocean time step
+    REAL(r8) :: time        ! time in days from jan 1 of any year.
+    real(r4) :: dto,          & !  ocean time step
     dpy,          & !  days per year (added as input on 7-1-93)
     dm,           & !  depth d(km+.5)
     A             ! advection of heat(W/m2) or Salt(PSU m/s)
-    integer :: nzi,       & !  vertical dimension of field
+    integer(i4) :: nzi,       & !  vertical dimension of field
     km,       & !  index of gridpoint just below h
     mode,       & !  type of advection
     jsclr        ! scalar
@@ -445,9 +457,9 @@
 !     real rhs(nzi)      ! modified right hand side
 
 ! Internal
-    real :: f(12) = &     ! monthly partion of annual advection
+    real(r4) :: f(12) = &     ! monthly partion of annual advection
     	(/.05,.05,0.0,0.0,0.0,0.0,0.0,.05,.15,.20,.30,.20/)
-    real :: xsA(21) =  &  ! yearly excess of heat
+    real(r4) :: xsA(21) =  &  ! yearly excess of heat
 			(/48.26,21.73,29.02,56.59,19.94,15.96,18.28, &
     	40.52,37.06,29.83,29.47,15.77, 1.47,14.55, &
     	4.22,28.19,39.54,19.58,20.27,11.19,21.72/)
@@ -600,26 +612,22 @@
 
 !     Solve tridiagonal matrix for new vector yn, given right hand side
 !     vector rhs. Note: yn(nzi+1) = yo(nzi+1).
-!-----
-    use kei_parameters
-		!use kei_ocncommon
-
-		implicit none
+!-----		implicit none
 
 ! Input
-    real :: cu (nzi),    & !  upper coeff. for (k-1) on k line of tridmatrix
+    real(r4) :: cu (nzi),    & !  upper coeff. for (k-1) on k line of tridmatrix
     cc (nzi),    & !  central ...      (k  ) ..
     cl (nzi),    & !  lower .....      (k-1) ..
     rhs(nzi),    & !  right hand side
     yo(nzi+1),   & !  old field
     diff(0:nzi)
-    integer :: nzi       ! dimension of matrix
+    integer(i4) :: nzi       ! dimension of matrix
 ! Output
-    real :: yn(nzi+1)    ! new field
+    real(r4) :: yn(nzi+1)    ! new field
 ! Local
-    real :: gam(NZtmax), & !  temporary array for tridiagonal solver
+    real(r4) :: gam(NZtmax), & !  temporary array for tridiagonal solver
     bet          ! ...
-    integer :: i
+    integer(i4) :: i
 
 ! Solve tridiagonal matrix.
     bet   = cc(1)
@@ -663,14 +671,11 @@
 !     Compute hmix and diffusivity profiles for initial profile.
 !     Prepare for first time step.
 
-    use kei_parameters
-		use kei_common
-		use kei_ocncommon
 
 		implicit none
 
 ! Input
-    real ::  U(NZP1,NVEL),X(NZP1,NSCLR)
+    real(r4) ::  U(NZP1,NVEL),X(NZP1,NSCLR)
 
 ! Common Blocks -- relocated to module
 !    real :: tri(0:NZtmax,0:1,NGRID)! dt/dz/dz factors in trid. matrix
@@ -684,9 +689,9 @@
 !    old,new,Us,Xs,hmixd
 
 ! Local variables
-    real :: dzb(NZ)                ! diff. between grid-levels below z(j)
-    integer :: k,n,l,kmix0
-    real :: hmix0,deltaz
+    real(r4) :: dzb(NZ)                ! diff. between grid-levels below z(j)
+    integer(i4) :: k,n,l,kmix0
+    real(r4) :: hmix0,deltaz
 
 
 ! Compute factors for coefficients of tridiagonal matrix elements.
@@ -750,85 +755,6 @@
     end SUBROUTINE init_ocn
 
 !********************************************************************
-    subroutine swfrac( imt, fact, z, jwtype, swdk )
-!     compute fraction of solar short-wave flux penetrating to specified
-!     depth (times fact) due to exponential decay in  Jerlov water type
-!     reference : two band solar absorption model of simpson and
-!     paulson (1977)
-
-    parameter(nwtype=5) ! max number of different water types
-
-!  model
-    integer :: imt         ! number of horizontal grid points
-
-!  input
-    real :: fact           ! scale  factor to apply to depth array
-    real :: z         ! vertical height ( <0.) for desired sw
-!                           fraction                                 (m)
-    integer :: jwtype ! index for jerlov water type
-
-!  output
-    real :: swdk      !  short wave (radiation) fractional decay
-
-!  local
-!     jerlov water type :  I       IA      IB      II      III
-!                jwtype    1       2       3       4       5
-
-    real, save :: rfac(nwtype) = (/  0.58 ,  0.62 ,  0.67 ,  0.77 ,  0.78 /)
-    real, save :: a1(nwtype) = (/  0.35 ,  0.6  ,  1.0  ,  1.5  ,  1.4  /)
-    real, save :: a2(nwtype) = (/ 23.0  , 20.0  , 17.0  , 14.0  ,  7.9  /)
-
-    do 100 i = 1,imt
-
-        swdk =      rfac(jwtype)  * exp(z*fact/a1(jwtype)) &
-        + (1.-rfac(jwtype)) * exp(z*fact/a2(jwtype))
-
-    100 END DO
-
-    return
-    end subroutine swfrac
-
-
-!********************************************************************
-
-!********************************************************************
-    subroutine swfrac_imt( imt, fact, z, jwtype, swdk )
-!     compute fraction of solar short-wave flux penetrating to specified
-!     depth (times fact) due to exponential decay in  Jerlov water type
-!     reference : two band solar absorption model of simpson and
-!     paulson (1977)
-
-    parameter(nwtype=5) ! max number of different water types
-
-!  model
-    integer :: imt         ! number of horizontal grid points
-
-!  input
-    real :: fact           ! scale  factor to apply to depth array
-    real :: z(imt)         ! vertical height ( <0.) for desired sw
-!                           fraction                                 (m)
-    integer :: jwtype(imt) ! index for jerlov water type
-
-!  output
-    real :: swdk(imt)      !  short wave (radiation) fractional decay
-
-!  local
-!     jerlov water type :  I       IA      IB      II      III
-!                jwtype    1       2       3       4       5
-
-    real, save :: rfac(nwtype) = (/  0.58 ,  0.62 ,  0.67 ,  0.77 ,  0.78 /)
-    real, save :: a1(nwtype) = (/  0.35 ,  0.6  ,  1.0  ,  1.5  ,  1.4  /)
-    real, save :: a2(nwtype) = (/ 23.0  , 20.0  , 17.0  , 14.0  ,  7.9  /)
-
-    do 100 i = 1,imt
-
-        swdk(i) =      rfac(jwtype(i))  * exp(z(i)*fact/a1(jwtype(i))) &
-        + (1.-rfac(jwtype(i))) * exp(z(i)*fact/a2(jwtype(i)))
-
-    100 END DO
-
-    return
-    end subroutine swfrac_imt
 
 
 !********************************************************************
@@ -836,17 +762,15 @@
 
     subroutine budget (X1,X2)
 
-    use kei_parameters
-		use kei_common
 
 		implicit none
 
 		! Inputs
-		real :: X1(nzp1,nsclr), X2(nzp1,nsclr)
+		real(r4) :: X1(nzp1,nsclr), X2(nzp1,nsclr)
 
 		! Local
-		integer :: k
-		real :: T1,T2,S1,S2,fltn,dhdt,dfdt,Qtop,Ftop,Qbot,Fbot,delt,fact, &
+		integer(i4) :: k
+		real(r4) :: T1,T2,S1,S2,fltn,dhdt,dfdt,Qtop,Ftop,Qbot,Fbot,delt,fact, &
 			rhs,diff
 
     T1 = 0.0
@@ -885,3 +809,4 @@
     return
     end subroutine budget
 
+end module kei_ocn

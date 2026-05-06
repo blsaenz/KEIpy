@@ -1,28 +1,28 @@
 MODULE kei_hacks
-
-  USE kei_ecocommon, ONLY: log_kind,int_kind,real_kind,dbl_kind
+  use kei_kinds, only: i4, r4, r8, log_kind
+  USE kei_kinds, only: i4, r4, r8, log_kind
 
   IMPLICIT NONE
   
   ! overwrite in some eddy heat at depth during certain periods
-  LOGICAL, PARAMETER :: eddy_hack = .false.
-  LOGICAL, PARAMETER :: assimilate_ts_hack = .true.
+  logical(kind=log_kind), PARAMETER :: eddy_hack = .false.
+  logical(kind=log_kind), PARAMETER :: assimilate_ts_hack = .true.
   
   ! fraction precipitation adjustment OVER ICE ONLY
-  REAL, PARAMETER :: snow_fraction = 0.70    
-  REAL, PARAMETER :: rain_fraction = 0.0
+  real(r4), PARAMETER :: snow_fraction = 0.70    
+  real(r4), PARAMETER :: rain_fraction = 0.0
   
   ! fraction shortwave irradiance
-  REAL, PARAMETER :: shortwave_multiplier = 0.80
+  real(r4), PARAMETER :: shortwave_multiplier = 0.80
 
   ! conform to ice concentration found in forcing (0=no, 1=yes)
-  INTEGER, PARAMETER :: ic_conform = 0
+  integer(i4), PARAMETER :: ic_conform = 0
 
 !-----------------------------------------------------------------------
 !     initial fe/bio profile adjustments
 !-----------------------------------------------------------------------
   
-  real (kind=dbl_kind), parameter :: &
+  real(r8), parameter :: &
     fe_multiplier = 1.0, &
     fe_offset = -100., &
     bio_offset = 100., &
@@ -33,10 +33,10 @@ MODULE kei_hacks
 !     variables used in adding a static krill grazer (not yet implemented)
 !-----------------------------------------------------------------------
 
-    logical, parameter :: &
+    logical(kind=log_kind), parameter :: &
       use_krill_hack = .false. 
     
-    real (kind=dbl_kind), parameter :: &
+    real(r8), parameter :: &
       krillC = 2000.          , &! krill concentration in carbon (mg C m-3)
       krill_sp_umax = 1.0     , &
       krill_diat_umax = 4.0  , &
@@ -53,8 +53,8 @@ MODULE kei_hacks
       IMPLICIT NONE
       
        ! Input/Output
-      REAL, INTENT (INOUT) :: X(NZP1,NSCLR)
-      INTEGER, INTENT(IN) :: nt
+      real(r4), INTENT (INOUT) :: X(NZP1,NSCLR)
+      integer(i4), INTENT(IN) :: nt
      
       !IF(nt .eq. 3600 ) then !.or. nt .eq. 4200 .or. nt .eq. 5160) then
       ! write(6,*) 'Hacking in eddy heat'
@@ -80,12 +80,12 @@ MODULE kei_hacks
       IMPLICIT NONE
      
       ! Input/Output
-      real, intent (INOUT) :: X(NZP1,NSCLR)
+      real(r4), intent (INOUT) :: X(NZP1,NSCLR)
       type(kei_forcing_type), intent(IN) :: kforce   ! forcing data structure (from kei_common)
       
       ! Local Variables
-      integer :: ii,ii_ft,ii_ud, ii_interp
-      real :: deltat,sigma_ft,sigma,sigma0,s_slope,intercept,alpha,beta,exppr
+      integer(i4) :: ii,ii_ft,ii_ud, ii_interp
+      real(r4) :: deltat,sigma_ft,sigma,sigma0,s_slope,intercept,alpha,beta,exppr
 
       ! rectify lower ocean, if enabled
       if (assimilate_ts_hack) THEN
@@ -198,10 +198,10 @@ MODULE kei_hacks
     
       IMPLICIT NONE
     
-      real, intent (INOUT) :: X(NZP1,NSCLR)
-      integer(KIND=int_kind), INTENT(IN) :: nt, start_year
+      real(r4), intent (INOUT) :: X(NZP1,NSCLR)
+      integer(i4), INTENT(IN) :: nt, start_year
       
-      integer(KIND=int_kind) :: fe_offset_local, bio_offset_i
+      integer(i4) :: fe_offset_local, bio_offset_i
         
       if (fe_offset < 0) then
         select case (start_year)

@@ -1,5 +1,5 @@
 module macmods_mod
-
+  use kei_kinds, only: i4, r4, r8, log_kind
     !use marbl_kinds_mod, only : int_kind
     !use marbl_kinds_mod, only : r8
     use macmods_kinds_mod, only : r8,i4,log_kind

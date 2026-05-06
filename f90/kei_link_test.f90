@@ -1,20 +1,19 @@
 PROGRAM KEI_link_test
-
-
+  use kei_kinds, only: i4, r4, r8, log_kind
   USE kei_parameters
   USE kei_common
   USE kei_icecommon
   USE kei_ice
   USE kei_ecocommon
-  USE kei_ocncommon
+  USE kei_ocn, ONLY: init_ocn, ocnstep
   USE kei_eco
   USE kei_hacks
   USE kei_sw
   USE link
 
-  INTEGER :: iii
+  integer(i4) :: iii
 
-  REAL :: &
+  real(r4) :: &
     U_local(NZ,NVEL),  &    ! momentum
     X_local(NZ,NSCLR),  &   ! tracers
     Fcomp(1000,19), &   ! forcing
@@ -22,7 +21,7 @@ PROGRAM KEI_link_test
     hm_local(NZP1), &
     zm_local(NZP1)
 
-  DOUBLE PRECISION :: doy, sw_out(n_outputs)
+  REAL(r8) :: doy, sw_out(n_outputs)
 
 
   open(12, file="../test_data/kf_200_100_2000_savetxt.txt")

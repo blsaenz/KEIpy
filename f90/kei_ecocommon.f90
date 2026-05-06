@@ -1,33 +1,21 @@
 module kei_ecocommon
 
   use kei_parameters
+	use kei_kinds, only: i4, r4, r8, log_kind
 	implicit none
 
 	Public
 	Save
-
-	  integer, parameter :: &
-          log_kind = kind(.true.);
-
-	  integer, parameter :: &
-          int_kind = 4;
-
-	  integer, parameter :: &
-          real_kind = 4;
-
-	  integer, parameter :: &
-          dbl_kind = 8;
-
-     integer (kind=int_kind), parameter :: &
+     integer(i4), parameter :: &
           ecosys_tracer_cnt = 24
 
      ! number of vertical layers
      ! sourced using equivalence to kei_parameters, for code compatibility
-     integer (kind=int_kind), parameter :: &
+     integer(i4), parameter :: &
           km = NZ
      !equivalence (nz,km)
 
-      integer (kind=int_kind), parameter :: &
+      integer(i4), parameter :: &
         imt = 1,  &   ! x (longitudinal) dimension of ecosys variables
         jmt = 1       ! y (latitudinal) dimension of ecosys variables
 
@@ -35,7 +23,7 @@ module kei_ecocommon
 !     tracer indices
 !-----------------------------------------------------------------------
 
-    integer(kind=int_kind), parameter :: &
+    integer(i4), parameter :: &
       po4_ind     =  1,  & ! dissolved inorganic phosphate
       no3_ind     =  2,  & ! dissolved inorganic nitrate
       sio3_ind    =  3,  & ! dissolved inorganic silicate
@@ -92,7 +80,7 @@ module kei_ecocommon
 !     terms that may be of interest to output
 !-----------------------------------------------------------------------
 
-       real (kind=dbl_kind), dimension(:,:), allocatable, target :: &
+       real(r8), dimension(:,:), allocatable, target :: &
         XKW_tavg, AP_tavg, PV_CO2_tavg, PV_O2_tavg, &
         SCHMIDT_O2_tavg, O2SAT_tavg, &
         FG_O2_tavg, SCHMIDT_CO2_tavg, PH_tavg, CO2STAR_tavg, &
@@ -119,7 +107,7 @@ module kei_ecocommon
         FvPE_ALK_tavg, NITRIF_tavg, DENITRIF_tavg
 
        ! output parameters
-       real (kind=real_kind), dimension(km) :: &
+       real(r4), dimension(km) :: &
           tot_prod, diat_Fe_lim, diat_light_lim, graze_diat, graze_tot, &
           diat_N_lim, diat_P_lim, diat_Si_lim, sp_N_lim, sp_P_lim, sp_Fe_lim, &
           graze_sp, sp_light_lim
@@ -128,11 +116,11 @@ module kei_ecocommon
 !     forcing variables required for ecosys module
 !-----------------------------------------------------------------------
 
-		real (kind=dbl_kind), parameter :: &
-		 atm_co2_const = 400.0_dbl_kind, &  ! default constant CO2
-		 ap_const = 1.0_dbl_kind             ! default constant air pressure (atm)
+		real(r8), parameter :: &
+		 atm_co2_const = 400.0_r8, &  ! default constant CO2
+		 ap_const = 1.0_r8             ! default constant air pressure (atm)
 
-		real(kind=dbl_kind) :: &
+		real(r8) :: &
 		 dust_flux,          & ! surface dust flux
 !       iron_flux,         & ! iron component of surface dust flux
 		 winds_SQR,          & ! wind-speed ** 2
@@ -140,11 +128,11 @@ module kei_ecocommon
 		 atm_co2,            & ! atmospheric CO2 concentration
 		 ap                    ! atmospheric pressure
 
-		real(kind=dbl_kind), dimension (ecosys_tracer_cnt) :: &
+		real(r8), dimension (ecosys_tracer_cnt) :: &
       ice_to_ocean_eflux
 
 		! restoring nutrient climatology switches
-		logical, parameter :: &
+		logical(kind=log_kind), parameter :: &
 			lrest_po4 = .false. , &        ! po4 climatological restoring switch
 			lrest_no3 = .false. , &        ! no3 climatological restoring switch
 			lrest_sio3 = .false. , &       ! sio3 climatological restoring switch
@@ -153,15 +141,15 @@ module kei_ecocommon
 		  lsource_sink = .true.          ! T = compute ecosys, F = inorganic only
 
 		! restoring nutrient climatology profiles
-		real(kind=dbl_kind), dimension(imt,jmt,km) :: &
+		real(r8), dimension(imt,jmt,km) :: &
 			PO4_CLIM, NO3_CLIM, SiO3_CLIM
 
 		! timescales and depths for nutrient restoring
-		real (kind=dbl_kind), parameter :: &
-			rest_time_inv_surf = 0.0_dbl_kind, &  ! 0 = instant, inverse ?
-			rest_time_inv_deep = 0.0_dbl_kind, &  ! 0 = instant, inverse ?
-			rest_z0            = 1000.0_dbl_kind, &  ! m
-			rest_z1            = 2000.0_dbl_kind     ! m
+		real(r8), parameter :: &
+			rest_time_inv_surf = 0.0_r8, &  ! 0 = instant, inverse ?
+			rest_time_inv_deep = 0.0_r8, &  ! 0 = instant, inverse ?
+			rest_z0            = 1000.0_r8, &  ! m
+			rest_z1            = 2000.0_r8     ! m
 
 
 end module kei_ecocommon

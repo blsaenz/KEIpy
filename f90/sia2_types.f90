@@ -1,5 +1,5 @@
 module sia2_types
-
+  use kei_kinds, only: i4, r4, r8, log_kind
   use sia2_constants
   use sia2_parameters
   
@@ -13,7 +13,7 @@ module sia2_types
 
   ! Projection type - holds projection conversion information for various projections
   type, public :: proj_type
-      integer(kind=int_kind), dimension(grid_h,grid_v) :: &
+      integer(i4), dimension(grid_h,grid_v) :: &
           mdh, &          ! model domain horizontal grid index
           mdv, &          ! model domain vertical grid index
           x_mp, &         ! NCEP/mercator grid horizontal(longitude) index
@@ -26,7 +26,7 @@ module sia2_types
           y_dg, &         ! 1 degree grid vertical(latitude) index
           mi, &           ! grid index to modeled variables
           mask            ! ocean mask - 1 = ocean, 0 = excluded from analysis (land or coastline)
-      real(kind=dbl_kind), dimension(grid_h,grid_v) :: &
+      real(r4), dimension(grid_h,grid_v) :: &
           lat, &          ! central latitude of model grid cell
           lon             ! central longitude of model grid cell
   end type proj_type
@@ -35,7 +35,7 @@ module sia2_types
   type, public :: ncep_type
       ! air temp, 2m air pressure, specific humidity, cloud fraction, 
       ! u direction wind speed, v direciton wind speed, precipitation rate
-      real(kind=dbl_kind), dimension(mp_x,mp_y) :: &
+      real(r4), dimension(mp_x,mp_y) :: &
           at, &           ! 2m air temperature (kelvin)
           p, &            ! surface air pressure (mb)
           h, &            ! specific humidity ()
@@ -48,7 +48,7 @@ module sia2_types
   ! ed_type - holds a set of global spectral radiation based on the
   ! NCEP/DOE grid
   type, public :: ed_type
-      real(kind=dbl_kind), dimension(mp_x,mp_y,wavl) :: &
+      real(r4), dimension(mp_x,mp_y,wavl) :: &
           Ed              ! µEin/m^2/s
   end type ed_type
 
@@ -70,7 +70,7 @@ module sia2_types
   type, public :: ecmwf_type
       ! air temp, 2m air pressure, specific humidity, cloud fraction, 
       ! u direction wind speed, v direciton wind speed, precipitation rate
-      real(kind=dbl_kind), dimension(ec_x,ec_y) :: &
+      real(r4), dimension(ec_x,ec_y) :: &
           at, &           ! 2m air temperature (kelvin)
           p, &            ! surface air pressure (Pa)
           dpt, &          ! dew point temperature (kelvin)
@@ -85,7 +85,7 @@ module sia2_types
   type, public :: ecmwf_int_type
       ! air temp, 2m air pressure, specific humidity, cloud fraction, 
       ! u direction wind speed, v direciton wind speed, precipitation rate
-      real(kind=dbl_kind), dimension(eci_x,eci_y) :: &
+      real(r4), dimension(eci_x,eci_y) :: &
           at, &           ! 2m air temperature (kelvin)
           p, &            ! surface air pressure (Pa)
           dpt, &          ! dew point temperature (kelvin)
@@ -121,7 +121,7 @@ module sia2_types
   ! woa_type - holds 1 degrees World Ocean Atlas data for a specific depth,
   ! which is determined by setting the woa_depth constant
   type, public :: woa_type
-      real, dimension(dg_x,dg_y) :: &
+      real(r4), dimension(dg_x,dg_y) :: &
           t, &            ! World Ocean Atlas water temp (dec C)
           s, &            ! World Ocean Atlas salinity (psu)
           n, &            ! World Ocean Atlas nitrate concentration (µMol)
@@ -143,25 +143,25 @@ module sia2_types
   ! EASE projection forcing type - holds forcing variables that are
   ! projected using ease grid
   type, public :: ease_f_type 
-      real(kind=dbl_kind), dimension(grid_h,grid_v) :: &
+      real(r4), dimension(grid_h,grid_v) :: &
           icecon, &       ! ssm/i ice concentration for current timestep (fraction)
           icecon_next     ! pre-loaded ssm/i ice concentration for next step (fraction)
-      real(kind=dbl_kind), dimension(grid_h,grid_v) :: &
+      real(r4), dimension(grid_h,grid_v) :: &
           sh, &           ! ssm/i snow depth for current timestep (cm)
           sh_next         ! pre-loaded ssm/i snow depth for next step (cm)
-      real(kind=dbl_kind), dimension(grid_h,grid_v,7) :: &
+      real(r4), dimension(grid_h,grid_v,7) :: &
           sh_past         ! array of past snow depths for validaiton of snow depth algorithm
-      real(kind=dbl_kind), dimension(grid_h,grid_v,5) :: &
+      real(r4), dimension(grid_h,grid_v,5) :: &
           icecon_past         ! array of past snow depths for validaiton of snow depth algorithm
-      real(kind=dbl_kind), dimension(grid_h,grid_v,3) :: &
+      real(r4), dimension(grid_h,grid_v,3) :: &
           ice_vec, &       ! ease grid ice vectors (u,v,flag)
           ice_vec_next     ! pre-loaded ease grid ice vectors for next step(u,v,flag)
-      real(kind=dbl_kind), dimension(grid_h,grid_v,3,5) :: &
+      real(r4), dimension(grid_h,grid_v,3,5) :: &
           icevec_past
   end type ease_f_type
 
   type, public :: validation_f_type ! validation station forcing type
-      real(kind=dbl_kind) :: &
+      real(r4) :: &
           at, &
           sh, &
           ih, &
@@ -173,7 +173,7 @@ module sia2_types
           rhum, &
           fc, &
           pr
-      real(kind=dbl_kind) :: &
+      real(r4) :: &
           fw, &
           t, &
           s, &
@@ -183,7 +183,7 @@ module sia2_types
           sioh4, &
           swd, &
           lwd
-      integer(kind=int_kind) :: &
+      integer(i4) :: &
           time, &
           time_offset, &
           x_mp, &
@@ -207,7 +207,7 @@ module sia2_types
   ! Interpolated/corrected forcing data is stored for one modeled grid point
   ! is stored in this type
   type, public :: forcing_type 
-      real(kind=dbl_kind) :: &
+      real(r4) :: &
           at, &
           p, &
           h, &
@@ -241,12 +241,12 @@ module sia2_types
           ivv_interp, &
           ivu_interp_next, &
           ivv_interp_next
-      real(kind=dbl_kind), dimension(n_3t) :: &
+      real(r4), dimension(n_3t) :: &
           tr3
   end type forcing_type
 
   type, public :: meta_type
-      integer(kind=int_kind) :: &
+      integer(i4) :: &
           status, &
           grid_h, &
           grid_v, &
@@ -258,7 +258,7 @@ module sia2_types
           y_eci, &
           x_dg, &
           y_dg
-      real(kind=dbl_kind) :: &
+      real(r4) :: &
           melt_loss, &
           adv_loss, &
           md_loss, &
@@ -303,20 +303,20 @@ module sia2_types
           pwt_sum_bot, &
           pwt_sum_af_bot
           
-      integer(kind=int_kind), dimension(8) :: &
+      integer(i4), dimension(8) :: &
           ia, &           ! i_ease index of 8 surround cells
           ja, &           ! j_ease index of 8 surrounding cells
           mia             ! mi index of 8 surroundind cells
   end type meta_type
 
   type, public :: snow_type
-      integer(kind=int_kind) :: &
+      integer(i4) :: &
           z
-      real(kind=dbl_kind) :: &
+      real(r4) :: &
           depth, &
           d_small, &
           ts
-      real(kind=dbl_kind), dimension(z_max_snow) :: &
+      real(r4), dimension(z_max_snow) :: &
           t, &
           d, &
           heat, &
@@ -326,7 +326,7 @@ module sia2_types
   end type snow_type
 
   type, public :: pond_type
-      real(kind=dbl_kind) :: &
+      real(r4) :: &
           t, &
           s, &
           d, &
@@ -339,18 +339,18 @@ module sia2_types
           nh4, &          ! ice layer brine NH4 concentration (µMol)
           po4, &          ! ice layer brine PO4 concentration (µMol)
           sioh4           ! ice layer brine SiOH4 concentration (µMol)                  
-      real(kind=dbl_kind), dimension(n_3t) :: &
+      real(r4), dimension(n_3t) :: &
           tr3
   end type pond_type
 
 
   type, public :: ice_type
-  integer(kind=int_kind) :: &
+  integer(i4) :: &
       z               ! number of active layers
-  integer(kind=int_kind), dimension(z_max_ice) :: &
+  integer(i4), dimension(z_max_ice) :: &
           bced, &         ! brine channeled - indicated whether layer has good connection with underlying seawater
           drained         ! layer is drained of brine, affecting optical properties and thermal conductivity and capactitance
-      real(kind=dbl_kind) :: &
+      real(r4) :: &
           ts, &           ! surface temperature of top layer (ice OR snow) (degC)
           fbh, &          ! freeboard height of ice pack (m)
           pr_sum, &       ! precipitation sum - record total precipitation in cell (kg/m^2)
@@ -369,7 +369,7 @@ module sia2_types
           snow_dist, &
           snow_rd
           
-      real(kind=dbl_kind), dimension(z_max_ice) :: &
+      real(r4), dimension(z_max_ice) :: &
           t, &            ! ice layer temperature (degC)
           s, &            ! ice layer bulk salinity (psu)
           d, &            ! ice layer density (g/m^2)
@@ -394,7 +394,7 @@ module sia2_types
           dsdt3, &
           tgrad, &
           ed_w
-      real(kind=dbl_kind), dimension(z_max_ice+1) :: &
+      real(r4), dimension(z_max_ice+1) :: &
           poc, &          ! particulate organic carbon (detritus) (mgC/m^3)
           no3, &          ! ice layer brine NO3 concentration (µMol) - instantaneous concentration
           nh4, &          ! ice layer brine NH4 concentration (µMol) - instantaneous concentration
@@ -404,24 +404,24 @@ module sia2_types
           nh4_mean, &          ! ice layer brine NH4 concentration (µMol) - conc. available to algae, over time
           po4_mean, &          ! ice layer brine PO4 concentration (µMol) - conc. available to algae, over time
           sioh4_mean           ! ice layer brine SiOH4 concentration (µMol) - conc. available to algae, over time
-      real(kind=dbl_kind), dimension(n_2t) :: &
+      real(r4), dimension(n_2t) :: &
           tr2
-      real(kind=dbl_kind), dimension(n_3t,z_max_ice) :: &
+      real(r4), dimension(n_3t,z_max_ice) :: &
           tr3
-      real(kind=dbl_kind), dimension(n_flx) :: &
+      real(r4), dimension(n_flx) :: &
           flux
       type (snow_type) :: &
           snow         ! snow_type - an ice grid cell may have more than one snow_type
       type (pond_type) :: &
           pond            ! pond_type - melt pond variables
-      real(kind=dbl_kind), dimension(z_max_ice,la) :: &
+      real(r4), dimension(z_max_ice,la) :: &
           pur             ! Photosynthetically useable radiation by depth and wavelength (µEin/m^s/s/wavelength)
   end type ice_type
 
 
   type, public :: ice_pack_type
   
-    real(kind=dbl_kind) :: &
+    real(r4) :: &
       t_mean, &             ! mean surface temperature
       s_mean, &             ! mean bulk salinity (psu)
       d_mean, &             ! mean ice density
@@ -442,11 +442,11 @@ module sia2_types
       s_mass_mean, &        ! mean salt (kg m-2)
       ice_mass_mean,  &     ! mean ice mass (J/g)
       snow_mass_mean        ! mean snow mass (J/g)      
-    real(kind=dbl_kind), dimension(n_flx) :: &
+    real(r4), dimension(n_flx) :: &
       flux
-    real(kind=dbl_kind), dimension(n_2t) :: &
+    real(r4), dimension(n_2t) :: &
       tr2_mean
-    real(kind=dbl_kind), dimension(n_3t) :: &
+    real(r4), dimension(n_3t) :: &
       tr3_mean
     type(ice_type), dimension(n_max_floes) :: &
       ice
@@ -455,14 +455,14 @@ module sia2_types
 
 
   type, public :: platelet_type
-      real(kind=dbl_kind) :: &
+      real(r4) :: &
           t, & 
           s, & 
           d, & 
           bs, & 
           bd, & 
           bv 
-      real(kind=dbl_kind), dimension(pl_max) :: &
+      real(r4), dimension(pl_max) :: &
           no3, &
           nh4, &
           po4, &
@@ -474,23 +474,23 @@ module sia2_types
   end type platelet_type                  
 
   type, public :: snow_adv_type
-      integer(kind=int_kind) :: &
+      integer(i4) :: &
           z
-      real(kind=dbl_kind) :: &
+      real(r4) :: &
           sh_prev, &
           depth           ! new advected snow depth, before ridging
-      real(kind=dbl_kind), dimension(z_max_snow) :: &
+      real(r4), dimension(z_max_snow) :: &
           th_new
   end type snow_adv_type
 
   type, public :: ice_adv_type
-      integer(kind=int_kind) :: &
+      integer(i4) :: &
           z               ! new number of ice layers resulting from advection
-      real(kind=dbl_kind) :: &
+      real(r4) :: &
           af, &           ! areal fraction of advected ice in this category, not yet ridged, could be > 1!
           depth, &           ! new advected internal ice depth depth (before ridging)
           t_mean
-      real(kind=dbl_kind), dimension(z_max_ice) :: &
+      real(r4), dimension(z_max_ice) :: &
           th_new, &       ! new ice layer thicknesses resulting from advection (m)
           id_new, &       ! new ice layer depths resulting from advection (m)
           th_corr, &      ! corrected ice layer thicknesses resulting from boundaries during advection (m)
@@ -500,9 +500,9 @@ module sia2_types
   end type ice_adv_type
 
   type, public :: adv_type              
-      integer(kind=int_kind) :: &
+      integer(i4) :: &
           v_mod           
-      real(kind=dbl_kind) :: &
+      real(r4) :: &
           adv_sum, &      ! sum of in and out advection fractions
           out, &          ! areal percentage of cell advected out
           out1, &         ! convergence-optimzed areal percentage of cell advected out
@@ -526,16 +526,16 @@ module sia2_types
           a_allowed, &
           id_mean, &
           a_drop
-      real(kind=dbl_kind), dimension(8)  :: &
+      real(r4), dimension(8)  :: &
           in, &           ! convergence-optimzed areal percentage inputs
           in1, &          ! areal percentage of bordering cell advected in - before advection
           in1a            ! area of advection in                         
-!       real(kind=dbl_kind), dimension(0:8)  :: &
+!       real(r4), dimension(0:8)  :: &
 !         a_convg, &      ! area of input converging
 !         f_convg         ! fraction of input converging
-      real(kind=dbl_kind), dimension(ic_n)  :: &
+      real(r4), dimension(ic_n)  :: &
           a_rdg           ! final total area that goes ends up ridging according to rf (km^2) 
-      real(kind=dbl_kind), dimension(ic_n,ic_n)  :: &
+      real(r4), dimension(ic_n,ic_n)  :: &
           rf              ! ridging factor - areal reduction scalar for ridged ice
       type (ice_adv_type), dimension(sc_n,ic_n) :: &
           ice            ! snow_adv_type - holds advection variables for snow layers
@@ -544,23 +544,23 @@ module sia2_types
   end type adv_type
 
   type, public :: stn_write_type
-      logical :: &
+      logical(kind=log_kind) :: &
           valid           ! turns on/off writing for station
-      integer(kind=int_kind) :: &
+      integer(i4) :: &
           step            ! index to the current writeout step
       character (LEN=80) :: &
           fname           ! string holds output filename for station
-      real(kind=dbl_kind) :: &
+      real(r4) :: &
           time            ! write out model time
-      real(kind=dbl_kind), dimension(18) :: &
+      real(r4), dimension(18) :: &
           s               ! array to hold single-value station variables
-      real(kind=dbl_kind), dimension(29,z_max_ice) :: &
+      real(r4), dimension(29,z_max_ice) :: &
           z               ! array to hold z-dimension station variables
-      real(kind=dbl_kind), dimension(5,z_max_ice+1) :: &
+      real(r4), dimension(5,z_max_ice+1) :: &
           z1              ! array to hold z1-dimension station variables
-      real(kind=dbl_kind), dimension(3,wavl) :: &
+      real(r4), dimension(3,wavl) :: &
           wavl            ! array to hold wavl dimension station variables
-      real(kind=dbl_kind), dimension(3) :: &
+      real(r4), dimension(3) :: &
           icevec          ! array to station icevec data
   end type stn_write_type
 

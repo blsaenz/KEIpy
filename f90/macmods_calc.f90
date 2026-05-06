@@ -3,7 +3,7 @@
 !f2py -c mag_kinds_mod.f90 mag_parameters_mod.f90 mag_calc.f90 -m mag_calc_fortran --debug --f90flags="-m64 -g -c -O3 -fopenmp -fdec-math -fopenmp -march=native -funroll-loops" -lgomp
 !
 MODULE macmods_calc
-
+  use kei_kinds, only: i4, r4, r8, log_kind
     !use iso_c_binding, only: c_int, c_float, c_double
     use macmods_kinds_mod
     use macmods_param_mod
@@ -125,7 +125,7 @@ MODULE macmods_calc
     t_harv, &
     min_lim
 
-    logical, INTENT(IN) :: &
+    logical(kind=log_kind), INTENT(IN) :: &
     turn_of_day
 
     ! shared internal variables
@@ -150,7 +150,7 @@ MODULE macmods_calc
 
     ! private internal variables
     !----------------------------------------------------
-    logical :: bad_forcing,is_valid
+    logical(kind=log_kind) :: bad_forcing,is_valid
 
     integer(kind=i4) :: i,j,thread
 
@@ -1018,7 +1018,7 @@ MODULE macmods_calc
       params(npar), &
       dt_mag
 
-    logical, INTENT(IN) :: &
+    logical(kind=log_kind), INTENT(IN) :: &
       turn_of_day
 
      CALL mag_calc(lat,lon,sst,par,chl,swh,mwp,cmag,nflux, &

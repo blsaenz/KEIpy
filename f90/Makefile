@@ -47,15 +47,14 @@ endif
 
 BD = build
 
-SIA2_OBJ := sia2_constants.o kei_hacks.o sia2_parameters.o sia2_state.o \
+SIA2_OBJ := kei_kinds.o sia2_constants.o kei_hacks.o sia2_parameters.o sia2_state.o \
     sia2_types.o sia2_grid.o sia2_flux_heat.o sia2_desalination.o
 
-OBJ1D  := sia2_constants.o kei_hacks.o sia2_parameters.o sia2_state.o \
+OBJ1D  := kei_kinds.o sia2_constants.o kei_hacks.o sia2_parameters.o sia2_state.o \
   sia2_types.o sia2_grid.o sia2_flux_heat.o sia2_desalination.o\
-  kei_ocncommon.o \
   kei_ecocommon.o \
   kei_ice.o kei_eco.o kei_init.o kei_fluxes.o \
-  kei_subs1D.o kei_atm.o kei_ocn.o kei_kpp.o \
+  kei_subs1D.o kei_atm.o kei_kpp.o kei_ocn.o \
   kei_sw.o
 
 F901D  := kei_parameters.f90 kei_common.f90 kei_icecommon.f90 kei_link.f90
@@ -72,15 +71,16 @@ FFLAGS :=  $(BUG)
 # keep ice_common (sia2_routines) and macmods out of f2py linking, since it cannot
 # handle variables with the same names across different modules
 kei: $(OBJ1D)
-	f2py -c --f90exec="gfortran" --f90flags="$(FFLAGS) $(LAPACK)" $(OBJ1D) $(F901D) $(MACMODS_OBJ) -m kei
+# --link-lapack_opt: final .so link needs LAPACK (e.g. SGTSV); f90flags still pass Accelerate for compiles.
+	f2py -c --f90exec="gfortran" --f90flags="$(FFLAGS) $(LAPACK)" --link-lapack_opt $(OBJ1D) $(F901D) $(MACMODS_OBJ) -m kei
 
 # compile routines
 kei_fluxes.o: kei_hacks.o
 	$(FC) -c $(FFLAGS) kei_fluxes.f90
-kei_ocn.o	:
-	$(FC) -c $(FFLAGS) kei_ocn.f90
-kei_kpp.o   :
+kei_kpp.o: kei_subs1D.o kei_common.o kei_parameters.o kei_kinds.o kei_icecommon.o
 	$(FC) -c $(FFLAGS) kei_kpp.f90
+kei_ocn.o: kei_kpp.o kei_common.o kei_parameters.o kei_kinds.o
+	$(FC) -c $(FFLAGS) kei_ocn.f90
 kei_subs1D.o:
 	$(FC) -c $(FFLAGS) kei_subs1D.f90
 kei_atm.o	: kei_atm.f90
@@ -91,7 +91,7 @@ kei_init.o	: kei_ecocommon.o kei_parameters.o kei_common.o kei_icecommon.o
 # compile modules
 kei_link.o	: $(OBJ1D) kei_parameters.o kei_common.o kei_icecommon.o
 	$(FC) -c $(FFLAGS) kei_link.f90 $(LAPACK)
-kei_ice.o	: kei_ice.f90 kei_hacks.o
+kei_ice.o	: kei_ice.f90 kei_hacks.o kei_fluxes.o
 	$(FC) -c $(FFLAGS) kei_ice.f90
 kei_eco.o	: kei_ecocommon.o kei_parameters.o kei_common.o kei_hacks.o
 	$(FC) -c $(FFLAGS) kei_eco.f90
@@ -99,11 +99,9 @@ kei_ecocommon.o	:
 	$(FC) -c $(FFLAGS) kei_ecocommon.f90
 kei_icecommon.o	: kei_icecommon.f90 $(SIA2_OBJ)
 	$(FC) -c $(FFLAGS) kei_icecommon.f90
-kei_ocncommon.o	:
-	$(FC) -c $(FFLAGS) kei_ocncommon.f90
 kei_common.o	: kei_icecommon.o
 	$(FC) -c $(FFLAGS) kei_common.f90
-kei_parameters.o	:
+kei_parameters.o	: kei_kinds.o
 	$(FC) -c $(FFLAGS) kei_parameters.f90
 
 sia2_flux_heat.o	: sia2_constants.o sia2_parameters.o sia2_types.o
@@ -120,7 +118,9 @@ sia2_parameters.o	: sia2_constants.o
 	$(FC) -c $(FFLAGS) sia2_parameters.f90
 kei_hacks.o	: kei_parameters.o kei_common.o kei_subs1D.o kei_ecocommon.o
 	$(FC) -c $(FFLAGS) kei_hacks.f90
-sia2_constants.o	:
+kei_kinds.o	: kei_kinds.f90
+	$(FC) -c $(FFLAGS) kei_kinds.f90
+sia2_constants.o	: kei_kinds.o
 	$(FC) -c $(FFLAGS) sia2_constants.f90
 
 kei_sw.o	: $(MACMODS_OBJ)
@@ -133,7 +133,7 @@ macmods_util_mod.o    : macmods_param_mod.o macmods_kinds_mod.o
 	$(FC) -c $(FFLAGS) macmods_util_mod.f90
 macmods_param_mod.o    : macmods_kinds_mod.o
 	$(FC) -c $(FFLAGS) macmods_param_mod.f90
-macmods_kinds_mod.o    :
+macmods_kinds_mod.o    : kei_kinds.o
 	$(FC) -c $(FFLAGS) macmods_kinds_mod.f90
 
 #	-------

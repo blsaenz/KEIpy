@@ -1,7 +1,7 @@
 
 module sia2_state
 
-	use sia2_constants, only : log_kind,int_kind,real_kind,dbl_kind
+	use kei_kinds, only: i4, r4, r8, log_kind
 	
 	implicit none
 
@@ -38,10 +38,10 @@ module sia2_state
 
 	! Function Arguments
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			T_mean,							  & !
 			S_mean                	!
-		real(kind=dbl_kind), intent(out) :: &
+		real(r4), intent(out) :: &
 			bs_mean,							  & !
 			bd_mean,							  & !
 			d_mean,							  	& !
@@ -50,7 +50,7 @@ module sia2_state
 
 	! Internal Variables
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind) :: &
+		real(r4) :: &
 			alpha0,								& !
 			alpha1,								& !
 			alpha2,								& !
@@ -62,8 +62,8 @@ module sia2_state
 		if (T_mean .lt. T_melt) then
 
 			! calc new brine salinity
-			alpha0 = 1.0_dbl_kind   ! temp assignment as check below
-			if (T_mean .gt. -3.058_dbl_kind) then
+			alpha0 = 1.0_r4   ! temp assignment as check below
+			if (T_mean .gt. -3.058_r4) then
 
 				! use linear freezing point calc for brine salinity above temp=-3.058
 				bs_mean = T_mean/mu
@@ -71,30 +71,30 @@ module sia2_state
 			else
 
 				! use polynomial brine sal estimation for temps colder than -3.058
-				if (T_mean .le. -3.058_dbl_kind .and. T_mean .ge. -22.9_dbl_kind) then
-					alpha0 = -3.9921_dbl_kind
-					alpha1 = -22.7_dbl_kind
-					alpha2 = -1.0015_dbl_kind
-					alpha3 = -0.019956_dbl_kind
-				elseif (T_mean .lt. -22.9_dbl_kind .and. &
-				T_mean .ge. -44.0_dbl_kind) then
-					alpha0 = 206.24_dbl_kind
-					alpha1 = -1.8907_dbl_kind
-					alpha2 = -0.060868_dbl_kind
-					alpha3 = -0.0010247_dbl_kind
-				elseif (T_mean .lt. -44.0_dbl_kind .and. &
-				T_mean .ge. -54.0_dbl_kind) then
-					 alpha0 = -4442.1_dbl_kind
-					 alpha1 = -277.86_dbl_kind
-					 alpha2 = -5.501_dbl_kind
-					 alpha3 = -0.03669_dbl_kind
-				elseif (T_mean .lt. -54.0_dbl_kind) then
+				if (T_mean .le. -3.058_r4 .and. T_mean .ge. -22.9_r4) then
+					alpha0 = -3.9921_r4
+					alpha1 = -22.7_r4
+					alpha2 = -1.0015_r4
+					alpha3 = -0.019956_r4
+				elseif (T_mean .lt. -22.9_r4 .and. &
+				T_mean .ge. -44.0_r4) then
+					alpha0 = 206.24_r4
+					alpha1 = -1.8907_r4
+					alpha2 = -0.060868_r4
+					alpha3 = -0.0010247_r4
+				elseif (T_mean .lt. -44.0_r4 .and. &
+				T_mean .ge. -54.0_r4) then
+					 alpha0 = -4442.1_r4
+					 alpha1 = -277.86_r4
+					 alpha2 = -5.501_r4
+					 alpha3 = -0.03669_r4
+				elseif (T_mean .lt. -54.0_r4) then
 					 alpha0 = c0
 				endif                  
 
 				if (alpha0 .eq. c0) then
 					! fix upper brine sal limit at 300 psu
-					bs_mean = 300.0_dbl_kind
+					bs_mean = 300.0_r4
 				else
 					! use selected polynomial to calc brine sal
 					bs_mean = alpha0 + alpha1*T_mean + &
@@ -109,7 +109,7 @@ module sia2_state
 			endif
 
 			! calculate new brine density (c=800 g m-3 ppt-1)
-			bd_mean = 1e6_dbl_kind + bs_mean*800.0_dbl_kind      ! g/m^3
+			bd_mean = 1e6_r4 + bs_mean*800.0_r4      ! g/m^3
 
 			! new ice density
 			d_mean = (c1-bb_f)*IceD*bd_mean*bs_mean/(bd_mean*bs_mean - &
@@ -124,7 +124,7 @@ module sia2_state
 		else
 		    
       bs_mean = s_mean ! ice is melted
-			bd_mean = c1e6 + bs_mean*800.0_dbl_kind      ! g/m^3
+			bd_mean = c1e6 + bs_mean*800.0_r4      ! g/m^3
 			d_mean = bd_mean
 			bv_mean = c1e3
       heat = cw*T_mean*d_mean
@@ -142,7 +142,7 @@ module sia2_state
 ! Purpose: calculates brine salinity (PSU)
 ! ----------------------------------------------------------------------	
 
-	real(kind=dbl_kind) pure function sia2_bs(T_mean,S_mean)
+	real(r4) pure function sia2_bs(T_mean,S_mean)
 		
 	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
@@ -154,13 +154,13 @@ module sia2_state
 
 	! Function Arguments
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			T_mean,							  & !
 			S_mean                
 
 	! Internal Variables
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind) :: &
+		real(r4) :: &
 			alpha0,								& !
 			alpha1,								& !
 			alpha2,								& !
@@ -172,8 +172,8 @@ module sia2_state
 		if (T_mean .lt. T_melt) then
 
 			! calc new brine salinity
-			alpha0 = 1.0_dbl_kind   ! temp assignment as check below
-			if (T_mean .gt. -3.058_dbl_kind) then
+			alpha0 = 1.0_r4   ! temp assignment as check below
+			if (T_mean .gt. -3.058_r4) then
 
 				! use linear freezing point calc for brine salinity above temp=-3.058
 				sia2_bs = T_mean/mu
@@ -181,30 +181,30 @@ module sia2_state
 			else
 
 				! use polynomial brine sal estimation for temps colder than -3.058
-				if (T_mean .le. -3.058_dbl_kind .and. T_mean .ge. -22.9_dbl_kind) then
-					alpha0 = -3.9921_dbl_kind
-					alpha1 = -22.7_dbl_kind
-					alpha2 = -1.0015_dbl_kind
-					alpha3 = -0.019956_dbl_kind
-				elseif (T_mean .lt. -22.9_dbl_kind .and. &
-				T_mean .ge. -44.0_dbl_kind) then
-					alpha0 = 206.24_dbl_kind
-					alpha1 = -1.8907_dbl_kind
-					alpha2 = -0.060868_dbl_kind
-					alpha3 = -0.0010247_dbl_kind
-				elseif (T_mean .lt. -44.0_dbl_kind .and. &
-				T_mean .ge. -54.0_dbl_kind) then
-					 alpha0 = -4442.1_dbl_kind
-					 alpha1 = -277.86_dbl_kind
-					 alpha2 = -5.501_dbl_kind
-					 alpha3 = -0.03669_dbl_kind
-				elseif (T_mean .lt. -54.0_dbl_kind) then
+				if (T_mean .le. -3.058_r4 .and. T_mean .ge. -22.9_r4) then
+					alpha0 = -3.9921_r4
+					alpha1 = -22.7_r4
+					alpha2 = -1.0015_r4
+					alpha3 = -0.019956_r4
+				elseif (T_mean .lt. -22.9_r4 .and. &
+				T_mean .ge. -44.0_r4) then
+					alpha0 = 206.24_r4
+					alpha1 = -1.8907_r4
+					alpha2 = -0.060868_r4
+					alpha3 = -0.0010247_r4
+				elseif (T_mean .lt. -44.0_r4 .and. &
+				T_mean .ge. -54.0_r4) then
+					 alpha0 = -4442.1_r4
+					 alpha1 = -277.86_r4
+					 alpha2 = -5.501_r4
+					 alpha3 = -0.03669_r4
+				elseif (T_mean .lt. -54.0_r4) then
 					 alpha0 = c0
 				endif                  
 
 				if (alpha0 .eq. c0) then
 					! fix upper brine sal limit at 300 psu
-					sia2_bs = 300.0_dbl_kind
+					sia2_bs = 300.0_r4
 				else
 					! use selected polynomial to calc brine sal
 					sia2_bs = alpha0 + alpha1*T_mean + &
@@ -233,17 +233,17 @@ module sia2_state
 ! Purpose: calculates brine density (g m-3)
 ! ----------------------------------------------------------------------	
 
-	real(kind=dbl_kind) pure function sia2_bd(bs_mean)
+	real(r4) pure function sia2_bd(bs_mean)
 
 			implicit none
 
 	! Function Arguments
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			bs_mean									 !
 
 		! calculate new brine density (c=800 g m-3 ppt-1)
-		sia2_bd = 1e6_dbl_kind + bs_mean*800.0_dbl_kind      ! g/m^3
+		sia2_bd = 1e6_r4 + bs_mean*800.0_r4      ! g/m^3
 			  
 	end function sia2_bd
 
@@ -254,7 +254,7 @@ module sia2_state
 ! Purpose: calculates sea ice density (g m-3)
 ! ----------------------------------------------------------------------	
 
-	real(kind=dbl_kind) pure function sia2_ice_d(t_mean,s_mean,bs_mean,bd_mean)
+	real(r4) pure function sia2_ice_d(t_mean,s_mean,bs_mean,bd_mean)
 
 	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
@@ -268,7 +268,7 @@ module sia2_state
 
 	! Function Arguments
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			t_mean,							  	& !
 			s_mean,							  	& !
 			bs_mean,							  & !
@@ -276,7 +276,7 @@ module sia2_state
 
 	! Internal Variables
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind) :: &
+		real(r4) :: &
 			T_melt
 
 		T_melt = mu*s_mean  ! find melt temperature at salinity s_mean
@@ -284,7 +284,7 @@ module sia2_state
 		if (T_mean .lt. T_melt) then				
 	
 			! new ice density
-			sia2_ice_d = (1.0_dbl_kind-bb_f)*IceD*bd_mean*bs_mean / &
+			sia2_ice_d = (1.0_r4-bb_f)*IceD*bd_mean*bs_mean / &
 				(bd_mean*bs_mean - S_mean*(bd_mean - IceD))
 				
 		else
@@ -303,7 +303,7 @@ module sia2_state
 ! Purpose: calculates sea ice brine volume (ppt)
 ! ----------------------------------------------------------------------	
 
-	real(kind=dbl_kind) pure function sia2_bv(t_mean,s_mean, &
+	real(r4) pure function sia2_bv(t_mean,s_mean, &
 		d_mean,bs_mean,bd_mean)
 
 	! Use Statements and Variables/Globals/Parameters
@@ -316,7 +316,7 @@ module sia2_state
 				  
 	! Function Arguments
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			t_mean,							  	& !
 			s_mean,							  	& !
 			d_mean,							  	& !
@@ -325,7 +325,7 @@ module sia2_state
 
 	! Internal Variables
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind) :: &
+		real(r4) :: &
 			T_melt
 
 		T_melt = mu*s_mean  ! find melt temperature at salinity s_mean
@@ -333,11 +333,11 @@ module sia2_state
 		if (T_mean .lt. T_melt) then				
 
 			! new brine volume
-			sia2_bv = 1.e3_dbl_kind*(d_mean*S_mean)/(bd_mean*bs_mean)  ! ppt
+			sia2_bv = 1.e3_r4*(d_mean*S_mean)/(bd_mean*bs_mean)  ! ppt
 
 		else
 		
-			sia2_bv = 1.e3_dbl_kind ! completely melted
+			sia2_bv = 1.e3_r4 ! completely melted
 			
 		endif
 
@@ -351,7 +351,7 @@ module sia2_state
 ! Purpose: calculates enthalpy  from a reference of 0 deg C
 ! ----------------------------------------------------------------------	
 
-	real(kind=dbl_kind) pure function sia2_ice_heat(t_mean,s_mean,d_mean)
+	real(r4) pure function sia2_ice_heat(t_mean,s_mean,d_mean)
 
 	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
@@ -365,22 +365,22 @@ module sia2_state
 
 	! Function Arguments
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			t_mean,							  	& ! 
 			s_mean,							  	& ! 
 			d_mean							  	  !
 
 	! Internal Variables
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind) :: &
+		real(r4) :: &
 			T_melt
 
 		T_melt = mu*s_mean  ! find melt temperature at salinity s_mean
 
 		if (T_mean .lt. T_melt) then				
 	
-			sia2_ice_heat = -1.0_dbl_kind*d_mean*(ci0*(T_melt - T_mean) &
-				+ Lf*(1.0_dbl_kind - T_melt/T_mean) - cw*T_melt) ! j/m^3 - not j/m^2
+			sia2_ice_heat = -1.0_r4*d_mean*(ci0*(T_melt - T_mean) &
+				+ Lf*(1.0_r4 - T_melt/T_mean) - cw*T_melt) ! j/m^3 - not j/m^2
 
     else
 
@@ -398,7 +398,7 @@ module sia2_state
 ! NOTE - Returns a positive heat! (If temp is below T_melt...)
 ! ----------------------------------------------------------------------	
 
-	real(kind=dbl_kind) pure function sia2_ice_heat_melt(t_mean,s_mean, &
+	real(r4) pure function sia2_ice_heat_melt(t_mean,s_mean, &
 		d_mean,t_ocn)
 
 	! Use Statements and Variables/Globals/Parameters
@@ -414,7 +414,7 @@ module sia2_state
 
 	! Function Arguments
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			t_mean,							  	& ! 
 			s_mean,							  	& ! 
 			d_mean,							  	& ! 
@@ -422,7 +422,7 @@ module sia2_state
 
 	! Internal Variables
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind) :: &
+		real(r4) :: &
 			T_melt
 
 		T_melt = mu*s_mean  ! find melt temperature at salinity s_mean
@@ -430,7 +430,7 @@ module sia2_state
 		
 		if (T_mean .lt. T_melt) then					
 			sia2_ice_heat_melt = ci0*(T_melt - T_mean) &
-				+ Lf*(1.0_dbl_kind - T_melt/T_mean) ! j/m^3 - not j/m^2
+				+ Lf*(1.0_r4 - T_melt/T_mean) ! j/m^3 - not j/m^2
 !    else
 !      sia2_ice_heat_melt = cw*T_mean ! sea ice is already melted             
     endif
@@ -449,7 +449,7 @@ module sia2_state
 ! NOTE - Returns a positive heat! (If temp is below 0degC...)
 ! ----------------------------------------------------------------------	
 
-	real(kind=dbl_kind) pure function sia2_snow_heat_melt(t_snow,d_snow,t_ocn)
+	real(r4) pure function sia2_snow_heat_melt(t_snow,d_snow,t_ocn)
 
 	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
@@ -463,7 +463,7 @@ module sia2_state
 
 	! Function Arguments
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			t_snow,							  	& ! 
 			d_snow,							  	& ! 
 			t_ocn							  	  !
@@ -488,7 +488,7 @@ module sia2_state
 ! density from a reference heat at 0 deg C
 ! ----------------------------------------------------------------------	
 
-	real(kind=dbl_kind) pure function sia2_ice_temp(s_mean,d_mean,h_mean)
+	real(r4) pure function sia2_ice_temp(s_mean,d_mean,h_mean)
 
 	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
@@ -502,14 +502,14 @@ module sia2_state
 
 	! Function Arguments
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			s_mean,							  	& ! 
 			d_mean,							  	& ! 
 			h_mean							  	  !
 
 	! Internal Variables
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind) :: &
+		real(r4) :: &
 			aq,							  			& ! 
 			bq,							  			& ! 
 			cq,							  			& ! 
@@ -527,8 +527,8 @@ module sia2_state
 			
 			! solve heat eqn. backwards to find T_mean
 			! the "negative" solutions seem to always be right
-			sia2_ice_temp = (-1.0_dbl_kind*bq - &
-				sqrt(bq**2 - 4.0_dbl_kind*aq*cq))/(2.0_dbl_kind*aq)
+			sia2_ice_temp = (-1.0_r4*bq - &
+				sqrt(bq**2 - 4.0_r4*aq*cq))/(2.0_r4*aq)
 
 		else	  
 				
@@ -547,7 +547,7 @@ module sia2_state
 ! enthalpy at t=0degC
 ! ----------------------------------------------------------------------	
 
-	real(kind=dbl_kind) pure function sia2_snow_heat(d_mean,t_mean)
+	real(r4) pure function sia2_snow_heat(d_mean,t_mean)
 
 	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
@@ -559,18 +559,18 @@ module sia2_state
 
 	! Function Arguments
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			d_mean,							  	& ! density (g m-3)
 			t_mean							  	  ! snow temperature (deg C)
 
 	! Internal Variables
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind) :: &
+		real(r4) :: &
 			T_k												! snow temp in kelvin
 
 		T_k = t_mean + kelvin0
-	  sia2_snow_heat = d_mean*(heat_snow0 - 0.2309_dbl_kind*T_k - &
-			0.0034_dbl_kind*T_k**2)
+	  sia2_snow_heat = d_mean*(heat_snow0 - 0.2309_r4*T_k - &
+			0.0034_r4*T_k**2)
 
 	end function sia2_snow_heat
 
@@ -583,7 +583,7 @@ module sia2_state
 ! density from a reference heat at 0 deg C
 ! ----------------------------------------------------------------------	
 
-	real(kind=dbl_kind) pure function sia2_snow_temp(d_mean,h_mean)
+	real(r4) pure function sia2_snow_temp(d_mean,h_mean)
 
 	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
@@ -596,15 +596,15 @@ module sia2_state
 
 	! Function Arguments
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			d_mean,							  	& ! snow density (g m-3)
 			h_mean							  	  ! snow enthalpy (J m-3)
 
 		! Solve quadradic for new snow temp
 		sia2_snow_temp = h_mean/d_mean
-		sia2_snow_temp = (0.2309_dbl_kind - &
-			sqrt(0.05331481_dbl_kind + 0.0136_dbl_kind * &
-			 (heat_snow0-sia2_snow_temp)))/(-0.0068_dbl_kind)
+		sia2_snow_temp = (0.2309_r4 - &
+			sqrt(0.05331481_r4 + 0.0136_r4 * &
+			 (heat_snow0-sia2_snow_temp)))/(-0.0068_r4)
 		sia2_snow_temp = min(sia2_snow_temp - kelvin0,c0)
 
 	end function sia2_snow_temp
@@ -635,15 +635,15 @@ module sia2_state
 	! --------------------------------------------------------------------
 		type (ice_type), intent(in) :: &
 			ice             ! ice structure
-		real(kind=dbl_kind), intent(out) :: &
+		real(r4), intent(out) :: &
 			h20,          & ! total h20 mass (kg/m^2)
 			salt            ! total salt mass (kg/m^2)
 			
 	! Internal Variables
 	! --------------------------------------------------------------------
-		integer(kind=int_kind) :: &
+		integer(i4) :: &
 			i           		! iterator
-		real(kind=dbl_kind) :: &
+		real(r4) :: &
 			mass            ! layer mass (kg/m^2)
 			
 	! Function Code
@@ -674,7 +674,7 @@ module sia2_state
 ! used to find h20 mass (kg or kg/m^2) in a mass with salinity in parts
 ! per thousand (ppt)
 ! ----------------------------------------------------------------------	
-	real(kind=dbl_kind) pure function sia2_layer_h2o(mass,salinity)
+	real(r4) pure function sia2_layer_h2o(mass,salinity)
 	
 	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
@@ -686,7 +686,7 @@ module sia2_state
 	
 	! Function Arguments
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			mass,          & ! total h20 mass (kg or kg/m^2)
 			salinity         ! bulk salinity (ppt)
 						
@@ -704,7 +704,7 @@ module sia2_state
 ! used to find salt mass (kg or kg/m^2) in a mass with salinity in parts
 ! per thousand (ppt)
 ! ----------------------------------------------------------------------	
-	real(kind=dbl_kind) pure function sia2_layer_salt(mass,salinity)
+	real(r4) pure function sia2_layer_salt(mass,salinity)
 	
 	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
@@ -715,7 +715,7 @@ module sia2_state
 	
 	! Function Arguments
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			mass,          & ! total h20 mass (kg or kg/m^2)
 			salinity         ! bulk salinity (ppt)
 						
@@ -749,14 +749,14 @@ module sia2_state
 	! --------------------------------------------------------------------
 		type (ice_type), intent(in) :: &
 			ice             ! ice structure
-		real(kind=dbl_kind), intent(out) :: &
+		real(r4), intent(out) :: &
 			h20            ! total h20 mass (kg/m^2)
 			
 	! Internal Variables
 	! --------------------------------------------------------------------
-		integer(kind=int_kind) :: &
+		integer(i4) :: &
 			i        		   	! iterator
-		real(kind=dbl_kind) :: &
+		real(r4) :: &
 			mass            ! layer mass (kg/m^2)
 			
 	! Function Code
@@ -776,7 +776,7 @@ module sia2_state
 ! used to find mass of h2o int snow for flux accounting purposes
 ! note: does not take ice area into account - masses are in kg/m^2
 ! ----------------------------------------------------------------------	
-	real(kind=dbl_kind) pure function sia2_snow_mean_d(ice)
+	real(r4) pure function sia2_snow_mean_d(ice)
 	
 	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
@@ -793,9 +793,9 @@ module sia2_state
 			
 	! Internal Variables
 	! --------------------------------------------------------------------
-		integer(kind=int_kind) :: &
+		integer(i4) :: &
 			i           	! iterator
-		real(kind=dbl_kind) :: &
+		real(r4) :: &
 			th            ! layer mass (kg/m^2)
 			
 	! Function Code
@@ -834,7 +834,7 @@ module sia2_state
 !	! --------------------------------------------------------------------
 !		type (ice_type), intent(in) :: &
 !			ice             ! ice structure
-!		real(kind=dbl_kind), intent(out) :: &
+!		real(r4), intent(out) :: &
 !			hc_i,          & ! heat content of ice (J relative to 0 deg C)
 !			hc_total         ! heat content of ice and snow (J relative to 0 deg C)
 !			
@@ -869,7 +869,7 @@ module sia2_state
 	! --------------------------------------------------------------------
 		type (ice_type), intent(in) :: &
 			ice             ! ice structure
-		real(kind=dbl_kind), intent(out) :: &
+		real(r4), intent(out) :: &
 			hc_i,          & ! heat content of ice (J relative to 0 deg C)
 			hc_total         ! heat content of ice and snow (J relative to 0 deg C)
 			
@@ -903,9 +903,9 @@ module sia2_state
 !	! --------------------------------------------------------------------
 !		type (ice_type), intent(in) :: &
 !			ice             ! ice structure
-!		real(kind=dbl_kind), intent(in) :: &
+!		real(r4), intent(in) :: &
 !			t_ocn						! ocean mixed layer temperature (degC)
-!		real(kind=dbl_kind), intent(out) :: &
+!		real(r4), intent(out) :: &
 !			hc_i,          & ! heat content of ice (J relative to t_ocn)
 !			hc_total         ! heat content of ice and snow (J relative to t_ocn)
 !			
@@ -944,15 +944,15 @@ module sia2_state
 	! --------------------------------------------------------------------
 		type (ice_type), intent(in) :: &
 			ice             ! ice structure
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			t_ocn						! ocean mixed layer temperature (degC)
-		real(kind=dbl_kind), intent(out) :: &
+		real(r4), intent(out) :: &
 			hc_i,          & ! heat content of ice (J relative to t_ocn)
 			hc_total         ! heat content of ice and snow (J relative to t_ocn)
 			
 	! Internal Variables
 	! --------------------------------------------------------------------
-		integer(int_kind) :: &
+		integer(i4) :: &
 			i            ! iterator
 			
 	! Function Code

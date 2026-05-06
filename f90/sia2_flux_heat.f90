@@ -1,12 +1,12 @@
 
 module sia2_flux_heat
 
-	use sia2_constants, only : log_kind,int_kind,real_kind,dbl_kind
+	use kei_kinds, only: i4, r4, r8, log_kind
 	
 	implicit none
 
 	type, public :: heat_pre_calc
-			real(kind=dbl_kind) :: &
+			real(r4) :: &
 					Tair, 					&	! 2m air temperature (kelvin)
 					potT, 					&	! potential air temperature
 					shum, 					&	! specific humidity (kg m-3)
@@ -62,7 +62,7 @@ module sia2_flux_heat
 
 	! Subroutine Arguments
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			ice_t(z_max_ice),					& ! ice temperature (deg C)
 			ice_s(z_max_ice),					& ! ice bulk salinity (psu)
 			ice_d(z_max_ice),					& ! ice density (g m-3)
@@ -70,16 +70,16 @@ module sia2_flux_heat
 			snow_t(z_max_snow),				&	! snow density (g m-3)  NOTE - topmost snow layer is lowest in vector (upside down!!)
 			snow_d(z_max_snow),				&	! snow density (g m-3)  NOTE - topmost snow layer is lowest in vector (upside down!!)
 			snow_th(z_max_snow)					! snow layer thickness
-		integer(kind=int_kind), intent(in) :: &
+		integer(i4), intent(in) :: &
 			ice_z,										& ! current number of ice layers
 			snow_z								      ! current number of snow layers
-		real(kind=dbl_kind), intent(out) :: &
+		real(r4), intent(out) :: &
 			ki(z_max_pack+1),					& ! thermal conductivity profile (W m-1 K-1) 
 			dth(z_max_pack+1)					  ! midpoint-midpoint layer thicknesses
 
 	! Internal Variables
 	! --------------------------------------------------------------------
-		integer(kind=int_kind) :: &
+		integer(i4) :: &
 			z,									&	! ice_z + snow_z
 			ice_z1,							&	! 1st ice layer
 			mo,									&	! switch for solution of surface temperature
@@ -87,7 +87,7 @@ module sia2_flux_heat
 			ii,									&	! iterator
 			jj										! iterator
 
-		real(kind=dbl_kind) :: &
+		real(r4) :: &
 			rs,      						&	! rvec surface value
 			s_mean,							&
 			d_mean,							&
@@ -188,20 +188,20 @@ end subroutine sia2_conductivity
 ! Purpose: find snow thermal conductivity (W m-1 K-1)
 ! ----------------------------------------------------------------------
 
-	real(kind=dbl_kind) function sia2_snow_ki(d_mean)
+	real(r4) function sia2_snow_ki(d_mean)
 
 		implicit none
 
 		! Function Arguments
 		! --------------------------------------------------------------------
- 		real(kind=dbl_kind), intent(in) :: d_mean   ! snow density
+ 		real(r4), intent(in) :: d_mean   ! snow density
 
-!  	sia2_snow_ki = 0.138_dbl_kind - 1.01_dbl_kind*d_mean + &
-!    	3.233_dbl_kind*d_mean**2 + 0.1495_dbl_kind  ! sturm 1997 + 0.1495
-    if (d_mean .ge. 0.4_dbl_kind) then
-    	sia2_snow_ki = 0.5_dbl_kind
+!  	sia2_snow_ki = 0.138_r4 - 1.01_r4*d_mean + &
+!    	3.233_r4*d_mean**2 + 0.1495_r4  ! sturm 1997 + 0.1495
+    if (d_mean .ge. 0.4_r4) then
+    	sia2_snow_ki = 0.5_r4
     else
-    	sia2_snow_ki = 0.33_dbl_kind
+    	sia2_snow_ki = 0.33_r4
 		endif
 
 	end function sia2_snow_ki
@@ -213,7 +213,7 @@ end subroutine sia2_conductivity
 ! Purpose: find ice thermal conductivity (W m-1 K-1)
 ! ----------------------------------------------------------------------
 
-	real(kind=dbl_kind) function sia2_ice_ki(t_mean,s_mean,d_mean)
+	real(r4) function sia2_ice_ki(t_mean,s_mean,d_mean)
 
 		use sia2_constants, only : &
 			c1e6,									&	! constant = 1e6
@@ -223,13 +223,13 @@ end subroutine sia2_conductivity
 
 		! Function Arguments
 		! --------------------------------------------------------------------
- 		real(kind=dbl_kind), intent(in) :: &
+ 		real(r4), intent(in) :: &
  			t_mean,									&   ! ice mean temperature (degC)
  			s_mean,									&   ! ice bulk salinity (psu)
  			d_mean										  ! ice density (g m-3)
 
-  	sia2_ice_ki = (d_mean/IceD)*(2.11_dbl_kind-0.011_dbl_kind*t_mean + &
-				0.09_dbl_kind*s_mean/t_mean - (d_mean-IceD)/c1e6)  ! pringle et al. 2006?				      
+  	sia2_ice_ki = (d_mean/IceD)*(2.11_r4-0.011_r4*t_mean + &
+				0.09_r4*s_mean/t_mean - (d_mean-IceD)/c1e6)  ! pringle et al. 2006?				      
 
 	end function sia2_ice_ki
 
@@ -271,11 +271,11 @@ end subroutine sia2_conductivity
 		
 	! Function Arguments
 	! --------------------------------------------------------------------
-			real(kind=dbl_kind), intent(inout) :: &
+			real(r4), intent(inout) :: &
 				ts_last,						&	! previous surface temperature (degC)
 				ts_next,						&	! calculated surface temp (degC) - must be estimated before calling function
 				t_next(z_max_pack)					! calculated snow/ice temperature profile - (degC) must be estimated before calling function
-			real(kind=dbl_kind), intent(in) :: &
+			real(r4), intent(in) :: &
 				t_last(z_max_pack),			&	! previous snow/ice temperature profile
 				ki(z_max_pack+1),				&	! thermal conductivity profile (W m-1 K-1) 
 				dth(z_max_pack+1),				&	! midpoint-midpoint layer thicknesses
@@ -294,10 +294,10 @@ end subroutine sia2_conductivity
 				T_bot,							&	! bottom ice temperature (fixed, degC)
 				T_air,							&	! surface air temperature (K)
 				dtt_s									! time step length (s)
-			integer(kind=int_kind), intent(in) :: &
+			integer(i4), intent(in) :: &
 				z_ice,							&	! current number of ice layers
 				z_snow								! current number of snow layers
-			real(kind=dbl_kind), intent(out) :: &
+			real(r4), intent(out) :: &
 				T_diff,							&	! max difference in layer temperature of solution
 				T_step,							&	! max difference in layer temperature of convergence
 				Fc_top,							&	! surface conductive heat flux (W m-2)
@@ -305,7 +305,7 @@ end subroutine sia2_conductivity
 
 	! Internal Variables
 	! --------------------------------------------------------------------
-			integer(kind=int_kind) :: &
+			integer(i4) :: &
 				z,									&	! z_ice + z_snow
 				z1,									&	! z+mo
 				mo,									&	! switch for solution of surface temperature
@@ -313,7 +313,7 @@ end subroutine sia2_conductivity
 				ii,									&	! iterator
 				jj										! iterator
 	
-			real(kind=dbl_kind) :: &
+			real(r4) :: &
 				rs,      						&	! rvec surface value
 				r1,									&	! rvec 1st layer value
 				xl,									&	! tridiagonal calc intermediate
@@ -343,7 +343,7 @@ end subroutine sia2_conductivity
 			z = z_ice + z_snow
 
       ! surface matrix constant - same for all cases
-      rs = -1.0_dbl_kind*F0 + dF0*Ts_last		
+      rs = -1.0_r4*F0 + dF0*Ts_last		
 
       ! top layer is SNOW
       ! ----------------------------------------------------------------
@@ -354,8 +354,8 @@ end subroutine sia2_conductivity
           tmp1 = min(tmp1,c0)
           
           ! snow heat capacity averaged between T_last and T_next, * snow density
-          tmp2 = 0.185_dbl_kind + 0.689e-2_dbl_kind*(tmp1+kelvin0)
-          tmp2 = max(0.02_dbl_kind,tmp2)
+          tmp2 = 0.185_r4 + 0.689e-2_r4*(tmp1+kelvin0)
+          tmp2 = max(0.02_r4,tmp2)
           ci(1) = snow_d(z_snow)*tmp2
           xl = 2.*dtt_s/((dth(1)+dth(2))*ci(1))
 
@@ -393,9 +393,9 @@ end subroutine sia2_conductivity
           tmp1 = min(T_last(1),T_melt)
           tmp2 = min(T_next(1),T_melt)
 
-          ci(1) = (1.0_dbl_kind-bb_f) * ( &         ! remove air fraction
+          ci(1) = (1.0_r4-bb_f) * ( &         ! remove air fraction
               ice_bd(1)*bv_mean*cw +   &    ! heat capacity of pure ice
-              IceD*(1.0_dbl_kind-bv_mean)*ci0 - &    ! heat capacity of brine 
+              IceD*(1.0_r4-bv_mean)*ci0 - &    ! heat capacity of brine 
               IceD*Lf*T_melt/(tmp1*tmp2))   ! latent heat of freezing based on temp change
 
           xl = 2.*dtt_s/((dth(1)+dth(2))*ci(1))
@@ -468,8 +468,8 @@ end subroutine sia2_conductivity
              tmp1 = min(tmp1,c0)
 
              ! snow heat capacity averaged between T_last and T_next, *ice_d
-             tmp2 = 0.185_dbl_kind + 0.689e-2_dbl_kind*(tmp1+kelvin0)
-             tmp2 = max(0.02_dbl_kind,tmp2)
+             tmp2 = 0.185_r4 + 0.689e-2_r4*(tmp1+kelvin0)
+             tmp2 = max(0.02_r4,tmp2)
              ci(ii) = snow_d(z_snow-ii+1)*tmp2
              xl = 2.*dtt_s/((dth(ii)+dth(ii+1))*ci(ii))
 
@@ -493,12 +493,12 @@ end subroutine sia2_conductivity
               tmp1 = min(T_last(ii),T_melt)
               tmp2 = min(T_next(ii),T_melt)
 
-              ci(ii) = (1.0_dbl_kind-bb_f) * ( &            ! remove air fraction
+              ci(ii) = (1.0_r4-bb_f) * ( &            ! remove air fraction
                   ice_bd(jj)*bv_mean*cw +  &    ! heat capacity of pure ice
-                  IceD*(1.0_dbl_kind-bv_mean)*ci0 - &    ! heat capacity of brine 
+                  IceD*(1.0_r4-bv_mean)*ci0 - &    ! heat capacity of brine 
                   IceD*Lf*T_melt/(tmp1*tmp2))   ! latent heat of freezing based on temp change
 
-              xl = 2.0_dbl_kind*dtt_s/((dth(ii)+dth(ii+1))*ci(ii))
+              xl = 2.0_r4*dtt_s/((dth(ii)+dth(ii+1))*ci(ii))
               tmp3 = dtt_s/(ci(ii)*ice_th(jj))
 
               ! assign constant vector - include irradiance absorbed in ice
@@ -545,7 +545,7 @@ end subroutine sia2_conductivity
 !             print *,'DL: ',dl
 !             print *,'r_vec: ',r_vec
 
-		if (DBL_KIND .eq. 8) then
+		if (r4 .eq. r8) then  ! false: sia2 real type is r4; was dbl_kind=4 in sia2_constants
 	    call DGTSV(z1,1,DL_calc,DC_calc,DU_calc,r_vec,z1,info)
     else
 	    call SGTSV(z1,1,DL_calc,DC_calc,DU_calc,r_vec,z1,info)
@@ -613,11 +613,11 @@ end subroutine sia2_conductivity
 		
 	! Function Arguments
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			Ts											! surface temperature (Kelvin)
 		type (heat_pre_calc), intent(in) :: &
 			pc											! pre-calculated surface heat flux parameters
-		real(kind=dbl_kind), intent(out) :: &
+		real(r4), intent(out) :: &
 			F0,										&	! surface heat balance (W m-2)
 			dF0, 									&	! surface heat balance derivative (W m-2 K-1)
 			F_little_L,						&	! outgoing longwave irradiance (W m-2)
@@ -626,7 +626,7 @@ end subroutine sia2_conductivity
 
 	! Internal Variables
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind) :: &
+		real(r4) :: &
 			shcoef,								&	! sensible turbulent heat flux coefficient
 			lhcoef,								&	! latent turbulent heat flux coefficient
 			F0_constants,					&	! F0 constant pasts, Kottmeier et al. 2003
@@ -730,7 +730,7 @@ end subroutine sia2_conductivity
 		
 	! Function Arguments
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			Tair,									&	! air temperature (Kelvin)
 			v10,									&	! 10m wind speed (m/s)
 			pres,									&	! surface air pressure (mbar)
@@ -746,7 +746,7 @@ end subroutine sia2_conductivity
 
 	! Internal Variables
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind) :: &
+		real(r4) :: &
 			p_h2o_sat,						&	! saturation water pressure of air (mb)
 			p_h2o,								&	! partial pressure of water vaptor (mb)
 			shum_sat,								&	! saturation specific humidity (kg kg-1)
@@ -774,7 +774,7 @@ end subroutine sia2_conductivity
 				pc%rhum = rhum
 			endif		
 			!p_h2o = p_h2o_sat*pc%rhum
-			!pc%shum = 0.622_dbl_kind*p_h2o/(pres*c_01 - 1.622_dbl_kind*p_h2o)
+			!pc%shum = 0.622_r4*p_h2o/(pres*c_01 - 1.622_r4*p_h2o)
 			pc%rho_air = rhoair(Tair,pres*c100,pc%shum)	 ! covert pres to Pa
 		else	
 			pc%shum = shum
@@ -807,7 +807,7 @@ end subroutine sia2_conductivity
 		! incoming longwave irradiance
 		if (Fr .gt. c0) then
 			! find longwave emissivity basced on atmospheric cloud cover;  (König-Langlo & Augstein 1994)
-			epsa = 0.765_dbl_kind + 0.22_dbl_kind*(fc*c_01)**3 ! longwave emissivity of air
+			epsa = 0.765_r4 + 0.22_r4*(fc*c_01)**3 ! longwave emissivity of air
 			pc%Fl = epsa*steph_boltz*Tair**4
     else
       pc%Fl = Fl
@@ -817,7 +817,7 @@ end subroutine sia2_conductivity
 		pc%eps0 = eps_snow*pc%f_snow + eps_ice*(c1 - pc%f_snow) 
 
 		! find first static part of turbulent heat flux equation
-		pc%Fe_sub1 = 0.622_dbl_kind*(Lv*c1e3)*pc%rho_air*Ce*v10/(pres)  ! J/kg/K * kg/m^3 * (dimensionless) * m/s * 1/mbar = J/m^2/mbar/K
+		pc%Fe_sub1 = 0.622_r4*(Lv*c1e3)*pc%rho_air*Ce*v10/(pres)  ! J/kg/K * kg/m^3 * (dimensionless) * m/s * 1/mbar = J/m^2/mbar/K
 
 		! find second static part of turbulent heat flux equation
 		pc%Fe_sub2 = pc%Fe_sub1*(pc%rhum*(fe_A*Tair**4 &
@@ -846,15 +846,15 @@ end subroutine sia2_conductivity
 ! function p_sat 
 ! Purpose: saturation vapor pressure at temp  
 ! ----------------------------------------------------------------------
-	real(kind=dbl_kind) pure function p_sat(T) 
+	real(r4) pure function p_sat(T) 
 		
 		implicit none
 		
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			T							! Air temperature (K)
 			
-		p_sat = 6.1078_dbl_kind*10**( &
-			(7.5_dbl_kind*T-2048.625_dbl_kind) / (T-35.85_dbl_kind))  ! (mb)
+		p_sat = 6.1078_r4*10**( &
+			(7.5_r4*T-2048.625_r4) / (T-35.85_r4))  ! (mb)
 
 	end function p_sat
 
@@ -867,16 +867,16 @@ end subroutine sia2_conductivity
 !     temperature in T (K), and pressure P(mb) over 
 !			either water (mode = 0), or ice (mode = 1)
 ! ----------------------------------------------------------------------
-	real(kind=dbl_kind) pure function qsat(mode, T, P)
+	real(r4) pure function qsat(mode, T, P)
 
 		implicit none
 
-		integer, intent(in) :: &
+		integer(i4), intent(in) :: &
 			mode							! 1=ice, 0 = water
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			T,							& ! temperature (K)
 			P								! mean sea level pressure (mb)
-		real(kind=dbl_kind) :: &
+		real(r4) :: &
 			P_h2o							! partial pressure of h2o in air
 
     !if(mode == 1) THEN
@@ -900,7 +900,7 @@ end subroutine sia2_conductivity
 ! Purpose: air density (kg m-3) at temperature T, pressure P, 
 ! specific humidity H 
 ! ----------------------------------------------------------------------
-	real(kind=dbl_kind) pure function rhoair(T,P,H) 
+	real(r4) pure function rhoair(T,P,H) 
 		
 		use sia2_constants, only : &
 			R_air,				& ! universal gas constant for air
@@ -908,7 +908,7 @@ end subroutine sia2_conductivity
 		
 		implicit none
 
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			T,						&	! Air temperature (K)
 			P,						&	! Air pressure (Pa)
 			H								! Specific humidity (kg kg-1)
@@ -923,7 +923,7 @@ end subroutine sia2_conductivity
 ! function ice_albedo 
 ! Purpose: find ice albedo according to CICEv3 (originally tuned using SHEBA data) 
 ! ----------------------------------------------------------------------
-	real(kind=dbl_kind) pure function ice_albedo(Ts,ice_depth,f_snow) 
+	real(r4) pure function ice_albedo(Ts,ice_depth,f_snow) 
 		
 		use sia2_constants, only : &
 			nc1,				& ! -1
@@ -940,14 +940,14 @@ end subroutine sia2_conductivity
 
 	! Function Arguments
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			Ts,						&	! Ice/snow surface temperature (mb)
 			ice_depth,		&	! sea ice thickness
 			f_snow					! sea ice thickness
 			
 	! Internal Variables
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind) :: &
+		real(r4) :: &
 			albedo_i,			&	! intermediate ice albedo
 			albedo_s				! intermediate snow albedo
 
@@ -965,7 +965,7 @@ end subroutine sia2_conductivity
 		endif  
 		if (ice_depth .lt. c_5) then
 			! scale using atan function toward open water albedo as thickness approaches 0
-			albedo_i = albedo_i - (albedo_i-0.06_dbl_kind)* &        ! 0.06 = open water albedo
+			albedo_i = albedo_i - (albedo_i-0.06_r4)* &        ! 0.06 = open water albedo
 				(c1-atan(atan_c_i*ice_depth))
 		endif	
 		ice_albedo = f_snow*albedo_s + (c1-f_snow)*albedo_i
@@ -1023,7 +1023,7 @@ end subroutine sia2_conductivity
 ! %INPUT/OUTPUT PARAMETERS:
 !
 
-		 real(kind=dbl_kind), intent(in) :: &
+		 real(r4), intent(in) :: &
 				Tsf      , & ! surface temperature of ice or ocean (degC)
 				potT     , & ! air potential temperature  (K)          
 				wind     , & ! wind speed (m/s)
@@ -1031,17 +1031,17 @@ end subroutine sia2_conductivity
 				Qa       , & ! specific humidity (kg/kg)
 				rhoa         ! air density (kg/m^3)
 
-		 real(kind=dbl_kind), intent(out) :: &
+		 real(r4), intent(out) :: &
 				shcoef   , & ! transfer coefficient for sensible heat
 				lhcoef       ! transfer coefficient for latent heat
 ! !
 ! !EOP
 ! !
 ! 
-		 integer :: &
+		 integer(i4) :: &
 				k
 
-		 real(kind=dbl_kind) :: &
+		 real(r4) :: &
 				TsfK  , & ! surface temperature in Kelvin (K)
 				xqq   , & ! temporary variable
 				psimh , & ! stability function at zlvl   (momentum)
@@ -1054,7 +1054,7 @@ end subroutine sia2_conductivity
 				delq  , & ! humidity difference      (kg/kg)
 				Lheat     ! Lvap or Lsub, depending on surface type
 
-		 real(kind=dbl_kind) :: &
+		 real(r4) :: &
 				ustar , & ! ustar (m/s)
 				tstar , & ! tstar
 				qstar , & ! qstar
@@ -1073,7 +1073,7 @@ end subroutine sia2_conductivity
 				psixh     ! stability function at zlvl   (heat and water)
 
 			 ! from CICE 4 ice_constants.F90
-		real(kind=dbl_kind), parameter :: &
+		real(r4), parameter :: &
 			 c0 = 0.e0, &
 			 c1 = 1.e0, &
 			 c2 = 2.e0, &
@@ -1101,7 +1101,7 @@ end subroutine sia2_conductivity
 			 pih = 0.5*3.14159265358979323846e0 ! p5*pi
 								
 		 ! local functions
-		 real(kind=dbl_kind) :: &
+		 real(r4) :: &
 				xd    , & ! dummy argument
 				psimhu, & ! unstable part of psimh
 				psixhu    ! unstable part of psimx
@@ -1112,7 +1112,7 @@ end subroutine sia2_conductivity
 
 		 psimhu(xd)  = log((c1+xd*(c2+xd))*(c1+xd*xd)/c8) &
 								 - c2*atan(xd) + pih
-!ech                  - c2*atan(xd) + 1.571_dbl_kind
+!ech                  - c2*atan(xd) + 1.571_r4
 
 		 psixhu(xd)  =  c2 * log((c1 + xd*xd)/c2)
 
@@ -1250,22 +1250,22 @@ end subroutine sia2_conductivity
 !
 ! !INPUT/OUTPUT PARAMETERS:
 
-	real(kind=dbl_kind), intent(in) :: &
+	real(r4), intent(in) :: &
 		 Tsf      , & ! surface temperature in Kelvin (K)
 		 wind     , & ! wind speed (m/s)
 		 rhoa         ! air density (kg/m^3)
 
-	real(kind=dbl_kind), intent(out):: &
+	real(r4), intent(out):: &
 		 shcoef   , & ! transfer coefficient for sensible heat
 		 lhcoef       ! transfer coefficient for latent heat
 
 ! internal vars
 
-	real(kind=dbl_kind) :: &
+	real(r4) :: &
 		 Lheat   ! Lvap or Lsub, depending on surface type
 
 	! from CICE 4 ice_constants.F90
-	real(kind=dbl_kind), parameter :: &
+	real(r4), parameter :: &
 		 cp_air    = 1005.0  ,& ! specific heat of air (J/kg/K)
 		 Lsub      = 2.835e6 ,&   ! latent heat, sublimation freshwater (J/kg)
 		 Lvap      = 2.501e6      ! latent heat, vaporization freshwater (J/kg)
@@ -1317,7 +1317,7 @@ end subroutine sia2_conductivity
 		
 	! Function Arguments
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind), intent(in) :: &
+		real(r4), intent(in) :: &
 			t_ocn,									&	! ocean temperature (degC)
 			s_ocn,									&	! ocean salinity (psu)
 			d_ocn,									&	! ocean density (g m-3)
@@ -1327,12 +1327,12 @@ end subroutine sia2_conductivity
 			ud_ice										! ice velocity direction (radians)
 		logical(kind=log_kind), intent(in) :: &
 			fixed_mu								! downward longwave irradiance
-		real(kind=dbl_kind), intent(out) :: &
+		real(r4), intent(out) :: &
 			F_io										! ocean temperature (degC)
 
 	! Internal Variables
 	! --------------------------------------------------------------------
-		real(kind=dbl_kind) :: &
+		real(r4) :: &
 			t_frz,									&	! freezing temp of ocean water
 			tau_w,									&	! ice-ocean stress
 			mu_w											! friction velocity
@@ -1343,7 +1343,7 @@ end subroutine sia2_conductivity
 		! find mu
 		mu_w = mu_w_min
 		if (.not. fixed_mu) then
-			tau_w = 2585.0_dbl_kind    ! placeholder - equation not yet implemented 
+			tau_w = 2585.0_r4    ! placeholder - equation not yet implemented 
 			mu_w = sqrt(abs(tau_w)/d_ocn)
 			mu_w = max(mu_w,mu_w_min)
 		endif
@@ -1351,8 +1351,8 @@ end subroutine sia2_conductivity
 		! find freezing temperature of seawater
 		t_frz = s_ocn*mu
 		
-		!t_frz = (-0.0575_dbl_kind +1.710523e-3_dbl_kind *sqrt(s_ocn) &
-		!	-2.154996e-4_dbl_kind *s_ocn) * s_ocn  ! - 7.53e-4 *Db  ! <-- not including pressure part since this is at "surface"
+		!t_frz = (-0.0575_r4 +1.710523e-3_r4 *sqrt(s_ocn) &
+		!	-2.154996e-4_r4 *s_ocn) * s_ocn  ! - 7.53e-4 *Db  ! <-- not including pressure part since this is at "surface"
 		
 		! find ocean heat flux, > 0 is melting....
 		F_io = d_ocn*cw*chw*mu_w*(T_ocn - T_frz)

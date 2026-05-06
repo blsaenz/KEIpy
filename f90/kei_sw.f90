@@ -1,6 +1,6 @@
 
 MODULE kei_sw
-
+  use kei_kinds, only: i4, r4, r8, log_kind
     use kei_parameters
     use kei_common
     use macmods_kinds_mod
@@ -37,7 +37,7 @@ MODULE kei_sw
 
     PUBLIC
 
-    integer, parameter :: n_sw_output = 36
+    integer(i4), parameter :: n_sw_output = 36
 
     ! Keep these around, so we can write them out
     REAL(KIND=r8), DIMENSION(IMT,JMT), SAVE :: sw_lat,sw_lon,sw_sst, &
@@ -63,7 +63,7 @@ MODULE kei_sw
 
         real(kind=r8), intent(in) :: doy
         real(kind=r8) :: depth
-        integer :: i
+        integer(i4) :: i
 
         call macmods_get_depth(doy,depth)
         do i=0,NZ
@@ -77,7 +77,7 @@ MODULE kei_sw
 
     SUBROUTINE kei_sw_step(U,X,doy,dtday,nt,par_phyto,swh_in,mwp_in,cmag_in)
 
-        real :: U(NZP1,NVEL), X(NZP1,NSCLR) ! nvel=2 typically
+        real(r4) :: U(NZP1,NVEL), X(NZP1,NSCLR) ! nvel=2 typically
         real(kind=r8), intent(in) :: doy,swh_in,mwp_in,cmag_in,dtday
         integer(kind=i4), intent(in) :: nt
         REAL(KIND=r8), DIMENSION(IMT,JMT) :: f_values

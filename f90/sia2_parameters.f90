@@ -4,7 +4,7 @@
 
 module sia2_parameters
 
-	use sia2_constants, only: log_kind,int_kind,real_kind,dbl_kind
+	use kei_kinds, only: i4, r4, r8, log_kind
 	
 	implicit none
 
@@ -14,7 +14,7 @@ module sia2_parameters
 	! ------------------------------------------------------------
 	! run options
 	! ------------------------------------------------------------
-	integer(kind=int_kind), parameter :: &
+	integer(i4), parameter :: &
 		rstart 				=	0	    ,	&	!	1) use retart files to resume simulation 2) start new simulation	
 		adv_on 				=	1	    ,	&	!	advect ice according to ice motion product	
 		use_gpu  			=	1	    ,	&	!	perform delta-eddington light calculations using GPU card	
@@ -36,7 +36,7 @@ module sia2_parameters
 	! ------------------------------------------------------------
 	! start and end timing
 	! ------------------------------------------------------------
-	real(kind=dbl_kind), parameter :: &
+	real(r4), parameter :: &
 		begin_j_day 	=	71	    ,        & !	start date (decimal julian day)	
 		begin_year 		=	1997	    ,        & !	start year	
 		end_j_day 		=	182	    ,        & !	end date (decimal julian day)	
@@ -45,7 +45,7 @@ module sia2_parameters
 	! ------------------------------------------------------------
 	! output options
 	! ------------------------------------------------------------
-	integer(kind=int_kind), parameter :: &
+	integer(i4), parameter :: &
 		write_f 			=	24	    ,        & !	write frequency (hours)	
 		write_disk 		=	1	    ,        & !	actually write to disk - may not want to if debugging (1=yes, 0=no)	
 		wr_stations 	=	0	             !	write out station netcdf files - costly disk access, maybe want to supress	
@@ -54,7 +54,7 @@ module sia2_parameters
 	! grid resolution
 	! ------------------------------------------------------------
 
-	integer(kind=int_kind), parameter :: &
+	integer(i4), parameter :: &
 		n_max_floes 					= 40						, & ! maximum number of ice categories
 		z_max_ice 						= 42						, & ! maximum ice layers
 		z_max_snow						= 26						, & ! maximum snow layers
@@ -62,16 +62,16 @@ module sia2_parameters
 		z_int_min 						=	1	    				, & !	defines minimum number of model layers	
 		z_sk 									=	2	    				, & !	number of layers in skeletal layer	
 		pl_max 								= 30								! maximum platelet layers
-	real(kind=dbl_kind), parameter :: &
-		h_max 								= 10.0_dbl_kind , & ! 1maximum ice thickness (m)
-		pl_th 								= 0.02_dbl_kind , & ! platelet layer thickness (m)
-		bot_th 								= 0.2_dbl_kind  ,	&	! thickness of bottom section considered bottom ice (m from bottom)
-		sk_th_min 						=	0.001_dbl_kind, & !	minimum height of individual skeletal layer	
-		sk_th_max 						=	0.01_dbl_kind	, & !	maximum height of individual skeletal layer	
-		z_th_min 							=	0.02_dbl_kind	 ,	& !	minimum height of individual layer	
-		z_th_max 							=	0.3937376_dbl_kind,	& !	maximum height of individual layer	
-		z_th_fr 							=	0.01_dbl_kind	,	& !	default new consolidated frazil ice thickness
-		z_th_crit 						=	0.02_dbl_kind	,	& !	critical height of individual layer, below which a smaller physics timestep mut be used (m)
+	real(r4), parameter :: &
+		h_max 								= 10.0_r4 , & ! 1maximum ice thickness (m)
+		pl_th 								= 0.02_r4 , & ! platelet layer thickness (m)
+		bot_th 								= 0.2_r4  ,	&	! thickness of bottom section considered bottom ice (m from bottom)
+		sk_th_min 						=	0.001_r4, & !	minimum height of individual skeletal layer	
+		sk_th_max 						=	0.01_r4	, & !	maximum height of individual skeletal layer	
+		z_th_min 							=	0.02_r4	 ,	& !	minimum height of individual layer	
+		z_th_max 							=	0.3937376_r4,	& !	maximum height of individual layer	
+		z_th_fr 							=	0.01_r4	,	& !	default new consolidated frazil ice thickness
+		z_th_crit 						=	0.02_r4	,	& !	critical height of individual layer, below which a smaller physics timestep mut be used (m)
 		h_crit                = z_th_min*(z_max_ice-z_sk), & ! height where grid shifts to accordion style
     th_min                = z_th_min*z_int_min
 
@@ -80,7 +80,7 @@ module sia2_parameters
 	! ------------------------------------------------------------
 
 		! timing
-		real(kind=dbl_kind), save :: &
+		real(r4), save :: &
 			dt 						=	1	    ,        & !	length of time step (hours)	
 			dt_sub_1 			=	0.2	    ,        & !	fraction of main timestep for ice physics - normal is 0.05	
 			dt_sub_2 			=	0.05	    ,        & !	fraction of main timestep for fast-changing ice physics - normal is 0.005	
@@ -89,7 +89,7 @@ module sia2_parameters
 			dt_sub_2_tol 	=	1.3	             !	minimum temperature tolerance for use of dt_sub_2 (dec C)	
 
 		! ocean
-		real(kind=dbl_kind), save :: &
+		real(r4), save :: &
 			Fw 						=	7.0	    ,        & !	Oceanic heat flux from water (W/m^2) (1.195 cal/m^2/sec * 4.1868 W*s/cal = 5 W/m^2 in Arrigo, others?)	
 			Sw 						=	34.1	    ,        & !	salinity of seawater (psu) - normal = 34.95 (33.33)	
 			Sd 						=	1027693	    ,        & !	density of seawater  (g/m^3)	
@@ -102,36 +102,36 @@ module sia2_parameters
 			alg_wc 				=	35	             !	water column algal concentration - used when freezing/flooding/creating new ice (mgC/m^3)	
 
 		! snow & ice
-		integer(kind=int_kind), parameter :: &
+		integer(i4), parameter :: &
 			ic_n 									= 5							, & ! ice thickness categories (between 1 and 10)
 			sc_n 									= 2 						, & ! lognormal snow thickness categories (currently, either 1 or 2) 
 			la 										= 1 						, & ! lognormal light adjustment categories (between 1 and 9)
 			snow_model 		=	1	    ,	&	!	snow model type	
 			icecon_mod 		=	2	    ,	&	!	modify satellite ice concentration (0=no modification, 1=90%->100%, 2=80%->100%)	
 			grid_model 		=	2	    		!	determines how vertical ice grid is constructed (0 = equally spaced grid, 1 = higher resolution at top/bottom, 2 = variable number of layers)	
-		real(kind=dbl_kind), parameter :: &
-			ksnow 				=	0.33_dbl_kind,        & !	standard snow conductivity (W/m/K) (somewhere i found = 0.0741Cal/m/s/degC)	
-			den_s_dry 		=	0.35_dbl_kind,        & !	density dry snow (g/cm^3)	
-			den_s_wet 		=	0.35_dbl_kind,        & !	density wet snow (g/cm^3)	
-			den_s_switch 	=	-2.0_dbl_kind,        & !	temperature above which wet snow falls, below which dry snow falls	
-			bb_f 					=	0.03_dbl_kind,        & !	bubble fraction in sea ice - causes density to be decreased by this amount	
-			eps0_s 				= 0.97_dbl_kind,     & ! long-wave emissivity of snow surface - 
-			eps0_i 				= 0.99_dbl_kind,     & ! long-wave emissivity of ice surface - 
+		real(r4), parameter :: &
+			ksnow 				=	0.33_r4,        & !	standard snow conductivity (W/m/K) (somewhere i found = 0.0741Cal/m/s/degC)	
+			den_s_dry 		=	0.35_r4,        & !	density dry snow (g/cm^3)	
+			den_s_wet 		=	0.35_r4,        & !	density wet snow (g/cm^3)	
+			den_s_switch 	=	-2.0_r4,        & !	temperature above which wet snow falls, below which dry snow falls	
+			bb_f 					=	0.03_r4,        & !	bubble fraction in sea ice - causes density to be decreased by this amount	
+			eps0_s 				= 0.97_r4,     & ! long-wave emissivity of snow surface - 
+			eps0_i 				= 0.99_r4,     & ! long-wave emissivity of ice surface - 
 			eps_snow 			=	eps0_s	    , 		& !	long wave emissivity of snow (%)	
 			eps_ice 			=	eps0_i	    , 		& !	long wave emissivity of ice (%)	
-			atan_max 			= 1.557407724654902_dbl_kind,	&	! = tan(1), used for atan function multiplier			
-      atan_c_i = atan_max/0.5_dbl_kind,  &	! 0.5 m is the cutoff for the atan function that describes albedo
-			chw 					=	0.006_dbl_kind, 	& !	ocean-ice heat transfer coefficient
-      mu_w_min 			= 0.05_dbl_kind,   	&	! minimum friction velocity between ice and ocean, for use in ocean heat flux calc
-      Fm_a_switch 	= 0.90_dbl_kind,   	&	! grid cell area above which mixed layer frazil is applied to bottom of ice
-      mean_floe_diameter 	= 30.0_dbl_kind,   	&	
-      alpha_lateral_melt 	= 0.66_dbl_kind,   		& 
+			atan_max 			= 1.557407724654902_r4,	&	! = tan(1), used for atan function multiplier			
+      atan_c_i = atan_max/0.5_r4,  &	! 0.5 m is the cutoff for the atan function that describes albedo
+			chw 					=	0.006_r4, 	& !	ocean-ice heat transfer coefficient
+      mu_w_min 			= 0.05_r4,   	&	! minimum friction velocity between ice and ocean, for use in ocean heat flux calc
+      Fm_a_switch 	= 0.90_r4,   	&	! grid cell area above which mixed layer frazil is applied to bottom of ice
+      mean_floe_diameter 	= 30.0_r4,   	&	
+      alpha_lateral_melt 	= 0.66_r4,   		& 
       melt_f_denom = mean_floe_diameter*alpha_lateral_melt 
 
 		! ice desalination and fluid transfer
-		integer(kind=int_kind), parameter :: &
+		integer(i4), parameter :: &
 			desal 				=	7	             !	desalination type (0 = normal, 1 = with brine replacement, 2 = dtt brine flux)	
-		real(kind=dbl_kind), save :: &
+		real(r4), save :: &
 			bv_conv 			=	200.	   ,        & !	critical brine volume at which desal switches from direct convection to relative conv.	
 			f_sk 					=	0.5	    ,        & !	fraction of skeletal layer open to convection	
 			fb 						=	0.0511	    ,        & !	fraction of brine tube layer that is brine tubes	
@@ -141,7 +141,7 @@ module sia2_parameters
 			dbvdt_scale 	=	1.0	             !	scaling factor for desal dilution			
 
 		! irradiance
-		real(kind=dbl_kind), parameter :: &
+		real(r4), parameter :: &
 			alb_s_dry 		=	0.98	    ,        & !	standard albedo dry snow (%)	
 			alb_s_wet 		=	0.88	    ,        & !	standard albedo wet snow (%)	
 			alb_i_dry 		=	0.58	    ,        & !	standard albedo of sea ice (%)	
@@ -149,13 +149,13 @@ module sia2_parameters
 			h_snowpatch 	=	0.02	    ,        & !	contant that determines the bare ice/snow covered ice ratio for a given snowdepth	
 			par_to_swd 		=	2	    ,        & !	energy conversion factor between PAR (400-700nm) irradiance to total shortwave downward irradiance (250-4000nm) (energy/energy units) - 2.034 calc clear sky	
 			a_ice_ir 			=	7.18	             !	weighted-mean ice absorption coefficient for near-IR (700-4000nm)	
-		integer(kind=int_kind), parameter :: &
+		integer(i4), parameter :: &
 			par_cf 				=	0	             !	use climatology could fraction to correct par (0=off (cf already included in par), 1=yes)	
 
 		! biology
-		integer(kind=int_kind), parameter :: &
+		integer(i4), parameter :: &
 			alg_mig 			=	1	             !	algae migration (0=algae stay put verticaly, 1=algae move with their respective layers while ice grows (quasi-movement))
-		real(kind=dbl_kind), parameter :: &
+		real(r4), parameter :: &
 			Ek_max 				=	18	    ,        & !	Spectral photoaclimation parameter (microEin*m-2*s-1)	
 			A 						=	1.4	    ,        & !	parameter of light utilization equation (dimensionless)	
 			B 						=	0.12	    ,        & !	parameter of light utilization equation (dimensionless)	
@@ -177,17 +177,17 @@ module sia2_parameters
 			min_alg 			=	3.5	             !	minimum microalgal concentration (mgC/m^3)	
 
 		! initialization
-		integer(kind=int_kind), parameter :: &
+		integer(i4), parameter :: &
 			iit 					=	1	    ,        & !	intial ice temp (0 = use linear gradient w/ airtemp as inital ice temp, 1 = use water temp)	
 			iis 					=	0	    ,        & !	initial ice salinity (0 = use s_cont constant salinity 1 = use standard 1st year ice "C" curve, 2 = multiyear ice curve)	
 			iin 					=	4	    ,        & !	initial ice nutrients (0 = full nutrients upon ice creation, 1 = linear depleted nutrients, 2=very little nutrients, 4=seawater nutrients in brine)	
 			iif 					=	0	             !	initial snow flooding (m) - used only in validation mode	
-		real(kind=dbl_kind), save :: &
+		real(r4), save :: &
 			s_const 			=	9	    ,        & !	salinity constant to use if iis paramater is set to 0	
 			n_f 					=	0.3	             !	nutrient fraction - used to scale inital forcing nutirent concentrations if iin set to 2	
 
 		! other parameters
-		integer(kind=int_kind), save :: &
+		integer(i4), save :: &
 			ts_is_at 			=	0	    ,        & !	short-circuit atmospheric heat transfer by fixing surface temp to air temp (0=off 1=on)	
 			kevin_light 	=	0	    ,        & !	use Kevin's light model instead of gregg&carder 1990 (0=off 1=on)	
 			use_pl 				=	0	    ,        & !	use a platelet layer - only works if validaiton is on (0=off 1=on)	
@@ -200,7 +200,7 @@ module sia2_parameters
 			max_it 				=	100	    ,        & !	Newton-Raphson maximum iterations	
 			snow_ridging 	=	0	    ,	&	!	1=conserve snow mass during ridging,0=don't ridge up snow (w/ mass loss)	
 			snow_in_gaps 	=	1	             !	determines whether snow is inserted into ridging gaps, or just seawater	
-		real(kind=dbl_kind), save :: &
+		real(r4), save :: &
 			min_sal 			=	0.1	    ,        & !	minimum bulk ice salinity (ppt)	
 			nr_tol 				=	0.005	    ,        & !	Newton-Raphson method tolerance for surface temp (T0)	
 			gl_max_f 			=	0.075	    ,        & !	fraction of minimum layer height that is the trigger for boundary adjustment	
@@ -228,18 +228,18 @@ module sia2_parameters
 	! ------------------------------------------------------------
 
 		! external/2D tracers
-		integer(kind=int_kind), parameter :: &
+		integer(i4), parameter :: &
 			n_2t									= 4  								! number of 2D tracers
-		integer(kind=int_kind), parameter :: &
+		integer(i4), parameter :: &
 			age_i									= 1, 							& !	
 			ridged_i							= 2, 							& !
 			snow_dist_i						= 3, 							& !
 			snow_rd_i							= 4                 !
 
 		! internal/3D tracers
-		integer(kind=int_kind), parameter :: &
+		integer(i4), parameter :: &
 			n_3t 									= 5  								! number of 3D tracers		
-		integer(kind=int_kind), parameter :: &
+		integer(i4), parameter :: &
 			no3_i									= 1, 							& !
 			nh4_i									= 2, 							& !
 			po4_i									= 3, 							& !
@@ -251,9 +251,9 @@ module sia2_parameters
 	! ------------------------------------------------------------
 	! ice fluxes - sign is out of ice
 	! ------------------------------------------------------------
-		integer(kind=int_kind), parameter :: &
+		integer(i4), parameter :: &
 			n_flx									= 26  						! number of ice fluxes
-		integer(kind=int_kind), parameter :: &
+		integer(i4), parameter :: &
 			w_smelt 						= 1, 							& !
 			w_bmelt 						= 2, 							& !
 			w_bfreeze 					= 3, 							& !
@@ -285,9 +285,9 @@ module sia2_parameters
 	! ------------------------------------------------------------
 	! ice thickness change tracking variables
 	! ------------------------------------------------------------
-		integer(kind=int_kind), parameter :: &
+		integer(i4), parameter :: &
 			n_dh									= 17  						! number of ice thickness changes
-		integer(kind=int_kind), parameter :: &
+		integer(i4), parameter :: &
 			sn_precip 					= 1, 							& !
 			sn_melt 						= 2, 							& !
 			sn_subl 						= 3, 							& !
@@ -309,7 +309,7 @@ module sia2_parameters
 	! ------------------------------------------------------------
 	! input data grid indexes
 	! ------------------------------------------------------------          
-	integer(kind=int_kind), parameter :: &
+	integer(i4), parameter :: &
 			mp_x									= 192						, & ! NCEP/DOE II x bound
 			mp_y									= 94						, & ! NCEP/DOE II y bound
 			ec_x									= 144						, & ! ECMWF 40-yr Reanalysis x bound
@@ -324,7 +324,7 @@ module sia2_parameters
 		! ------------------------------------------------------------
 		! model domain grid indexes based on southern hemisphere EASE grid
 		! ------------------------------------------------------------          
-		integer(kind=int_kind), parameter :: &
+		integer(i4), parameter :: &
 			grid_v								= 721						, & !
 			grid_h								= 721						, & !
 			h1_ncep_i							= 202						, & !
@@ -335,7 +335,7 @@ module sia2_parameters
 		! ------------------------------------------------------------
 		! Enumerations
 		! ------------------------------------------------------------
-		integer(kind=int_kind), parameter :: &
+		integer(i4), parameter :: &
 			ncep_at								= 1					, & !
 			ncep_p 								= 2					, & !
 			ncep_h 								= 3					, & !
@@ -343,7 +343,7 @@ module sia2_parameters
 			ncep_u10							= 5					, & !
 			ncep_v10							= 6					, & !
 			ncep_pr								= 7							!
-		integer(kind=int_kind), parameter :: &
+		integer(i4), parameter :: &
 			woa_t									= 1					, & !
 			woa_s									= 2					, & !
 			woa_n									= 3					, & !
@@ -353,20 +353,20 @@ module sia2_parameters
 		! ------------------------------------------------------------
 		! All kinds of parameters
 		! ------------------------------------------------------------
-    real(kind=dbl_kind), parameter :: &
-    	ki_min 								= 0.563_dbl_kind			, & !  minimum sea ice thermal conductivity (W/m/K)
-			pond_f_perc 					= 0.3e0_dbl_kind	    , & ! fraction of ponded/melt water that pushed down through brine network
-			af_min 								= 5.0e-9_dbl_kind     , & ! minimum areal fraction of ice in a grid cell
-      Ce 										= 2.1e-3_dbl_kind      , & ! coefficient of turbulent latent heat transfer (water vapor?)
-      Ch 										= 2.0e-3_dbl_kind      , & ! coefficient of turbulent sensible heat transfer
-      cp 										= 1005.0_dbl_kind       ! J/kg/K 
+    real(r4), parameter :: &
+    	ki_min 								= 0.563_r4			, & !  minimum sea ice thermal conductivity (W/m/K)
+			pond_f_perc 					= 0.3e0_r4	    , & ! fraction of ponded/melt water that pushed down through brine network
+			af_min 								= 5.0e-9_r4     , & ! minimum areal fraction of ice in a grid cell
+      Ce 										= 2.1e-3_r4      , & ! coefficient of turbulent latent heat transfer (water vapor?)
+      Ch 										= 2.0e-3_r4      , & ! coefficient of turbulent sensible heat transfer
+      cp 										= 1005.0_r4       ! J/kg/K 
 
 		! ------------------------------------------------------------
 		! Model globals/parameters assigned during run or from
 		! constant.txt run file
 		! ------------------------------------------------------------
 	
-		real(kind=dbl_kind), allocatable :: &
+		real(r4), allocatable :: &
 				ida_multiplier(:),        &	!
 				lda_multiplier(:),        &	!
 				sda_multiplier(:)	        	!
@@ -375,7 +375,7 @@ module sia2_parameters
 				start,      							&	!
 				do_write,       					&	!
 				z_odd												!
-		real(kind=dbl_kind), save, dimension (301) :: &
+		real(r4), save, dimension (301) :: &
 				aice, &
 				aph, &
 				awater, &
@@ -395,26 +395,26 @@ module sia2_parameters
 				mp_grid_int2(:,:), &
 				ec_grid_int2(:,:), &
 				eci_grid_int2(:,:)
-		real(kind=dbl_kind), save, pointer :: &
+		real(r4), save, pointer :: &
 				kds_wet(:), &
 				kds_dry(:), &
 				lambda(:), &
 				quanta_to_watts(:)              
-		real(kind=dbl_kind), save, dimension (130) :: &
+		real(r4), save, dimension (130) :: &
 				mc_prod
-		real(kind=dbl_kind), save, dimension (ic_n) :: &
+		real(r4), save, dimension (ic_n) :: &
 				ic_h_max, &
 				ic_h_med, &
 				ic_h_min              
 
-		integer(kind=int_kind), save :: &
+		integer(i4), save :: &
 			steps, last_day, last_hour, last_year, icevec_index,skdump, &
 			dtt_1,dtt_2,dtt_3,n_dtt_1,n_dtt_2,n_dtt_3,snow_loaded, &
 			mdh, mdv, last6hour,last12hour,n_stations,snowd_index, &
 			hour24,tcells,sda_n, last3hour,ida_norm_n,lda_n,lda_norm_n, &
 			f_index,f_index_next,i_temp,pur_clock,icecon_index
 
-		real(kind=dbl_kind), save :: &
+		real(r4), save :: &
 			pur_stepper,sk_h,bt_h,next_write_hour,aph_max,dt_s, &
 			b_flux_max_tot,dt_years,dt_days, &
 			dtt_s_1,dtt_s_2,dtt_s_3,cur_month,ida_d,lda_d,ad_denom, &

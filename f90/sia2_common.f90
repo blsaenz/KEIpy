@@ -1,14 +1,14 @@
 module sia2_common
-	
+  use kei_kinds, only: i4, r4, r8, log_kind
 	use sia2_parameters
 
 	public
 	
-		real(kind=dbl_kind), allocatable :: ida_multiplier(:)
-		real(kind=dbl_kind), allocatable :: lda_multiplier(:)
-		real(kind=dbl_kind), allocatable :: sda_multiplier(:)
+		real(r4), allocatable :: ida_multiplier(:)
+		real(r4), allocatable :: lda_multiplier(:)
+		real(r4), allocatable :: sda_multiplier(:)
 
-		real(kind=dbl_kind), save, dimension (301) :: &
+		real(r4), save, dimension (301) :: &
 				aice, &
 				aph, &
 				awater, &
@@ -28,14 +28,14 @@ module sia2_common
 				mp_grid_int2(:,:), &
 				ec_grid_int2(:,:), &
 				eci_grid_int2(:,:)
-		real(kind=dbl_kind), save, pointer :: &
+		real(r4), save, pointer :: &
 				kds_wet(:), &
 				kds_dry(:), &
 				lambda(:), &
 				quanta_to_watts(:)              
-		real(kind=dbl_kind), save, dimension (130) :: &
+		real(r4), save, dimension (130) :: &
 				mc_prod
-		real(kind=dbl_kind), save, dimension (ic_n) :: &
+		real(r4), save, dimension (ic_n) :: &
 				ic_h_max, &
 				ic_h_med, &
 				ic_h_min              

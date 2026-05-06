@@ -26,6 +26,7 @@ f2py -c -m64 -02 -fopenmp -fdec-math mag_kinds_mod.f90 mag_parameters_mod.f90 ma
 #from calendar import isleap
 import math, os
 import numpy as np
+import pandas as pd
 #import h5py
 #from matplotlib.dates import date2num,num2date
 from numba import jit
@@ -591,10 +592,40 @@ def specific_from_relative_humidity( at, rh, pr ):
     return (hum, qz)
 
 def doy_from_datetime64(dt64):
-    doy = float(dt64.dt.dayofyear.values) # 'dt accessor' must used on DataArray (in this case it is a 0-D DataArray, so values is a single value)
-    doy_seconds = dt64.dt.hour*3600. + dt64.dt.minute*60. + dt64.dt.second \
-                  + dt64.dt.microsecond * 1.e-6
-    return doy + doy_seconds.item() / 86400.
+    """Day of year (1-based) plus fractional day from time-of-day.
+
+    ``kei.compute`` passes a 0-D time slice from ``f_time`` (often cftime via
+    ``xr.date_range(..., use_cftime=True)``). The old implementation added several ``dt64.dt.*``
+    DataArrays; xarray then runs alignment / ``_binary_op``, which can segfault
+    on some builds when mixing cftime components. We reduce to a plain scalar
+    first, then compute in pandas or with cftime fields.
+    """
+    if isinstance(dt64, xr.DataArray):
+        t = dt64.item()
+    else:
+        t = dt64
+
+    if isinstance(t, np.datetime64):
+        ts = pd.Timestamp(t)
+    elif hasattr(t, "dayofyr"):
+        # cftime.*Datetime* — dayofyr matches Fortran calendar conventions here
+        frac = (
+            t.hour * 3600.0
+            + t.minute * 60.0
+            + t.second
+            + getattr(t, "microsecond", 0) * 1.0e-6
+        ) / 86400.0
+        return float(t.dayofyr) + frac
+    else:
+        ts = pd.Timestamp(t)
+
+    frac = (
+        ts.hour * 3600.0
+        + ts.minute * 60.0
+        + ts.second
+        + ts.microsecond * 1.0e-6
+    ) / 86400.0
+    return float(ts.dayofyear) + frac
 
 
 def write_get_set_f90_code(params):

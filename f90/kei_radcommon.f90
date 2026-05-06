@@ -1,5 +1,5 @@
 module kei_radcommon
-
+  use kei_kinds, only: i4, r4, r8, log_kind
 !    common-blocks for radiative/convective model
 !    includes :
 !    comtim, drnl, global, prt, crdcon, crdcae, crdctl, crdalb
@@ -7,37 +7,37 @@ module kei_radcommon
 !     !   Basic grid point resolution parameters
 		implicit none
 
-    integer, parameter :: plev    = 18      !  number of vertical levels
-    integer, parameter :: plevp   = plev+1  !  number of vertical interfaces
-    integer, parameter :: plon    = 1       !  number of longitudes (T42)
-    integer, parameter :: plat    = 1       !  number of latitudes (T42)
-    integer, parameter :: plond   = 1       !  slt extended domain longitude
-    integer, parameter :: psave   = 10      ! number of extra rad/conv variables
+    integer(i4), parameter :: plev    = 18      !  number of vertical levels
+    integer(i4), parameter :: plevp   = plev+1  !  number of vertical interfaces
+    integer(i4), parameter :: plon    = 1       !  number of longitudes (T42)
+    integer(i4), parameter :: plat    = 1       !  number of latitudes (T42)
+    integer(i4), parameter :: plond   = 1       !  slt extended domain longitude
+    integer(i4), parameter :: psave   = 10      ! number of extra rad/conv variables
 !                                    to be stored
 
 !               plond= plon + 1 + 2*nxpt, !slt extended domain longitude
 
 ! model control time variables ********************************** comtim
 
-    DOUBLE PRECISION, save :: calday ! an change calday to double precision
-    integer, save :: nstep
+    REAL(r8), save :: calday ! an change calday to double precision
+    integer(i4), save :: nstep
 
 ! diurnal cycle switch; if true, does diurnal cycle *************** drnl
 
-    logical, save :: diurnal
+    logical(kind=log_kind), save :: diurnal
 
 ! global mean switch; if true, does global mean computation ***** global
 
     ! common /glbl/ global
-    logical, save :: globl ! changes from global, which is keywork in fortran 90 - saenz 7/2011
+    logical(kind=log_kind), save :: globl ! changes from global, which is keywork in fortran 90 - saenz 7/2011
 !
 ! clear sky switch; if true, does diagn. clear sky comp. ****** clearsky
 
-    logical, save :: clrsky
+    logical(kind=log_kind), save :: clrsky
 !
 ! radiation constants ******************************************* crdcon
 
-    real, save :: gravit,   & !  gravitational acceleration
+    real(r4), save :: gravit,   & !  gravitational acceleration
     rga,   & !  1 over gravit
     cpair,   & !  heat capacity air at constant pressure
     epsilo,   & !  ratio mmw h2o to mmw air
@@ -53,17 +53,17 @@ module kei_radcommon
 
 ! water vapor narrow band constants for lw computations ********* crdcae
 
-    real, dimension(2), save :: realk,st,a1,a2,b1,b2
+    real(r4), dimension(2), save :: realk,st,a1,a2,b1,b2
 
 ! constant coefficients for water vapor absorptivity and emissivi
 
-    real, dimension(3,4), save :: coefa, coefc, coefe
-    real, dimension(4,4), save :: coefb, coefd
-    real, dimension(6,2), save :: coeff, coefi
-    real, dimension(2,4), save :: coefg, coefh
-    real, dimension(3,2), save :: coefj, coefk
-    real, dimension(4), save :: c1,c2,c3,c4,c5,c6,c7
-    real, save :: c8 ,c9 ,c10,c11,c12,c13,c14,c15,c16,c17, &
+    real(r4), dimension(3,4), save :: coefa, coefc, coefe
+    real(r4), dimension(4,4), save :: coefb, coefd
+    real(r4), dimension(6,2), save :: coeff, coefi
+    real(r4), dimension(2,4), save :: coefg, coefh
+    real(r4), dimension(3,2), save :: coefj, coefk
+    real(r4), dimension(4), save :: c1,c2,c3,c4,c5,c6,c7
+    real(r4), save :: c8 ,c9 ,c10,c11,c12,c13,c14,c15,c16,c17, &
     	c18,c19,c20,c21,c22,c23,c24,c25,c26,c27, &
     	c28,c29,c30,c31
 
@@ -72,7 +72,7 @@ module kei_radcommon
 ! deficiencies in narrow-band model used to derive the
 ! emissivity. tuned with arkings line calculations.
 
-        real, save :: fwcoef,fwc1,fwc2,fc1,cfa1
+        real(r4), save :: fwcoef,fwc1,fwc2,fc1,cfa1
 
 
 ! radiation control variables *********************************** crdctl
@@ -85,8 +85,8 @@ module kei_radcommon
 ! emissivity computation
 
 
-    integer, save :: iradae,irad,naclw,nacsw,fnlw,fnsw
-    logical, save :: aeres
+    integer(i4), save :: iradae,irad,naclw,nacsw,fnlw,fnsw
+    logical(kind=log_kind), save :: aeres
 
 
 ! surface albedo data ******************************************* crdalb
@@ -103,7 +103,7 @@ module kei_radcommon
 ! together along coastlines; the fraction of every grid box that has
 ! strong zenith angle dependence is included also.
 
-    real, dimension(plond,plat), save :: & 
+    real(r4), dimension(plond,plat), save :: & 
     albvss, & !  grid box alb for vs over strng zn srfs
     albvsw, & !  grid box alb for vs over weak  zn srfs
     albnis, & !  grid box alb for ni over strng zn srfs
@@ -117,42 +117,13 @@ module kei_radcommon
 ! vegetation dataset values; ocean and land values are averaged together
 ! at coastlines.
 
-    real, dimension(plond,plat), save :: &
+    real(r4), dimension(plond,plat), save :: &
     rghnss  ! aerodynamic roughness length
 
-
-! FROM: -------------------- atmrad.com
-
-! common arguments for "init_atm" and "atmstep" and "prtprof"
-
-    integer, save :: nrow             !  latitude row index
-    real, save :: clat                !  Current latitude (radians)
-    real, save :: oro(plond)          !  land/ocean/sea ice flag
-    real, save :: sndpth(plond)       !  snow depth (liquid water equivalent)
-    real, save :: ps(plond)           !  surface pressure
-    real, save :: pmid(plond,plev)    !  model level pressures
-    real, save :: pint(plond,plevp)   !  model interface pressures
-    real, save :: pmln(plond,plev)    !  natural log of pmid
-    real, save :: piln(plond,plevp)   !  natural log of pint
-    real, save :: t(plond,plev)       !  model level temperatures
-    real, save :: h2ommr(plond,plev)  !  model level specific humidity
-    real, save :: o3mmr(plond,plev)   !  ozone mass mixing ratio
-    real, save :: cldfrc(plond,plevp) !  fractional cloud cover
-    real, save :: effcld(plond,plevp) !  effective fractional cloud cover
-    real, save :: clwp(plond,plev)    !  cloud liquid water path
-    real, save :: plol(plond,plevp)   !  o3 pressure weighted path lengths (cm)
-    real, save :: plos(plond,plevp)   !  o3 path lengths (cm)
-    real, save :: tstep               !  time step in seconds
-    integer, save :: numavg           ! number of iterations for averaging
-    real, save :: clon(plon)          !  longitude        (radians)
-    real, save :: tIN(plond,plev)     !  model level temperatures   from INPUT
-    real, save :: h2ommrIN(plond,plev)! model level spec. humidity from INPUT
-    character (len=80), save :: &
-			label,     & 										!  labels from INPUT
-			tlabel, &
-			dlabel
-
-
+!  Former ``atmrad.com`` column state (``nrow``, ``pmid``, ``t``, …) lived in
+!  ``kei_atmradcommon.f90`` and here; nothing in the current KEI link/use graph
+!  referenced it. Removed as unused — revive from CCM-era sources if rad/conv
+!  coupling is restored.
 
 end module kei_radcommon
 

@@ -1,86 +1,67 @@
 
 MODULE kei_parameters
 
+  use kei_kinds, only: i4, r4, r8, log_kind
+
   IMPLICIT NONE
 
   PUBLIC
 
-  INTEGER, PARAMETER :: NZ = 48
-  INTEGER, PARAMETER :: NZM1 = NZ-1
-  INTEGER, PARAMETER :: NZP1 = NZ+1
-  INTEGER, PARAMETER :: NDIM = 1
-  INTEGER, PARAMETER :: NX = 1
-  INTEGER, PARAMETER :: NY = 1
-  INTEGER, PARAMETER :: NVEL = 2
-  INTEGER, PARAMETER :: NSCLR = 2+24
-  INTEGER, PARAMETER :: NVP1 = NVEL+1
-  INTEGER, PARAMETER :: NSP1 = NSCLR+1
-  INTEGER, PARAMETER :: NSB = 1 ! NSCLR-2
+  INTEGER(i4), PARAMETER :: NZ = 400
+  INTEGER(i4), PARAMETER :: NZM1 = NZ-1
+  INTEGER(i4), PARAMETER :: NZP1 = NZ+1
+  INTEGER(i4), PARAMETER :: NDIM = 1
+  INTEGER(i4), PARAMETER :: NX = 1
+  INTEGER(i4), PARAMETER :: NY = 1
+  INTEGER(i4), PARAMETER :: NVEL = 2
+  INTEGER(i4), PARAMETER :: NSCLR = 2+24
+  INTEGER(i4), PARAMETER :: NVP1 = NVEL+1
+  INTEGER(i4), PARAMETER :: NSP1 = NSCLR+1
 
-  INTEGER, PARAMETER :: n_sw_outputs = 36 ! This lives here, and in macmods, n_outputs = 36.  How to fix? could use an alloceable array for storage, probably should
+  INTEGER(i4), PARAMETER :: n_sw_outputs = 36 ! This lives here, and in macmods, n_outputs = 36.  How to fix? could use an alloceable array for storage, probably should
 
 
-  INTEGER, PARAMETER :: itermax = 15
-  REAL, PARAMETER :: hmixtolfrac = 0.5
+  INTEGER(i4), PARAMETER :: itermax = 15
+  REAL(r8), PARAMETER :: hmixtolfrac = 0.5_r8
 
   ! temporary grid
-  INTEGER, PARAMETER :: NGRID = 1
-  INTEGER, PARAMETER :: NZL = 1
-  INTEGER, PARAMETER :: NZU = 2
-  INTEGER, PARAMETER :: NZDIVmax = 8
-  INTEGER, PARAMETER :: NZtmax = NZ +(NZL+NZU)*(NZDIVmax-1)
-  INTEGER, PARAMETER :: NZP1tmax = NZtmax+1
-  INTEGER, PARAMETER :: igridmax = 5
+  INTEGER(i4), PARAMETER :: NGRID = 1
+  INTEGER(i4), PARAMETER :: NZL = 1
+  INTEGER(i4), PARAMETER :: NZU = 2
+  INTEGER(i4), PARAMETER :: NZDIVmax = 8
+  INTEGER(i4), PARAMETER :: NZtmax = NZ +(NZL+NZU)*(NZDIVmax-1)
+  INTEGER(i4), PARAMETER :: NZP1tmax = NZtmax+1
+  INTEGER(i4), PARAMETER :: igridmax = 5
 
   ! fluxes and forcing
-  INTEGER, PARAMETER :: NSFLXS = 9
-  INTEGER, PARAMETER :: NJDT = 1
-  INTEGER, PARAMETER :: NSFLXSM1 = NSFLXS-1
-  INTEGER, PARAMETER :: NSFLXSP2 = NSFLXS+2
-  INTEGER, PARAMETER :: NFDATA = 13
-  INTEGER, PARAMETER :: NFDATAP1 = NFDATA+1
-  INTEGER, PARAMETER :: NDHARM = 5
+  INTEGER(i4), PARAMETER :: NSFLXS = 9
+  INTEGER(i4), PARAMETER :: NJDT = 1
+  INTEGER(i4), PARAMETER :: NSFLXSM1 = NSFLXS-1
+  INTEGER(i4), PARAMETER :: NSFLXSP2 = NSFLXS+2
+  INTEGER(i4), PARAMETER :: NFDATA = 13
+  INTEGER(i4), PARAMETER :: NFDATAP1 = NFDATA+1
+  INTEGER(i4), PARAMETER :: NDHARM = 5
 
   ! richardson mixing
-  INTEGER, PARAMETER :: MR = 100
-  INTEGER, PARAMETER :: MRP1 = MR+1
+  INTEGER(i4), PARAMETER :: MR = 100
+  INTEGER(i4), PARAMETER :: MRP1 = MR+1
 
   ! rad/conv model
-  INTEGER, PARAMETER :: NPLEV  = 18
-  INTEGER, PARAMETER :: NPSAVE = 10
+  INTEGER(i4), PARAMETER :: NPLEV  = 18
+  INTEGER(i4), PARAMETER :: NPSAVE = 10
 
   ! output buffer
   !INTEGER, PARAMETER :: NDOUT = 10+NZP1
   !INTEGER, PARAMETER :: NBUFF = NZP1*(NVp1+NSP1) + &
   !  NZP1*(NVEL+NSCLR) + NDOUT + 3*NZ + 5*NSFLXS
 
-  INTEGER, PARAMETER :: maxmodeadv = 6
+  INTEGER(i4), PARAMETER :: maxmodeadv = 6
 
-  INTEGER, PARAMETER :: forcing_var_cnt = 19
+  INTEGER(i4), PARAMETER :: forcing_var_cnt = 19
+  ! (forcing field names were in a CHARACTER PARAMETER array; f2py's parser
+  ! cannot split that constructor reliably. Names match *_f_ind below.)
 
-  CHARACTER (len = 8), DIMENSION(forcing_var_cnt), &
-    PARAMETER :: forcing_var_name = (/ &
-      'date    ', &
-      'tau_x   ', &
-      'tau_y   ', &
-      'qswins  ', &
-      'qlwdwn  ', &
-      'tz      ', &
-      'qz      ', &
-      'prain   ', &
-      'psnow   ', &
-      'msl     ', &
-      'h       ', &
-      'dustf   ', &
-      'divu    ', &
-      'ic      ', &
-      'ain     ', &
-      'aout    ', &
-      'swh     ', &
-      'mwp     ', &
-      'cmag    ' /)
-
-  INTEGER, PARAMETER :: &
+  INTEGER(i4), PARAMETER :: &
       date_f_ind = 1,     &  ! date forcing field
       taux_f_ind = 2,     &  ! x-direction windspeed forcing field
       tauy_f_ind = 3,     &  ! y-direction windspeed forcing field
@@ -126,7 +107,6 @@ END MODULE kei_parameters
 !     NDIM  & NX & NY : dimension of the model(not used in this version)
 !     NVEL  : number of velocity components, i.e. 2 for U and V
 !     NSCLR : number of scalars, i.e. T, S, and additional scalars
-!     NSB   : number of biological scalars, used in "biocommon.inc"
 !     hmixtolfrac : convergence tolerance for hmix(new)-hmix(old)
 !             iteration in ocnstep: fraction of layer thickness hm(kmix)
 !     itermax : maximum number of hmix iterations (on main or temporary

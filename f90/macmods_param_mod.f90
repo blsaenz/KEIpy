@@ -2,7 +2,7 @@
 ! MACMODS Paramaters, Types, & Variables
 ! ======================================================================
 module macmods_param_mod
-
+  use kei_kinds, only: i4, r4, r8, log_kind
   use macmods_kinds_mod, only : r8,i4,log_kind
 
   implicit none
@@ -10,7 +10,7 @@ module macmods_param_mod
   save
 
   ! Dimensions
-  integer, parameter, public ::                 &
+  integer(i4), parameter, public ::                 &
        imt             = 1                    , &   ! grid is fixed
        jmt             = 1                    , &    ! grid is fixed
        chunk_size     = 40                           !
@@ -220,7 +220,7 @@ module macmods_param_mod
 
     implicit none
 
-    integer :: i
+    integer(i4) :: i
 
     open(unit=21, file='macmods_parameters.txt', form='FORMATTED', access='sequential')
     do i=1,npar

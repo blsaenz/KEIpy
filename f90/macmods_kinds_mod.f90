@@ -1,18 +1,11 @@
 module macmods_kinds_mod
 
+  use kei_kinds, only: i4, r4, r8, log_kind
+
   implicit none
 
   public
 
-  ! ------------------------------------------------------------
-  ! Elemental data types/sizes
-  ! ------------------------------------------------------------
-
-  integer, parameter :: &
-      i4              = 4             , & ! integers are 4 bytes
-      log_kind        = kind(.true.)  , & ! logical kind
-      r4              = 4             , & ! floats are 4 bytes in KPP
-      r8              = 8             , & ! doubles are set to 4 for KPP
-      d8              = 8                 ! there are few functions that require 8-byte precision
+  integer(i4), parameter :: d8 = r8  ! legacy alias (8-byte real) for macmods utilities
 
 end module macmods_kinds_mod

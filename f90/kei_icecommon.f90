@@ -1,4 +1,5 @@
   module kei_icecommon
+  use kei_kinds, only: i4, r4, r8, log_kind
 
     !use kei_parameters
     ! f2py won't allow this, so specified in two places ... make sure nni = z_max_ice, nns/nnfs = z_max_snow !!
@@ -6,27 +7,27 @@
 
     implicit none
 
-    integer, parameter  :: &
+    integer(i4), parameter  :: &
       nni            =  42,      &  !
       nnfs           =  26,      & !
       nns            =  26        !
-    real, parameter :: fs_crit = -0.02 ! height below freeboard at which flooding occurs (m)
+    real(r4), parameter :: fs_crit = -0.02 ! height below freeboard at which flooding occurs (m)
 
 
     !integer, parameter  :: nnis=nns+nnfs+nni
-    integer, parameter  :: nnis=nns+nni
+    integer(i4), parameter  :: nnis=nns+nni
 
     ! ice advection
-    real, parameter :: export_melt_f = 0.  ! fraction of ice exported that is assumed to melt nearby/influence salinity
-    real, save :: import_melt_f ! multiplier of calculated ice melt - affects ocean salinity
-    real, save :: ice_fe_local ! storage for what concentration of fe the ice has
+    real(r4), parameter :: export_melt_f = 0.  ! fraction of ice exported that is assumed to melt nearby/influence salinity
+    real(r4), save :: import_melt_f ! multiplier of calculated ice melt - affects ocean salinity
+    real(r4), save :: ice_fe_local ! storage for what concentration of fe the ice has
 
 
-    integer, save  :: &
+    integer(i4), save  :: &
       ni_cur,   &
       ns_cur
 
-    real, save  :: &
+    real(r4), save  :: &
       Tas,      &
       Ti(nni),  &
       Si(nni),  &
@@ -37,39 +38,39 @@
       dzi(nni)
 
     ! timice
-    integer, save :: &
+    integer(i4), save :: &
       ndtice,icemax,inew,iold
-    real, save :: &
+    real(r4), save :: &
       runice,dti
 
     ! ice state
-    real, save :: &
+    real(r4), save :: &
       fice,hice(0:1),TI0,qI0,uI,vI,albice
 
     ! ice paras
-    real, save :: &
+    real(r4), save :: &
       dsice,tfscl,SWFACS,tmlt,tfrz,sice,rhoice, &
       CPice,epsi,sfrazil,fCoriolis,sslush
 
     ! ice force
-    integer, save :: &
+    integer(i4), save :: &
       NSICE
-    real, save :: &
+    real(r4), save :: &
       FROCN,FRICE,R1,R0,DHDTice,dhs,dhi,dhfs,shs
 
     ! snow state
-    real, save :: &
+    real(r4), save :: &
       hsn(0:1),rhosn,rhofsnow,CPsn,CPfsnow, &
       hfsnow(0:1)
 
     ! flx paras
-    real, save :: &
+    real(r4), save :: &
       EL,SL,FL,FLSN,C2K,Qsfc
 
-    real, save :: &
+    real(r4), save :: &
       lateral_freshwater_melt_flux
 
-    real, save :: atm_flux_to_ice_surface, &
+    real(r4), save :: atm_flux_to_ice_surface, &
       ice_ocean_bottom_flux, &
       ice_ocean_bottom_flux_potential, &
       total_ice_melt, &

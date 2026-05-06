@@ -75,12 +75,12 @@ SUBROUTINE init_env(U,X)
   implicit none
 
   ! function arguments
-  real :: &
+  real(r4) :: &
     U(NZP1,NVEL), &
     X(NZP1,NSCLR)
 
   ! local
-  integer :: i
+  integer(i4) :: i
 
   zmp = abs(zm)
 

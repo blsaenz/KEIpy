@@ -2,7 +2,7 @@
 ! Global Paramaters, Types, & Variables
 ! ======================================================================
 module macmods_util_mod
-
+  use kei_kinds, only: i4, r4, r8, log_kind
   use macmods_kinds_mod, only : r8,i4,log_kind
 
   use macmods_param_mod
@@ -12,7 +12,7 @@ module macmods_util_mod
   public
 
   ! Named enumerations
-  integer, parameter, public ::                 &
+  integer(i4), parameter, public ::                 &
        init_seeding_type        = 0             , &
        monthly_seeding_type     = 1             , &
        seed_on_harvest_type     = 2             , &

@@ -1,4 +1,5 @@
 module kei_eco
+  use kei_kinds, only: i4, r4, r8, log_kind
   !-----------------------------------------------------------------------------
   !   CVS:$Id: ecosys_parms.F90,v 1.1 2004/05/12 18:27:14 ivan Exp $
   !   CVS:$Name:  $
@@ -27,42 +28,42 @@ module kei_eco
   !   floating point constants used across ecosystem module
   !-----------------------------------------------------------------------------
 
-  REAL(KIND=dbl_kind), PARAMETER :: &
-       c1 = 1.0_dbl_kind,             &
-       spd = 86400.0_dbl_kind,        & ! number of seconds in a day
+  real(r8), PARAMETER :: &
+       c1 = 1.0_r8,             &
+       spd = 86400.0_r8,        & ! number of seconds in a day
        dps = c1 / spd,                & ! number of days in a second
-       yps = c1 / (365_dbl_kind*spd), & ! number of years in a second
-       c0 = 0.0_dbl_kind,             &
-       c2 = 2.0_dbl_kind,              &
-       c3 = 3.0_dbl_kind,              &
-       c10 = 10.0_dbl_kind,            &
-       p5 = 0.5_dbl_kind,              &
-       c100 = 100.0_dbl_kind,        &
-       c1000 = 1000.0_dbl_kind,        &
-       rho_sw = 4.1_dbl_kind/3.996_dbl_kind,      & ! density of salt water (g/cm^3)
-       T0_Kelvin = 273.15_dbl_kind
+       yps = c1 / (365_r8*spd), & ! number of years in a second
+       c0 = 0.0_r8,             &
+       c2 = 2.0_r8,              &
+       c3 = 3.0_r8,              &
+       c10 = 10.0_r8,            &
+       p5 = 0.5_r8,              &
+       c100 = 100.0_r8,        &
+       c1000 = 1000.0_r8,        &
+       rho_sw = 4.1_r8/3.996_r8,      & ! density of salt water (g/cm^3)
+       T0_Kelvin = 273.15_r8
   !-----------------------------------------------------------------------------
   !   Redfield Ratios, dissolved & particulate
   !-----------------------------------------------------------------------------
 
-  REAL(KIND=dbl_kind), PARAMETER :: &
-       parm_Red_D_C_P  = 117.0_dbl_kind,                 & ! carbon:phosphorus
-       parm_Red_D_N_P  =  16.0_dbl_kind,                 & ! nitrogen:phosphorus
-       parm_Red_D_O2_P = 170.0_dbl_kind,                 & ! oxygen:phosphorus
+  real(r8), PARAMETER :: &
+       parm_Red_D_C_P  = 117.0_r8,                 & ! carbon:phosphorus
+       parm_Red_D_N_P  =  16.0_r8,                 & ! nitrogen:phosphorus
+       parm_Red_D_O2_P = 170.0_r8,                 & ! oxygen:phosphorus
        parm_Red_P_C_P  = parm_Red_D_C_P,                 & ! carbon:phosphorus
        parm_Red_D_C_N  = parm_Red_D_C_P/parm_Red_D_N_P,  & ! carbon:nitrogen
        parm_Red_P_C_N  = parm_Red_D_C_N,                 & ! carbon:nitrogen
        parm_Red_D_C_O2 = parm_Red_D_C_P/parm_Red_D_O2_P, & ! carbon:oxygen
        parm_Red_P_C_O2 = parm_Red_D_C_O2,                & ! carbon:oxygen
-       parm_Red_Fe_C   = 3.0e-6_dbl_kind,                & ! iron:carbon
-       parm_Red_D_C_O2_diaz = parm_Red_D_C_P/150.0_dbl_kind! carbon:oxygen
+       parm_Red_Fe_C   = 3.0e-6_r8,                & ! iron:carbon
+       parm_Red_D_C_O2_diaz = parm_Red_D_C_P/150.0_r8! carbon:oxygen
                                                            ! for diazotrophs
 
   !----------------------------------------------------------------------------
   !   ecosystem parameters accessible via input file
   !----------------------------------------------------------------------------
 
-  REAL(KIND=dbl_kind) :: &
+  real(r8) :: &
        parm_Fe_bioavail,      & ! fraction of Fe flux that is bioavailable
        parm_prod_dissolve,    & ! frac. of prod -> DOC
        parm_o2_min,           & ! min O2 needed for prod & consump. (nmol/cm^3)
@@ -105,47 +106,47 @@ module kei_eco
   !     Parameters previously hardcoded in main body of bio_subs code
   !---------------------------------------------------------------------------
 
-  real(kind=dbl_kind), parameter ::      &
-      PCref = 3.0_dbl_kind * dps, & !max phyto C-spec. grth rate at tref (1/sec)
-      PCrefSp = 4.5_dbl_kind * dps, & !max phyto C-spec. grth rate at tref (1/sec)
-      PCrefDiat = 4.5_dbl_kind * dps, & !max phyto C-spec. grth rate at tref (1/sec)
-      sp_mort    = 0.1_dbl_kind   * dps, & !sphyto mort rate (1/sec)
-!      sp_mort2   = 0.009_dbl_kind * dps, & !sphyto quad. mort rate (1/sec/((mmol C/m3))
-      diat_mort  = 0.1_dbl_kind   * dps, & !diatom mort rate (1/sec)
-!      diat_mort2 = 0.009_dbl_kind * dps, & !diatom quad mort rate (1/sec/((mmol C/m3))
+  real(r8), parameter ::      &
+      PCref = 3.0_r8 * dps, & !max phyto C-spec. grth rate at tref (1/sec)
+      PCrefSp = 4.5_r8 * dps, & !max phyto C-spec. grth rate at tref (1/sec)
+      PCrefDiat = 4.5_r8 * dps, & !max phyto C-spec. grth rate at tref (1/sec)
+      sp_mort    = 0.1_r8   * dps, & !sphyto mort rate (1/sec)
+!      sp_mort2   = 0.009_r8 * dps, & !sphyto quad. mort rate (1/sec/((mmol C/m3))
+      diat_mort  = 0.1_r8   * dps, & !diatom mort rate (1/sec)
+!      diat_mort2 = 0.009_r8 * dps, & !diatom quad mort rate (1/sec/((mmol C/m3))
 
-      sp_mort2   = 0.0009_dbl_kind * dps, & !sphyto quad. mort rate (1/sec/((mmol C/m3))
-      diat_mort2   = 0.0009_dbl_kind * dps, & !sphyto quad. mort rate (1/sec/((mmol C/m3))
+      sp_mort2   = 0.0009_r8 * dps, & !sphyto quad. mort rate (1/sec/((mmol C/m3))
+      diat_mort2   = 0.0009_r8 * dps, & !sphyto quad. mort rate (1/sec/((mmol C/m3))
 
 
-!      sp_mort    = 0.17_dbl_kind   * dps, & !sphyto mort rate (1/sec)
-!      sp_mort2   = 0.0035_dbl_kind * dps, & !sphyto quad. mort rate (1/sec/((mmol C/m3))
-!      diat_mort  = 0.17_dbl_kind   * dps, & !diatom mort rate (1/sec)
-!      diat_mort2 = 0.0035_dbl_kind * dps, & !diatom quad mort rate (1/sec/((mmol C/m3))
-      PCrefDiaz  = 0.4_dbl_kind  * dps,  & !max Diaz C-specific growth rate at tref (1/sec)
-      diaz_mort  = 0.16_dbl_kind * dps,  & !diaz mort rate (1/sec)
-      diaz_kPO4  = 0.005_dbl_kind,      & !diaz half-sat. const. for P (diatom value)
-      diaz_kFe   = 0.1e-3_dbl_kind        !diaz half-sat. const. for Fe
+!      sp_mort    = 0.17_r8   * dps, & !sphyto mort rate (1/sec)
+!      sp_mort2   = 0.0035_r8 * dps, & !sphyto quad. mort rate (1/sec/((mmol C/m3))
+!      diat_mort  = 0.17_r8   * dps, & !diatom mort rate (1/sec)
+!      diat_mort2 = 0.0035_r8 * dps, & !diatom quad mort rate (1/sec/((mmol C/m3))
+      PCrefDiaz  = 0.4_r8  * dps,  & !max Diaz C-specific growth rate at tref (1/sec)
+      diaz_mort  = 0.16_r8 * dps,  & !diaz mort rate (1/sec)
+      diaz_kPO4  = 0.005_r8,      & !diaz half-sat. const. for P (diatom value)
+      diaz_kFe   = 0.1e-3_r8        !diaz half-sat. const. for Fe
 
   !---------------------------------------------------------------------
   !     Misc. Rate constants
   !---------------------------------------------------------------------
-  real(kind=dbl_kind), parameter :: &
-!       sp_agg_rate_max   = 0.2_dbl_kind, & !max agg. rate for small phyto (1/d)
-!       diat_agg_rate_max = 0.2_dbl_kind, & !max agg. rate for diatoms (1/d)
-       sp_agg_rate_max   = 0.75_dbl_kind, & !max agg. rate for small phyto (1/d)
-       diat_agg_rate_max = 0.75_dbl_kind, & !max agg. rate for diatoms (1/d)
-       diat_agg_rate_min = 0.01_dbl_kind,& !min agg. rate for diatoms (1/d)
-       fe_scavenge_rate0 = 0.12_dbl_kind,& !init Fe scaveng. rate (% of ambient)
-       fe_scavenge_thres1 = 0.6e-3_dbl_kind, & !upper thres. for Fe scavenging
-       fe_scavenge_thres2 = 0.5e-3_dbl_kind, & !lower thres. for Fe scavenging
-       dust_fescav_scale  = 0.833e8_dbl_kind, & !dust scavenging scale factor
-       thres_fe           = 1.0e5_dbl_kind,   & !thres. depth for Fe diff. flux
-       fe_max_scale1      = 3.0_dbl_kind,     & !unitless scaling coeff.
-       fe_max_scale2      = 6.0_dbl_kind/1.4e-3_dbl_kind,& !unitless scaling coeff.
-       fe_diff_rate       = 2.3148e-6_dbl_kind,&!fe diffusion rate
+  real(r8), parameter :: &
+!       sp_agg_rate_max   = 0.2_r8, & !max agg. rate for small phyto (1/d)
+!       diat_agg_rate_max = 0.2_r8, & !max agg. rate for diatoms (1/d)
+       sp_agg_rate_max   = 0.75_r8, & !max agg. rate for small phyto (1/d)
+       diat_agg_rate_max = 0.75_r8, & !max agg. rate for diatoms (1/d)
+       diat_agg_rate_min = 0.01_r8,& !min agg. rate for diatoms (1/d)
+       fe_scavenge_rate0 = 0.12_r8,& !init Fe scaveng. rate (% of ambient)
+       fe_scavenge_thres1 = 0.6e-3_r8, & !upper thres. for Fe scavenging
+       fe_scavenge_thres2 = 0.5e-3_r8, & !lower thres. for Fe scavenging
+       dust_fescav_scale  = 0.833e8_r8, & !dust scavenging scale factor
+       thres_fe           = 1.0e5_r8,   & !thres. depth for Fe diff. flux
+       fe_max_scale1      = 3.0_r8,     & !unitless scaling coeff.
+       fe_max_scale2      = 6.0_r8/1.4e-3_r8,& !unitless scaling coeff.
+       fe_diff_rate       = 2.3148e-6_r8,&!fe diffusion rate
                                                 !   (nmolFe/cm2/sec)
-       f_fescav_P_iron    = 0.1_dbl_kind        !fraction of Fe scavenging
+       f_fescav_P_iron    = 0.1_r8        !fraction of Fe scavenging
                                                 !        to particulate Fe
 
   !---------------------------------------------------------------------
@@ -156,8 +157,8 @@ module kei_eco
   !
   !     dust_to_Fe          conversion - dust to iron (nmol Fe/g Dust)
   !---------------------------------------------------------------------
-  real(kind=dbl_kind), parameter :: &
-       dust_to_Fe=0.035_dbl_kind/55.847_dbl_kind*1.0e9_dbl_kind
+  real(r8), parameter :: &
+       dust_to_Fe=0.035_r8/55.847_r8*1.0e9_r8
 
   !----------------------------------------------------------------------------
   !     Partitioning of phytoplankton growth, grazing and losses
@@ -165,47 +166,47 @@ module kei_eco
   !     All f_* variables are fractions and are non-dimensional
   !----------------------------------------------------------------------------
 
-  real(kind=dbl_kind), parameter ::     &
-      z_ingest         = 0.15_dbl_kind,  & !zoo ingestion coefficient (non-dim)
-      caco3_poc_min    = 0.4_dbl_kind,  & !minimum proportionality between
+  real(r8), parameter ::     &
+      z_ingest         = 0.15_r8,  & !zoo ingestion coefficient (non-dim)
+      caco3_poc_min    = 0.4_r8,  & !minimum proportionality between
                                           !   QCaCO3 and grazing losses to POC
                                           !   (mmol C/mmol CaCO3)
-      spc_poc_fac      = 0.22_dbl_kind, & !small phyto grazing factor (1/mmolC)
-      f_graze_sp_poc_lim = 0.24_dbl_kind, &
-      f_prod_sp_CaCO3  = 0.026_dbl_kind, & !fraction of sp prod. as CaCO3 prod.
-      f_photosp_CaCO3  = 0.4_dbl_kind,  & !proportionality between small phyto
+      spc_poc_fac      = 0.22_r8, & !small phyto grazing factor (1/mmolC)
+      f_graze_sp_poc_lim = 0.24_r8, &
+      f_prod_sp_CaCO3  = 0.026_r8, & !fraction of sp prod. as CaCO3 prod.
+      f_photosp_CaCO3  = 0.4_r8,  & !proportionality between small phyto
                                           !    production and CaCO3 production
-      f_graze_sp_doc   = 0.34_dbl_kind, & !fraction sm. phyto. grazing to DOC
+      f_graze_sp_doc   = 0.34_r8, & !fraction sm. phyto. grazing to DOC
       f_graze_sp_dic   = c1 - z_ingest - f_graze_sp_doc, & !fraction to DIC
-      f_z_grz_sqr_diat = 0.81_dbl_kind, &   ! original
-!      f_z_grz_sqr_diat = 3.5_dbl_kind, &     ! sevrine recommendation
-      f_graze_diat_poc = 0.26_dbl_kind, & !fraction diatom grazing to POC
-      f_graze_diat_doc = 0.13_dbl_kind, & !fraction diatom grazing to DOC
+      f_z_grz_sqr_diat = 0.81_r8, &   ! original
+!      f_z_grz_sqr_diat = 3.5_r8, &     ! sevrine recommendation
+      f_graze_diat_poc = 0.26_r8, & !fraction diatom grazing to POC
+      f_graze_diat_doc = 0.13_r8, & !fraction diatom grazing to DOC
       f_graze_diat_dic = c1 - z_ingest - f_graze_diat_poc &
                           - f_graze_diat_doc, & !fraction diatom grazing to DIC
-      f_diat_loss_poc  = 0.05_dbl_kind, &  !fraction diatom loss to POC
+      f_diat_loss_poc  = 0.05_r8, &  !fraction diatom loss to POC
       f_diat_loss_dc   = c1-f_diat_loss_poc, & !fraction diatom loss to DOC
-      f_graze_diaz_zoo = 0.21_dbl_kind, & !fraction diaz. grazing to zoo
-      f_graze_diaz_poc = 0.0_dbl_kind, &  !fraction diaz grazing to POC
-      f_graze_diaz_doc = 0.24_dbl_kind, & !fraction diaz grazing to DOC
+      f_graze_diaz_zoo = 0.21_r8, & !fraction diaz. grazing to zoo
+      f_graze_diaz_poc = 0.0_r8, &  !fraction diaz grazing to POC
+      f_graze_diaz_doc = 0.24_r8, & !fraction diaz grazing to DOC
       f_graze_diaz_dic = c1-f_graze_diaz_zoo-f_graze_diaz_poc &
                          - f_graze_diaz_doc, & !fraction diaz grazing to DIC
-      f_sp_zoo_detr   = 0.06666_dbl_kind,& !fraction of zoo losses to detrital
+      f_sp_zoo_detr   = 0.06666_r8,& !fraction of zoo losses to detrital
                                           !  pool when eating sphyto
-      f_diat_zoo_detr = 0.1333_dbl_kind,& !fraction of zoo losses to detrital
+      f_diat_zoo_detr = 0.1333_r8,& !fraction of zoo losses to detrital
                                           !  pool when eating diatoms
-      f_diaz_zoo_detr = 0.03333_dbl_kind,& !fraction of zoo losses to detrital
+      f_diaz_zoo_detr = 0.03333_r8,& !fraction of zoo losses to detrital
                                           !  pool when eating diaz
-      f_graze_CaCO3_remin = 0.33_dbl_kind, & !fraction of spCaCO3 grazing
+      f_graze_CaCO3_remin = 0.33_r8, & !fraction of spCaCO3 grazing
                                              !          which is remin
-      f_graze_si_remin    = 0.5_dbl_kind      !fraction of diatom Si grazing
+      f_graze_si_remin    = 0.5_r8      !fraction of diatom Si grazing
                                              !          which is remin
 
   !----------------------------------------------------------------------------
   !     fixed ratios
   !----------------------------------------------------------------------------
-  real(kind=dbl_kind), parameter :: &
-       r_Nfix_photo=1.43_dbl_kind         ! N fix relative to C fix (non-dim)
+  real(r8), parameter :: &
+       r_Nfix_photo=1.43_r8         ! N fix relative to C fix (non-dim)
 
   !-----------------------------------------------------------------------
   !     SET FIXED RATIOS for N/C, P/C, SiO3/C, Fe/C
@@ -213,76 +214,76 @@ module kei_eco
   !     for diazotrophs a N/P of 45 is assumed based on Letelier & Karl, 1998
   !-----------------------------------------------------------------------
 
-  real(kind=dbl_kind), parameter ::  &
-      Q             = 0.137_dbl_kind,  & !N/C ratio (mmol/mmol) of phyto & zoo
-      Qp            = 0.00855_dbl_kind,& !P/C ratio (mmol/mmol) sphyto,diat,zoo
-      Qp_diaz       = 0.002735_dbl_kind,& !diazotroph P/C ratio
-      Qfe_zoo       = 2.5e-6_dbl_kind, & !zooplankton fe/C ratio
-      gQsi_0        = 0.137_dbl_kind,  & !initial diatom Si/C ratio
-      gQfe_diat_0   = 6.0e-6_dbl_kind, & !initial diatom fe/C ratio
-      gQfe_sp_0     = 6.0e-6_dbl_kind, & !initial sphyto fe/C ratio
-      gQfe_diaz_0   = 42.0e-6_dbl_kind,& !initial diaz. fe/C ratio
-      gQfe_diat_min = 2.5e-6_dbl_kind, & !min diatom fe/C ratio
-      gQsi_max      = 0.685_dbl_kind,  & !max diatom Si/C ratio
-      gQsi_min      = 0.0685_dbl_kind, & !min diatom Si/C ratio
-      gQsi_coef     = 2.5_dbl_kind, &
-      gQfe_sp_min   = 2.5e-6_dbl_kind, & !min sphyto fe/C ratio
-      gQfe_diaz_min = 14.0e-6_dbl_kind,& !min diaz fe/C ratio
-      QCaCO3_max    = 0.4_dbl_kind,    & !max QCaCO3
-      thetaN_max_sp   = 2.5_dbl_kind, & !sp max thetaN (Chl/N) (mg Chl/mmol N)
-      thetaN_max_diat = 4.0_dbl_kind, & !diat max thetaN (Chl/N) (mg Chl/mmol N)
-!      thetaN_max_sp   = 2.3_dbl_kind, & !sp max thetaN (Chl/N) (mg Chl/mmol N)
-!      thetaN_max_diat = 3.0_dbl_kind, & !diat max thetaN (Chl/N) (mg Chl/mmol N)
-      thetaN_max_diaz = 3.4_dbl_kind, & !diaz max thetaN (Chl/N) (mg Chl/mmol N)
+  real(r8), parameter ::  &
+      Q             = 0.137_r8,  & !N/C ratio (mmol/mmol) of phyto & zoo
+      Qp            = 0.00855_r8,& !P/C ratio (mmol/mmol) sphyto,diat,zoo
+      Qp_diaz       = 0.002735_r8,& !diazotroph P/C ratio
+      Qfe_zoo       = 2.5e-6_r8, & !zooplankton fe/C ratio
+      gQsi_0        = 0.137_r8,  & !initial diatom Si/C ratio
+      gQfe_diat_0   = 6.0e-6_r8, & !initial diatom fe/C ratio
+      gQfe_sp_0     = 6.0e-6_r8, & !initial sphyto fe/C ratio
+      gQfe_diaz_0   = 42.0e-6_r8,& !initial diaz. fe/C ratio
+      gQfe_diat_min = 2.5e-6_r8, & !min diatom fe/C ratio
+      gQsi_max      = 0.685_r8,  & !max diatom Si/C ratio
+      gQsi_min      = 0.0685_r8, & !min diatom Si/C ratio
+      gQsi_coef     = 2.5_r8, &
+      gQfe_sp_min   = 2.5e-6_r8, & !min sphyto fe/C ratio
+      gQfe_diaz_min = 14.0e-6_r8,& !min diaz fe/C ratio
+      QCaCO3_max    = 0.4_r8,    & !max QCaCO3
+      thetaN_max_sp   = 2.5_r8, & !sp max thetaN (Chl/N) (mg Chl/mmol N)
+      thetaN_max_diat = 4.0_r8, & !diat max thetaN (Chl/N) (mg Chl/mmol N)
+!      thetaN_max_sp   = 2.3_r8, & !sp max thetaN (Chl/N) (mg Chl/mmol N)
+!      thetaN_max_diat = 3.0_r8, & !diat max thetaN (Chl/N) (mg Chl/mmol N)
+      thetaN_max_diaz = 3.4_r8, & !diaz max thetaN (Chl/N) (mg Chl/mmol N)
       ! carbon:nitrogen ratio for denitrification
       ! net removal of 120 mols NO3 for 117 mols C (136 = 120 + 16)
-      denitrif_C_N  = parm_Red_D_C_P/136.0_dbl_kind
+      denitrif_C_N  = parm_Red_D_C_P/136.0_r8
 
   !----------------------------------------------------------------------------
   !     loss term threshold parameters, chl:c ratios
   !----------------------------------------------------------------------------
 
-  real(kind=dbl_kind), parameter ::    &
-      thres_z1          = 100.0e2_dbl_kind, & !threshold = C_loss_thres for z shallower than this (cm)
-      thres_z2          = 200.0e2_dbl_kind, & !threshold = 0 for z deeper than this (cm)
-      loss_thres_sp     = 0.003_dbl_kind, & !small phyto conc. where losses go to zero
-!      loss_thres_sp     = 0.01_dbl_kind, & !small phyto conc. where losses go to zero - ben increased
-      loss_thres_diat   = 0.03_dbl_kind, & !diat conc. where losses go to zero
-!      loss_thres_diat   = 0.1_dbl_kind, & !diat conc. where losses go to zero - ben increased
-      loss_thres_zoo    = 0.03_dbl_kind,  & !zoo conc. where losses go to zero
-      loss_thres_diaz   = 0.01_dbl_kind,  & !diaz conc. where losses go to zero
-      loss_thres_diaz2  = 0.001_dbl_kind, & !diaz conc. thres at low temp
-      diaz_temp_thres   = 15.0_dbl_kind,  & !Temp. where diaz conc thres drops
-      CaCO3_temp_thres1 = 1.0_dbl_kind,   & !upper temp threshold for CaCO3 prod
-      CaCO3_temp_thres2 = -2.0_dbl_kind,  & !lower temp threshold
-      CaCO3_sp_thres    = 3.0_dbl_kind      ! bloom condition thres (mmolC/m3)
+  real(r8), parameter ::    &
+      thres_z1          = 100.0e2_r8, & !threshold = C_loss_thres for z shallower than this (cm)
+      thres_z2          = 200.0e2_r8, & !threshold = 0 for z deeper than this (cm)
+      loss_thres_sp     = 0.003_r8, & !small phyto conc. where losses go to zero
+!      loss_thres_sp     = 0.01_r8, & !small phyto conc. where losses go to zero - ben increased
+      loss_thres_diat   = 0.03_r8, & !diat conc. where losses go to zero
+!      loss_thres_diat   = 0.1_r8, & !diat conc. where losses go to zero - ben increased
+      loss_thres_zoo    = 0.03_r8,  & !zoo conc. where losses go to zero
+      loss_thres_diaz   = 0.01_r8,  & !diaz conc. where losses go to zero
+      loss_thres_diaz2  = 0.001_r8, & !diaz conc. thres at low temp
+      diaz_temp_thres   = 15.0_r8,  & !Temp. where diaz conc thres drops
+      CaCO3_temp_thres1 = 1.0_r8,   & !upper temp threshold for CaCO3 prod
+      CaCO3_temp_thres2 = -2.0_r8,  & !lower temp threshold
+      CaCO3_sp_thres    = 3.0_r8      ! bloom condition thres (mmolC/m3)
 
   !---------------------------------------------------------------------
   !     attenuation coefficients for PAR and related parameters
   !---------------------------------------------------------------------
-  real(kind=dbl_kind), parameter :: &
-       k_chl = 0.03e-2_dbl_kind, & ! Chl atten. coeff. (1/cm/(mg Chl/m^3))
-       k_h2o = 0.04e-2_dbl_kind, & ! water atten. coeff (1/cm)
-       f_qsw_par = 0.45_dbl_kind   ! PAR fraction
+  real(r8), parameter :: &
+       k_chl = 0.03e-2_r8, & ! Chl atten. coeff. (1/cm/(mg Chl/m^3))
+       k_h2o = 0.04e-2_r8, & ! water atten. coeff (1/cm)
+       f_qsw_par = 0.45_r8   ! PAR fraction
 
   !---------------------------------------------------------------------
   !     Temperature parameters
   !---------------------------------------------------------------------
-  real(kind=dbl_kind), parameter :: &
-       Tref = 30.0_dbl_kind, & ! reference temperature (C)
-       Q_10 = 2.0_dbl_kind     ! factor for temperature dependence (non-dim)
+  real(r8), parameter :: &
+       Tref = 30.0_r8, & ! reference temperature (C)
+       Q_10 = 2.0_r8     ! factor for temperature dependence (non-dim)
 
 !-----------------------------------------------------------------------
 !     derived type for implicit handling of sinking particulate matter
 !-----------------------------------------------------------------------
 
       type sinking_particle
-        real(kind=dbl_kind) :: &
+        real(r8) :: &
             diss,        & ! dissolution length for soft subclass
             gamma,       & ! fraction of production -> hard subclass
             mass,        & ! mass of 1e9 base units in g
             rho            ! QA mass ratio of POC to this particle class
-        real(kind=dbl_kind), dimension(imt,jmt) :: &
+        real(r8), dimension(imt,jmt) :: &
             sflux_in,    & ! incoming flux of soft subclass (base units/cm^2/sec)
             hflux_in,    & ! incoming flux of hard subclass (base units/cm^2/sec)
             prod,        & ! production term (base units/cm^3/sec)
@@ -291,9 +292,9 @@ module kei_eco
             remin          ! remineralization term (base units/cm^3/sec)
         end type sinking_particle
 
-      logical, dimension(imt,jmt) :: LAND_MASK = .true.
+      logical(kind=log_kind), dimension(imt,jmt) :: LAND_MASK = .true.
 
-      real(kind=dbl_kind), dimension(km) :: &
+      real(r8), dimension(km) :: &
         nutr_rest_time_inv ! inverse restoring time scale for nutrients (1/secs)
 
   !-----------------------------------------------------------------------------
@@ -303,32 +304,32 @@ module kei_eco
   !   10**-9 drops precision to 2 significant figures).
   !-----------------------------------------------------------------------------
 
-  REAL(KIND=dbl_kind), PARAMETER :: xacc = 1e-10_dbl_kind
-  INTEGER(KIND=int_kind), PARAMETER :: maxit = 100
+  real(r8), PARAMETER :: xacc = 1e-10_r8
+  integer(i4), PARAMETER :: maxit = 100
 
   !-----------------------------------------------------------------------------
   !   declarations for function coefficients & species concentrations
   !-----------------------------------------------------------------------------
 
-  REAL(KIND=dbl_kind), DIMENSION(imt) :: &
+  real(r8), DIMENSION(imt) :: &
        k0, k1, k2, kw, kb, ks, kf, k1p, k2p, k3p, ksi, ff, &
        bt, st, ft, dic, ta, pt, sit
 
-  REAL(KIND=dbl_kind), DIMENSION(imt,jmt) :: &
+  real(r8), DIMENSION(imt,jmt) :: &
        PH_PREV
 
   !-----------------------------------------------------------------------------
   !   holding variables to account for different tracer precision
   !   in kpp and ecosys_mod
   !-----------------------------------------------------------------------------
-  REAL(KIND=dbl_kind) :: &
+  real(r8) :: &
        dz_eco(km), &
        dzr_eco(km), &
        zt_eco(km)
 
-  INTEGER(KIND=int_kind), PARAMETER :: wavb = 31  ! PAR/PUR wavelength bins
+  integer(i4), PARAMETER :: wavb = 31  ! PAR/PUR wavelength bins
   ! default surface spectrum, if only using single PAR band in physical model
-  real(KIND=dbl_kind), PARAMETER, DIMENSION(wavb) :: &
+  real(r8), PARAMETER, DIMENSION(wavb) :: &
      srfspec = (/ 2.3421E-02, 2.3241E-02, 2.4949E-02, 2.3446E-02, &
       2.8255E-02, 3.2075E-02, 3.3944E-02, 3.4012E-02, 3.5491E-02, &
       3.3682E-02, 3.4819E-02, 3.5322E-02, 3.3823E-02, 3.5034E-02, &
@@ -350,40 +351,40 @@ CONTAINS
 
         ! subroutine arguments
         ! --------------------------------------------------------------
-        real :: kforce(forcing_var_cnt)
-        real(KIND=real_kind) :: X(NZP1,NSCLR)    ! tracers
-        real(KIND=real_kind) :: fice ! fractional ice coverage
-        real(KIND=real_kind) :: albocn ! ocean albedo - surf irradiance stuff should be outside/in one place!
-        real, dimension(NZ) :: &
+        real(r4) :: kforce(forcing_var_cnt)
+        real(r4) :: X(NZP1,NSCLR)    ! tracers
+        real(r4) :: fice ! fractional ice coverage
+        real(r4) :: albocn ! ocean albedo - surf irradiance stuff should be outside/in one place!
+        real(r4), dimension(NZ) :: &
           qsw                 ! penetrative (absorbed?) solar heat flux (W/m^2)
-        real(KIND=real_kind) :: Sref ! reference salinity to derive true salinity
-         real(KIND=dbl_kind) :: dt_sec ! timestep in seconds
-         real(KIND=real_kind) :: qsw_ice ! shortwave irradiance transmitted through ice
-         real(KIND=real_kind) :: hmix ! mixed layer (+m)
-         integer(KIND=int_kind) :: nt,start_year
+        real(r4) :: Sref ! reference salinity to derive true salinity
+         real(r8) :: dt_sec ! timestep in seconds
+         real(r4) :: qsw_ice ! shortwave irradiance transmitted through ice
+         real(r4) :: hmix ! mixed layer (+m)
+         integer(i4) :: nt,start_year
 
 
         ! local variables
         ! --------------------------------------------------------------
-        real(KIND=dbl_kind), dimension(imt,jmt,ecosys_tracer_cnt) :: &
+        real(r8), dimension(imt,jmt,ecosys_tracer_cnt) :: &
           TRACER_MODULE, &    !  tracers
           DTRACER_MODULE      !  tracer changes
-        real(KIND=dbl_kind), dimension(imt,jmt) :: &
+        real(r8), dimension(imt,jmt) :: &
              fice_eco, &
              ap_eco, &
              winds_SQR_eco, &
              t_eco, &
              s_eco, &
              qsw_eco
-        integer(KIND=int_kind) :: i,j,k,tr_end
-        real(kind=dbl_kind), dimension (ecosys_tracer_cnt) :: &
+        integer(i4) :: i,j,k,tr_end
+        real(r8), dimension (ecosys_tracer_cnt) :: &
           eco_inject
-        real(KIND=dbl_kind), intent(out) :: par_phyto(km) ! shortwave irradiance transmitted
-        real(KIND=dbl_kind), intent(in) :: absorp_in(km) ! external sources shortwave irradiance absorption (1/m)
-        real(KIND=dbl_kind), intent(out) :: absorp_out(km) ! total ecosystem shortwave irradiance absorption (1/m)
+        real(r8), intent(out) :: par_phyto(km) ! shortwave irradiance transmitted
+        real(r8), intent(in) :: absorp_in(km) ! external sources shortwave irradiance absorption (1/m)
+        real(r8), intent(out) :: absorp_out(km) ! total ecosystem shortwave irradiance absorption (1/m)
 
-         real(KIND=dbl_kind) :: PAR_out,PAR_in,PAR_avg,dz_ml, KPARdz, dz1
-         integer(KIND=int_kind) :: k_ml
+         real(r8) :: PAR_out,PAR_in,PAR_avg,dz_ml, KPARdz, dz1
+         integer(i4) :: k_ml
 
 
 !-----------------------------------------------------------------------
@@ -398,7 +399,7 @@ CONTAINS
          winds_SQR = (kforce(taux_f_ind)*100)**2 + &
            (kforce(tauy_f_ind)*100)**2
          atm_co2 =  atm_co2_const  ! atmospheric CO2 concentration (
-         ap = ap_const*1013.25e+3_dbl_kind      ! dyne / cm^2
+         ap = ap_const*1013.25e+3_r8      ! dyne / cm^2
 
 !-----------------------------------------------------------------------
 !     hacks
@@ -457,7 +458,7 @@ CONTAINS
           PAR_in = PAR_out
           dz1 = dz_eco(k)/c100
 
-          absorp_out(k) = absorp_in(k)/100._dbl_kind  ! 1/m -> 1/cm
+          absorp_out(k) = absorp_in(k)/100._r8  ! 1/m -> 1/cm
           absorp_out(k) = absorp_out(k) &
                     + k_chl * (max(c0, X(k,2+diazChl_ind)) &
                     + max(c0, X(k,2+diatChl_ind)) &
@@ -483,7 +484,7 @@ CONTAINS
               k_ml = k
           endif
 
-          absorp_out(k) = absorp_in(k)/100._dbl_kind ! convert back to 1/m for output
+          absorp_out(k) = absorp_in(k)/100._r8 ! convert back to 1/m for output
 
         enddo
         if (k_ml > 1) then
@@ -568,7 +569,7 @@ CONTAINS
 !     subroutine arguments
 !-----------------------------------------------------------------------
 
-      real(kind=real_kind), dimension(km) :: &
+      real(r4), dimension(km) :: &
           dz,         & ! layer thickness (m)
           zt            ! layer midpoint position (negative,m)
 
@@ -576,7 +577,7 @@ CONTAINS
 !     local variable declarations
 !-----------------------------------------------------------------------
 
-      integer (kind=int_kind) :: &
+      integer(i4) :: &
        n,                        & ! tracer index
        k,                        & ! vertical level index
        ind,                      & ! tracer index for tracer name from namelist
@@ -593,65 +594,65 @@ CONTAINS
 !     initialize ecosystem parameters
 !-----------------------------------------------------------------------
 
-      parm_Fe_bioavail    = 0.02_dbl_kind
-      parm_prod_dissolve  = 0.67_dbl_kind
-      parm_o2_min         = 4.0_dbl_kind
-      parm_no3_min        = 32.0_dbl_kind
-      parm_Rain_CaCO3     = 0.07_dbl_kind
-      parm_Rain_SiO2      = 0.03_dbl_kind
-      parm_kappa_nitrif   = 0.06_dbl_kind * dps       ! (= 1/( days))
-      parm_nitrif_par_lim = 5.0_dbl_kind
-      parm_POC_flux_ref   = 2.0e-3_dbl_kind
-      parm_rest_prod_tau  = 30.0_dbl_kind * spd       ! (= 30 days)
-      parm_rest_prod_z_c  = 7500_dbl_kind
-      parm_z_umax_0       = 2.75_dbl_kind * dps ! original
-      parm_diat_umax_0    = 2.07_dbl_kind * dps ! original
-!      parm_z_umax_0       = 4.0_dbl_kind * dps
-!      parm_z_umax_0       = 3.1_dbl_kind * dps  ! per wang and moore - standard
-!      parm_z_umax_0       = 1.5_dbl_kind * dps  ! sevrine recommendation
-!      parm_diat_umax_0    = 3.06_dbl_kind * dps
+      parm_Fe_bioavail    = 0.02_r8
+      parm_prod_dissolve  = 0.67_r8
+      parm_o2_min         = 4.0_r8
+      parm_no3_min        = 32.0_r8
+      parm_Rain_CaCO3     = 0.07_r8
+      parm_Rain_SiO2      = 0.03_r8
+      parm_kappa_nitrif   = 0.06_r8 * dps       ! (= 1/( days))
+      parm_nitrif_par_lim = 5.0_r8
+      parm_POC_flux_ref   = 2.0e-3_r8
+      parm_rest_prod_tau  = 30.0_r8 * spd       ! (= 30 days)
+      parm_rest_prod_z_c  = 7500_r8
+      parm_z_umax_0       = 2.75_r8 * dps ! original
+      parm_diat_umax_0    = 2.07_r8 * dps ! original
+!      parm_z_umax_0       = 4.0_r8 * dps
+!      parm_z_umax_0       = 3.1_r8 * dps  ! per wang and moore - standard
+!      parm_z_umax_0       = 1.5_r8 * dps  ! sevrine recommendation
+!      parm_diat_umax_0    = 3.06_r8 * dps
 
-!      parm_z_umax_0    = 0.2_dbl_kind * dps
-!      parm_diat_umax_0    = 0.2_dbl_kind * dps
+!      parm_z_umax_0    = 0.2_r8 * dps
+!      parm_diat_umax_0    = 0.2_r8 * dps
 
-      parm_z_umax_0    = 1.5_dbl_kind * dps
-      parm_diat_umax_0    = 1.5_dbl_kind * dps
+      parm_z_umax_0    = 1.5_r8 * dps
+      parm_diat_umax_0    = 1.5_r8 * dps
 
 
-!      parm_z_mort_0       = 0.1_dbl_kind * dps
-!      parm_z_mort2_0      = 0.45_dbl_kind * dps
-      parm_z_mort_0       = 0.17_dbl_kind * dps ! wang and moore
-      parm_z_mort2_0      = 0.0035_dbl_kind * dps ! wang and moore
-      parm_sd_remin_0     = 0.01_dbl_kind * dps       ! (= 1/(100 days))
-      parm_sp_kNO3        = 0.5_dbl_kind
-      parm_diat_kNO3      = 2.5_dbl_kind
-!      parm_sp_kNH4        = 0.005_dbl_kind
-!      parm_diat_kNH4      = 0.08_dbl_kind
-      parm_sp_kNH4        = 0.01_dbl_kind
-      parm_diat_kNH4      = 0.1_dbl_kind
-!      parm_sp_kFe         = 0.06e-3_dbl_kind
-!      parm_diat_kFe       = 0.15e-3_dbl_kind
-      parm_sp_kFe         = 0.035e-3_dbl_kind
-      parm_diat_kFe       = 0.08e-3_dbl_kind
-      parm_diat_kSiO3     = 1.0_dbl_kind
-!      parm_sp_kPO4        = 0.0003125_dbl_kind
-!      parm_diat_kPO4      = 0.005_dbl_kind
-      parm_sp_kPO4        = 0.01_dbl_kind
-      parm_diat_kPO4      = 0.1_dbl_kind
-      parm_z_grz          = 1.05_dbl_kind     ! original
-!      parm_z_grz          = 0.80_dbl_kind
-!      parm_alphaChl       = 0.3_dbl_kind * dps
-      parm_alphaChl       = 0.25_dbl_kind * dps
-!      parm_alphaChlsp     = 0.60_dbl_kind * dps  ! ben playing
-      parm_alphaChlsp     = 0.28_dbl_kind * dps
-!      parm_alphaChldiat   = 0.51_dbl_kind * dps  ! ben playing
-      parm_alphaChldiat   = 0.25_dbl_kind * dps
-      parm_alphaChlphaeo   = 0.68_dbl_kind * dps
-      parm_labile_ratio   = 0.70_dbl_kind
-      parm_alphaDiaz      = 0.036_dbl_kind * dps
-      parm_diaz_umax_0    = 1.2_dbl_kind * dps
+!      parm_z_mort_0       = 0.1_r8 * dps
+!      parm_z_mort2_0      = 0.45_r8 * dps
+      parm_z_mort_0       = 0.17_r8 * dps ! wang and moore
+      parm_z_mort2_0      = 0.0035_r8 * dps ! wang and moore
+      parm_sd_remin_0     = 0.01_r8 * dps       ! (= 1/(100 days))
+      parm_sp_kNO3        = 0.5_r8
+      parm_diat_kNO3      = 2.5_r8
+!      parm_sp_kNH4        = 0.005_r8
+!      parm_diat_kNH4      = 0.08_r8
+      parm_sp_kNH4        = 0.01_r8
+      parm_diat_kNH4      = 0.1_r8
+!      parm_sp_kFe         = 0.06e-3_r8
+!      parm_diat_kFe       = 0.15e-3_r8
+      parm_sp_kFe         = 0.035e-3_r8
+      parm_diat_kFe       = 0.08e-3_r8
+      parm_diat_kSiO3     = 1.0_r8
+!      parm_sp_kPO4        = 0.0003125_r8
+!      parm_diat_kPO4      = 0.005_r8
+      parm_sp_kPO4        = 0.01_r8
+      parm_diat_kPO4      = 0.1_r8
+      parm_z_grz          = 1.05_r8     ! original
+!      parm_z_grz          = 0.80_r8
+!      parm_alphaChl       = 0.3_r8 * dps
+      parm_alphaChl       = 0.25_r8 * dps
+!      parm_alphaChlsp     = 0.60_r8 * dps  ! ben playing
+      parm_alphaChlsp     = 0.28_r8 * dps
+!      parm_alphaChldiat   = 0.51_r8 * dps  ! ben playing
+      parm_alphaChldiat   = 0.25_r8 * dps
+      parm_alphaChlphaeo   = 0.68_r8 * dps
+      parm_labile_ratio   = 0.70_r8
+      parm_alphaDiaz      = 0.036_r8 * dps
+      parm_diaz_umax_0    = 1.2_r8 * dps
 
-      PH_PREV = 0.0_dbl_kind
+      PH_PREV = 0.0_r8
 
 !-----------------------------------------------------------------------
 !     initialize restoring timescale (if required)
@@ -814,28 +815,28 @@ CONTAINS
 !     arguments
 !-----------------------------------------------------------------------
 
-      integer(kind=int_kind), intent(in) :: &
+      integer(i4), intent(in) :: &
         k                   ! vertical level index
 
-      real(kind=dbl_kind), dimension(imt,jmt), intent(in) ::  &
+      real(r8), dimension(imt,jmt), intent(in) ::  &
         TEMP,               & ! potential temperature (C)
         SHF_QSW_Wpm2             ! penetrative solar heat flux (W/m^2)
 
-      real(kind=dbl_kind), dimension(imt,jmt,ecosys_tracer_cnt), &
+      real(r8), dimension(imt,jmt,ecosys_tracer_cnt), &
         intent(in) :: TRACER_MODULE    ! current tracer values
 
-      real(kind=dbl_kind), dimension(imt,jmt,ecosys_tracer_cnt), &
+      real(r8), dimension(imt,jmt,ecosys_tracer_cnt), &
         intent(out) :: DTRACER_MODULE  ! computed source/sink terms
 
-      integer(kind=int_kind) :: KMT ! maximum valid depth layer
+      integer(i4) :: KMT ! maximum valid depth layer
 
-      real(kind=dbl_kind), dimension(km) :: &
+      real(r8), dimension(km) :: &
           dz,        & ! layer thickness
           dzr,       & ! inverse later thickness
           zt          ! layer midpoint position
-      real(kind=dbl_kind), dimension (ecosys_tracer_cnt) :: &
+      real(r8), dimension (ecosys_tracer_cnt) :: &
           eco_inject
-       real(KIND=dbl_kind) :: par_phyto ! PAR that this layer experiences
+       real(r8) :: par_phyto ! PAR that this layer experiences
 
 !-----------------------------------------------------------------------
 !     local variables
@@ -844,10 +845,10 @@ CONTAINS
       character(len=*), parameter :: &
         sub_name = 'ecosys_mod:ecosys_set_interior'
 
-      real(kind=dbl_kind), parameter :: &
-        epsC      = 1.00e-8_dbl_kind, & !small C concentration (mmol C/m^3)
-        epsTinv   = 3.17e-8_dbl_kind, & !small inverse time scale (1/year) (1/sec)
-        epsnondim = 1.00e-6_dbl_kind  !small non-dimensional number (non-dim)
+      real(r8), parameter :: &
+        epsC      = 1.00e-8_r8, & !small C concentration (mmol C/m^3)
+        epsTinv   = 3.17e-8_r8, & !small inverse time scale (1/year) (1/sec)
+        epsnondim = 1.00e-6_r8  !small non-dimensional number (non-dim)
 
       type(sinking_particle), save :: &
         POC,          & ! base units = nmol C
@@ -856,11 +857,11 @@ CONTAINS
         dust,         & ! base units = g
         P_iron        ! base units = nmol Fe
 
-      real(kind=dbl_kind), dimension(imt,jmt), save :: &
+      real(r8), dimension(imt,jmt), save :: &
         QA_dust_def,  & ! incoming deficit in the QA(dust) POC flux
         PAR_out       ! photosynthetically available radiation (W/m^2)
 
-      real(kind=dbl_kind), dimension(imt,jmt) :: &
+      real(r8), dimension(imt,jmt) :: &
         PO4_loc,      & ! local copy of model PO4
         NO3_loc,      & ! local copy of model NO3
         SiO3_loc,     & ! local copy of model SiO3
@@ -884,12 +885,12 @@ CONTAINS
         DOFe_loc,     & ! local copy of model DOFe
         DOP_loc       ! local copy of model DOP
 
-      real(kind=dbl_kind) :: &
+      real(r8) :: &
         z_grz_sqr,    & ! square of parm_z_grz (mmol C/m^3)^2
         C_loss_thres, & ! bio-C threshold at which losses go to zero (mmol C/m^3)
         f_loss_thres  ! fraction of grazing loss reduction at depth
 
-      real(kind=dbl_kind), dimension(imt,jmt) :: &
+      real(r8), dimension(imt,jmt) :: &
         PAR_in,       & ! photosynthetically available radiation (W/m^2)
         KPARdz,       & ! PAR adsorption coefficient (non-dim)
         PAR_avg,      & ! average PAR over mixed layer depth (W/m^2)
@@ -900,7 +901,7 @@ CONTAINS
         RESTORE      ! restoring terms for nutrients (mmol ./m^3/sec)
 
 
-      real(kind=dbl_kind), dimension(imt,jmt) :: &
+      real(r8), dimension(imt,jmt) :: &
         z_umax,       & ! max. zoo growth rate on sp at local T (1/sec)
         diat_umax,    & ! max. zoo growth rate on diatoms at local T (1/sec)
         z_mort,       & ! zoo respiration loss, (1/sec/((mmol C/m3))
@@ -908,7 +909,7 @@ CONTAINS
         z_mort2,      & ! zoo quad mort rate, tohigherlevels (1/sec/((mmol C/m3))
         diaz_umax     ! max. zoo growth rate on diazotrophs at local T (1/sec)
 
-      real(kind=dbl_kind), dimension(imt,jmt) :: &
+      real(r8), dimension(imt,jmt) :: &
         thetaC_sp,    & ! local Chl/C ratio in small phyto (mg Chl/mmol C)
         thetaC_diat,  & ! local Chl/C ratio in diatoms (mg Chl/mmol C)
         QCaCO3,       & ! small phyto CaCO3/C ratio (mmol CaCO3/mmol C)
@@ -947,7 +948,7 @@ CONTAINS
         graze_sp_doc, & ! graze_sp routed to doc (mmol C/m^3/sec)
         graze_sp_dic  ! graze_sp routed to dic (mmol C/m^3/sec)
 
-      real(kind=dbl_kind), dimension(imt,jmt) :: & ! max of 39 continuation lines
+      real(r8), dimension(imt,jmt) :: & ! max of 39 continuation lines
         graze_diat,    & ! grazing rate on diatoms (mmol C/m^3/sec)
         graze_diat_zoo,& ! graze_diat routed to zoo (mmol C/m^3/sec)
         graze_diat_poc,& ! graze_diat routed to poc (mmol C/m^3/sec)
@@ -981,7 +982,7 @@ CONTAINS
         Qfe_diaz,      & ! diazotrophs init fe/C ratio
         gQfe_diaz      ! diazotroph fe/C ratio for new growth
 
-      real(kind=dbl_kind), dimension(imt,jmt) :: & ! max of 39 continuation lines
+      real(r8), dimension(imt,jmt) :: & ! max of 39 continuation lines
         PCphoto_diaz,  & ! diazotroph C-specific rate of photosynth. (1/sec)
         photoC_diaz,   & ! diazotroph C-fixation (mmol C/m^3/sec)
         Vfec_diaz,     & ! diazotroph C-specific iron uptake (non-dim)
@@ -1017,7 +1018,7 @@ CONTAINS
         DOM_remin,     & ! fraction of DOM remineralized at current TEMP
         Fe_scavenge_rate ! annual scavenging rate of iron as % of ambient
 
-      real(kind=dbl_kind), dimension(imt,jmt) :: & ! max of 39 continuation lines
+      real(r8), dimension(imt,jmt) :: & ! max of 39 continuation lines
         DON_prod,      & ! production of dissolved organic N
         DOFe_prod,     & ! produciton of dissolved organic Fe
         DOP_prod       ! production of dissolved organic P
@@ -2043,14 +2044,14 @@ CONTAINS
         dust,         & ! base units = g
         P_iron        ! base units = nmol Fe
 
-      real(kind=dbl_kind), dimension(imt,jmt), intent(out) :: &
+      real(r8), dimension(imt,jmt), intent(out) :: &
         QA_dust_def     ! incoming deficit in the QA(dust) POC flux
 
 !-----------------------------------------------------------------------
 !     local variables
 !-----------------------------------------------------------------------
 
-      REAL(KIND=dbl_kind), DIMENSION(imt,jmt) :: &
+      real(r8), DIMENSION(imt,jmt) :: &
         net_dust_in        ! net incoming dust flux
 
 !-----------------------------------------------------------------------
@@ -2061,31 +2062,31 @@ CONTAINS
 !
 !-----------------------------------------------------------------------
 
-      POC%diss      = 13000.0_dbl_kind  ! diss. length (cm), modified by TEMP
+      POC%diss      = 13000.0_r8  ! diss. length (cm), modified by TEMP
       POC%gamma     = c0                ! not used
-      POC%mass      = 12.01_dbl_kind   ! molecular weight of POC
+      POC%mass      = 12.01_r8   ! molecular weight of POC
       POC%rho       = c0               ! not used
 
-      P_CaCO3%diss  = 60000.0_dbl_kind ! diss. length (cm)
-      P_CaCO3%gamma = 0.55_dbl_kind     ! prod frac -> hard subclass
-      P_CaCO3%mass  = 100.09_dbl_kind  ! molecular weight of CaCO3
-      P_CaCO3%rho   = 0.07_dbl_kind * P_CaCO3%mass / POC%mass
+      P_CaCO3%diss  = 60000.0_r8 ! diss. length (cm)
+      P_CaCO3%gamma = 0.55_r8     ! prod frac -> hard subclass
+      P_CaCO3%mass  = 100.09_r8  ! molecular weight of CaCO3
+      P_CaCO3%rho   = 0.07_r8 * P_CaCO3%mass / POC%mass
                                        ! QA mass ratio for CaCO3
                                        ! This ratio is used in ecos_set_interior
 
-      P_SiO2%diss   = 2200.0_dbl_kind  ! diss. length (cm), modified by TEMP
-      P_SiO2%gamma  = 0.37_dbl_kind    ! prod frac -> hard subclass
-      P_SiO2%mass   = 60.08_dbl_kind   ! molecular weight of SiO2
-      P_SiO2%rho    = 0.035_dbl_kind * P_SiO2%mass / POC%mass
+      P_SiO2%diss   = 2200.0_r8  ! diss. length (cm), modified by TEMP
+      P_SiO2%gamma  = 0.37_r8    ! prod frac -> hard subclass
+      P_SiO2%mass   = 60.08_r8   ! molecular weight of SiO2
+      P_SiO2%rho    = 0.035_r8 * P_SiO2%mass / POC%mass
                                        ! QA mass ratio for SiO2
 
-      dust%diss     = 60000.0_dbl_kind ! diss. length (cm)
-      dust%gamma    = 0.97_dbl_kind    ! prod frac -> hard subclass
-      dust%mass     = 1.0e9_dbl_kind   ! base units are already grams
-      dust%rho      = 0.07_dbl_kind * dust%mass / POC%mass
+      dust%diss     = 60000.0_r8 ! diss. length (cm)
+      dust%gamma    = 0.97_r8    ! prod frac -> hard subclass
+      dust%mass     = 1.0e9_r8   ! base units are already grams
+      dust%rho      = 0.07_r8 * dust%mass / POC%mass
                                        ! QA mass ratio for dust
 
-      P_iron%diss   = 60000.0_dbl_kind ! diss. length (cm) - not used
+      P_iron%diss   = 60000.0_r8 ! diss. length (cm) - not used
       P_iron%gamma  = c0               ! prod frac -> hard subclass - not used
       P_iron%mass   = c0               ! not used
       P_iron%rho    = c0               ! not used
@@ -2195,7 +2196,7 @@ CONTAINS
 !     arguments
 !-----------------------------------------------------------------------
 
-      integer(kind=int_kind), intent(in) :: k ! vertical model level
+      integer(i4), intent(in) :: k ! vertical model level
       type(sinking_particle), intent(inout) :: &
            POC,          & ! base units = nmol C
            P_CaCO3,      & ! base units = nmol CaCO3
@@ -2203,19 +2204,19 @@ CONTAINS
            dust,         & ! base units = g
            P_iron        ! base units = nmol Fe
 
-      real(kind=dbl_kind), dimension(imt,jmt), intent(inout) :: &
+      real(r8), dimension(imt,jmt), intent(inout) :: &
            QA_dust_def     ! incoming deficit in the QA(dust) POC flux
 
-      real(kind=dbl_kind), dimension(imt,jmt), intent(in) :: &
+      real(r8), dimension(imt,jmt), intent(in) :: &
            TEMP          ! temperature for scaling functions
 
       ! used to change/increase POC%diss
-      real(kind=dbl_kind), dimension(imt,jmt), intent(in) :: &
+      real(r8), dimension(imt,jmt), intent(in) :: &
            O2_loc        ! dissolved oxygen
 
-      integer(kind=int_kind) :: kmt ! maximum valid depth layer
+      integer(i4) :: kmt ! maximum valid depth layer
 
-      real(kind=dbl_kind), dimension(km) :: &
+      real(r8), dimension(km) :: &
           dz,        & ! layer thickness
           dzr,       & ! inverse later thickness
           zt          ! layer midpoint position (negative)
@@ -2224,12 +2225,12 @@ CONTAINS
 !     local variables
 !-----------------------------------------------------------------------
 
-      real(kind=dbl_kind) :: poc_diss ! diss. length used (cm)
+      real(r8) :: poc_diss ! diss. length used (cm)
 
       character(len=*), parameter :: &
            sub_name = 'ecosys_mod:compute_particulate_terms'
 
-      real(kind=dbl_kind) :: &
+      real(r8) :: &
            decay_CaCO3,      & ! scaling factor for dissolution of CaCO3
            decay_dust,       & ! scaling factor for dissolution of dust
            decay_POC_E,      & ! scaling factor for dissolution of excess POC
@@ -2238,10 +2239,10 @@ CONTAINS
            POC_prod_avail,   & ! POC production available for excess POC flux
            new_QA_dust_def   ! outgoing deficit in the QA(dust) POC flux
 
-      integer(kind=int_kind) :: &
+      integer(i4) :: &
            i, j                  ! loop indices
 
-      real(kind=dbl_kind), dimension(imt,jmt) :: &
+      real(r8), dimension(imt,jmt) :: &
            TfuncP,        & ! temperature scaling from soft POM remin
            TfuncS         ! temperature scaling from soft POM remin
 
@@ -2270,7 +2271,7 @@ CONTAINS
 
       decay_CaCO3 = exp(-dz(k) / P_CaCO3%diss)
       decay_dust  = exp(-dz(k) / dust%diss)
-      decay_Hard  = exp(-dz(k) / 4.0e6_dbl_kind)
+      decay_Hard  = exp(-dz(k) / 4.0e6_r8)
 
 !----------------------------------------------------------------------
 !   Tref = 30.0 reference temperature (deg. C)
@@ -2280,10 +2281,10 @@ CONTAINS
 !
 !-----------------------------------------------------------------------
 
-      TfuncP = 1.12_dbl_kind**(((TEMP + T0_Kelvin) &
+      TfuncP = 1.12_r8**(((TEMP + T0_Kelvin) &
         - (Tref + T0_Kelvin)) / c10)
 
-      TfuncS = 4.0_dbl_kind**(((TEMP + T0_Kelvin) &
+      TfuncS = 4.0_r8**(((TEMP + T0_Kelvin) &
         - (Tref + T0_Kelvin)) / c10)
 
       do j = 1,jmt
@@ -2298,7 +2299,7 @@ CONTAINS
 
                 ! increase POC diss where there is denitrification
                 if (O2_loc(i,j).lt.parm_o2_min) then
-                    poc_diss = 26000.0_dbl_kind  ! diss. length (cm)
+                    poc_diss = 26000.0_r8  ! diss. length (cm)
                 else
                     poc_diss = POC%diss
                 endif
@@ -2587,34 +2588,34 @@ CONTAINS
 !     argument declarations
 !-----------------------------------------------------------------------
 
-      real (kind=dbl_kind), dimension(imt,jmt), intent(in) :: &
+      real(r8), dimension(imt,jmt), intent(in) :: &
         IFRAC          & ! sea ice fraction (non-dimensional)
       , ATM_PRESS      & ! sea level atmospheric pressure (dyne/cm^2)
       , U10_SQR        & ! 10m wind speed squared (cm^2/s^2)
       , SST            & ! sea surface temperature (C)
       , SSS            ! sea surface salinity (psu)
 
-      real (kind=dbl_kind), dimension(imt,jmt,ecosys_tracer_cnt), &
+      real(r8), dimension(imt,jmt,ecosys_tracer_cnt), &
         intent(in) :: SURF_VALS ! module tracers (fmol/cm^3)
 
-      real (kind=dbl_kind), dimension(imt,jmt,ecosys_tracer_cnt), &
+      real(r8), dimension(imt,jmt,ecosys_tracer_cnt), &
         intent(inout) :: STF_MODULE ! surface fluxes (fmol/cm^2/s)
 
 !-----------------------------------------------------------------------
 !     local parameters
 !-----------------------------------------------------------------------
 
-      real(kind=dbl_kind), parameter :: &
-          a         = 6.97e-9_dbl_kind, & ! in s/cm, from a = 0.251 cm/hr s^2/m^2 in Wannikhof 2014
-          phlo_init = 5.0_dbl_kind,   & ! low bound for ph for no prev soln
-          phhi_init = 9.0_dbl_kind,   & ! high bound for ph for no prev soln
-          del_ph    = 0.25_dbl_kind   ! delta-ph for prev soln
-          !a         = 8.6e-9_dbl_kind,& ! a = 0.31 cm/hr s^2/m^2 in (s/cm)    -- older value
+      real(r8), parameter :: &
+          a         = 6.97e-9_r8, & ! in s/cm, from a = 0.251 cm/hr s^2/m^2 in Wannikhof 2014
+          phlo_init = 5.0_r8,   & ! low bound for ph for no prev soln
+          phhi_init = 9.0_r8,   & ! high bound for ph for no prev soln
+          del_ph    = 0.25_r8   ! delta-ph for prev soln
+          !a         = 8.6e-9_r8,& ! a = 0.31 cm/hr s^2/m^2 in (s/cm)    -- older value
 !-----------------------------------------------------------------------
 !     local variable declarations
 !-----------------------------------------------------------------------
 
-      real (kind=dbl_kind), dimension(imt,jmt) :: &
+      real(r8), dimension(imt,jmt) :: &
         IFRAC_USED      & ! used ice fraction (m^2/m^2)
       , AP_USED         & ! used atmospheric pressure (atm)
       , XKW             & ! a * U10_SQR (cm/s)
@@ -2626,7 +2627,7 @@ CONTAINS
       , FLUX            & ! gas flux of O2 or CO2 (nmol/cm^2/s)
       , XCO2            ! atmospheric CO2 (2D)
 
-      real (kind=dbl_kind), dimension(imt) :: &
+      real(r8), dimension(imt) :: &
         PHLO_row        & ! lower bound for pH solver
       , PHHI_row        & ! upper bound for pH solver
       , PH_NEW          & ! computed PH from solver
@@ -2638,7 +2639,7 @@ CONTAINS
       logical (kind=log_kind), dimension(imt) :: &
         MASK_row        ! mask for pH solver
 
-      integer (kind=int_kind) :: &
+      integer(i4) :: &
         j               ! 'latitudinal' index
 
 
@@ -2656,7 +2657,7 @@ CONTAINS
 !        convert ATM_PRESS to atm
 !-----------------------------------------------------------------------
 
-      AP_USED = ATM_PRESS / 1013.25e+3_dbl_kind ! (dyne/cm^2 -> atm)
+      AP_USED = ATM_PRESS / 1013.25e+3_r8 ! (dyne/cm^2 -> atm)
 
       XKW_tavg = XKW
       AP_tavg  = AP_USED
@@ -2684,7 +2685,7 @@ CONTAINS
          SCHMIDT_O2_tavg = SCHMIDT_USED
          O2SAT_1atm = O2SAT(SST,SSS)
          where (LAND_MASK)
-            PV = XKW_ICE * sqrt(660.0_dbl_kind / SCHMIDT_USED)
+            PV = XKW_ICE * sqrt(660.0_r8 / SCHMIDT_USED)
             O2SAT_USED = AP_USED * O2SAT_1atm
             O2SAT_tavg = O2SAT_USED
             FLUX = PV * (O2SAT_USED - SURF_VALS(:,:,o2_ind))
@@ -2717,7 +2718,7 @@ CONTAINS
          SCHMIDT_USED = SCHMIDT_CO2(SST)
          SCHMIDT_CO2_tavg = SCHMIDT_USED
          where (LAND_MASK)
-            PV = XKW_ICE * sqrt(660.0_dbl_kind / SCHMIDT_USED)
+            PV = XKW_ICE * sqrt(660.0_r8 / SCHMIDT_USED)
          else where
             PV = c0
          endwhere
@@ -2760,7 +2761,7 @@ CONTAINS
 !        nmol/cm^2/s (positive down) to kg CO2/m^2/s (positive down)
 !-----------------------------------------------------------------------
 
-         !call named_field_set(sflux_co2_nf_ind, 44.0e-8_dbl_kind * FLUX)
+         !call named_field_set(sflux_co2_nf_ind, 44.0e-8_r8 * FLUX)
 
       endif
 
@@ -2798,8 +2799,8 @@ CONTAINS
     !   input arguments
     !---------------------------------------------------------------------------
 
-    LOGICAL(KIND=log_kind), DIMENSION(imt), INTENT(IN) :: mask
-    REAL(KIND=dbl_kind), DIMENSION(imt), INTENT(IN) :: &
+    logical(kind=log_kind), DIMENSION(imt), INTENT(IN) :: mask
+    real(r8), DIMENSION(imt), INTENT(IN) :: &
          t,        & ! temperature (degrees C)
          s,        & ! salinity (PSU)
          dic_in,   & ! total inorganic carbon (mmol/m^3)
@@ -2815,7 +2816,7 @@ CONTAINS
     !   output arguments
     !---------------------------------------------------------------------------
 
-    REAL(KIND=dbl_kind), DIMENSION(imt), INTENT(OUT) :: &
+    real(r8), DIMENSION(imt), INTENT(OUT) :: &
          ph,       & ! computed ph values, for initial guess on next time step
          co2star,  & ! CO2*water (mmol/m^3)
          dco2star, & ! delta CO2 (mmol/m^3)
@@ -2826,9 +2827,9 @@ CONTAINS
     !   local variable declarations
     !---------------------------------------------------------------------------
 
-    INTEGER(KIND=int_kind) :: i
+    integer(i4) :: i
 
-    REAL(KIND=dbl_kind) :: &
+    real(r8) :: &
          mass_to_vol,  & ! (mol/kg) -> (mmol/m^3)
          vol_to_mass,  & ! (mmol/m^3) -> (mol/kg)
          tk,           & ! temperature (K)
@@ -2838,7 +2839,7 @@ CONTAINS
          tk100, tk1002, invtk, dlogtk, is2, sqrtis, &
          s2, sqrts, s15, htotal2
 
-    REAL(KIND=dbl_kind), DIMENSION(imt) :: &
+    real(r8), DIMENSION(imt) :: &
          xco2,         & ! atmospheric CO2 (atm)
          htotal,       & ! free concentration of H ion
          x1, x2          ! bounds on htotal for solver
@@ -2861,8 +2862,8 @@ CONTAINS
     !---------------------------------------------------------------------------
 
     ! changed for use with tracers in mmol/m^3
-    !mass_to_vol = 1.0e3_dbl_kind * rho_sw
-    mass_to_vol = 1.0e6_dbl_kind * rho_sw
+    !mass_to_vol = 1.0e3_r8 * rho_sw
+    mass_to_vol = 1.0e6_r8 * rho_sw
     vol_to_mass = c1 / mass_to_vol
 
     !---------------------------------------------------------------------------
@@ -2875,7 +2876,7 @@ CONTAINS
           ta(i)   = ta_in(i)   * vol_to_mass
           pt(i)   = pt_in(i)   * vol_to_mass
           sit(i)  = sit_in(i)  * vol_to_mass
-          xco2(i) = xco2_in(i) * 1e-6_dbl_kind
+          xco2(i) = xco2_in(i) * 1e-6_r8
 
           !---------------------------------------------------------------------
           !   Calculate all constants needed to convert between various
@@ -2890,7 +2891,7 @@ CONTAINS
           !---------------------------------------------------------------------
 
           tk       = T0_Kelvin + t(i)
-          tk100    = tk * 1e-2_dbl_kind
+          tk100    = tk * 1e-2_r8
           tk1002   = tk100 * tk100
           invtk    = c1 / tk
           dlogtk   = LOG(tk)
@@ -3075,8 +3076,8 @@ CONTAINS
           co2star(i)  = co2star(i) * mass_to_vol
           dco2star(i) = dco2star(i) * mass_to_vol
 
-          pCO2surf(i) = pCO2surf(i) * 1e6_dbl_kind
-          dpCO2(i)    = dpCO2(i) * 1e6_dbl_kind
+          pCO2surf(i) = pCO2surf(i) * 1e6_r8
+          dpCO2(i)    = dpCO2(i) * 1e6_r8
 
        ELSE ! if mask
 
@@ -3109,22 +3110,22 @@ CONTAINS
     !   input arguments
     !---------------------------------------------------------------------------
 
-    LOGICAL(KIND=log_kind), DIMENSION(imt), INTENT(IN) :: mask
-    REAL(KIND=dbl_kind), DIMENSION(imt), INTENT(IN) :: x
+    logical(kind=log_kind), DIMENSION(imt), INTENT(IN) :: mask
+    real(r8), DIMENSION(imt), INTENT(IN) :: x
 
     !---------------------------------------------------------------------------
     !   output arguments
     !---------------------------------------------------------------------------
 
-    REAL(KIND=dbl_kind), DIMENSION(imt), INTENT(OUT) :: fn, df
+    real(r8), DIMENSION(imt), INTENT(OUT) :: fn, df
 
     !---------------------------------------------------------------------------
     !   local variable declarations
     !---------------------------------------------------------------------------
 
-    INTEGER(KIND=int_kind) :: i
+    integer(i4) :: i
 
-    REAL(KIND=dbl_kind) :: &
+    real(r8) :: &
          x1, x2, x3, k12, k12p, k123p, a, a2, da, b, b2, db, c
 
     !---------------------------------------------------------------------------
@@ -3205,25 +3206,25 @@ CONTAINS
     !   input arguments
     !---------------------------------------------------------------------------
 
-    LOGICAL(KIND=log_kind), DIMENSION(imt), INTENT(IN) :: mask_in
-    REAL(KIND=dbl_kind), DIMENSION(imt), INTENT(IN) :: x1, x2
-    REAL(KIND=dbl_kind), INTENT(IN) :: xacc
+    logical(kind=log_kind), DIMENSION(imt), INTENT(IN) :: mask_in
+    real(r8), DIMENSION(imt), INTENT(IN) :: x1, x2
+    real(r8), INTENT(IN) :: xacc
 
     !---------------------------------------------------------------------------
     !   output arguments
     !---------------------------------------------------------------------------
 
-    REAL(KIND=dbl_kind), DIMENSION(imt), INTENT(OUT) :: soln
+    real(r8), DIMENSION(imt), INTENT(OUT) :: soln
 
     !---------------------------------------------------------------------------
     !   local variable declarations
     !---------------------------------------------------------------------------
 
-    LOGICAL(KIND=log_kind) :: leave_bracket, dx_decrease
-    LOGICAL(KIND=log_kind), DIMENSION(imt) :: mask
-    INTEGER(KIND=int_kind) ::  i, it
-    REAL(KIND=dbl_kind) :: temp
-    REAL(KIND=dbl_kind), DIMENSION(imt) :: xlo, xhi, flo, fhi, f, df, dxold, dx
+    logical(kind=log_kind) :: leave_bracket, dx_decrease
+    logical(kind=log_kind), DIMENSION(imt) :: mask
+    integer(i4) ::  i, it
+    real(r8) :: temp
+    real(r8), DIMENSION(imt) :: xlo, xhi, flo, fhi, f, df, dxold, dx
 
     !---------------------------------------------------------------------------
     !   bracket root at each location and set up first iteration
@@ -3318,19 +3319,19 @@ CONTAINS
 !     result & argument declarations
 !-----------------------------------------------------------------------
 
-      real(kind=dbl_kind), dimension(imt,jmt) :: SCHMIDT_O2
+      real(r8), dimension(imt,jmt) :: SCHMIDT_O2
 
-      real(kind=dbl_kind), dimension(imt,jmt), intent(in) :: SST
+      real(r8), dimension(imt,jmt), intent(in) :: SST
 
 !-----------------------------------------------------------------------
 !     coefficients in expansion
 !-----------------------------------------------------------------------
 
-      real(kind=dbl_kind), parameter :: &
-        a = 1638.0_dbl_kind &
-      , b = 81.83_dbl_kind &
-      , c = 1.483_dbl_kind &
-      , d = 0.008004_dbl_kind
+      real(r8), parameter :: &
+        a = 1638.0_r8 &
+      , b = 81.83_r8 &
+      , c = 1.483_r8 &
+      , d = 0.008004_r8
 
 !-----------------------------------------------------------------------
 
@@ -3367,9 +3368,9 @@ CONTAINS
 !     result & argument declarations
 !-----------------------------------------------------------------------
 
-      real(kind=dbl_kind), dimension(imt,jmt) :: O2SAT
+      real(r8), dimension(imt,jmt) :: O2SAT
 
-      real(kind=dbl_kind), dimension(imt,jmt), intent(in) :: &
+      real(r8), dimension(imt,jmt), intent(in) :: &
         SST    & ! sea surface temperature (C)
       , SSS    ! sea surface salinity (psu)
 
@@ -3377,28 +3378,28 @@ CONTAINS
 !     local variables
 !-----------------------------------------------------------------------
 
-      real(kind=dbl_kind), dimension(imt,jmt) :: TS
+      real(r8), dimension(imt,jmt) :: TS
 
 !-----------------------------------------------------------------------
 !     coefficients in expansion
 !-----------------------------------------------------------------------
 
-      real(kind=dbl_kind), parameter :: &
-        a_0 = 2.00907_dbl_kind &
-      , a_1 = 3.22014_dbl_kind &
-      , a_2 = 4.05010_dbl_kind &
-      , a_3 = 4.94457_dbl_kind &
-      , a_4 = -2.56847E-1_dbl_kind &
-      , a_5 = 3.88767_dbl_kind &
-      , b_0 = -6.24523E-3_dbl_kind &
-      , b_1 = -7.37614E-3_dbl_kind &
-      , b_2 = -1.03410E-2_dbl_kind &
-      , b_3 = -8.17083E-3_dbl_kind &
-      , c_0 = -4.88682E-7_dbl_kind
+      real(r8), parameter :: &
+        a_0 = 2.00907_r8 &
+      , a_1 = 3.22014_r8 &
+      , a_2 = 4.05010_r8 &
+      , a_3 = 4.94457_r8 &
+      , a_4 = -2.56847E-1_r8 &
+      , a_5 = 3.88767_r8 &
+      , b_0 = -6.24523E-3_r8 &
+      , b_1 = -7.37614E-3_r8 &
+      , b_2 = -1.03410E-2_r8 &
+      , b_3 = -8.17083E-3_r8 &
+      , c_0 = -4.88682E-7_r8
 
 !-----------------------------------------------------------------------
 
-      TS = LOG( ((T0_Kelvin+25.0_dbl_kind) - SST) / (T0_Kelvin + SST) )
+      TS = LOG( ((T0_Kelvin+25.0_r8) - SST) / (T0_Kelvin + SST) )
 
       O2SAT = EXP(a_0+TS*(a_1+TS*(a_2+TS*(a_3+TS*(a_4+TS*a_5)))) + &
         SSS*( (b_0+TS*(b_1+TS*(b_2+TS*b_3))) + SSS*c_0 ))
@@ -3407,7 +3408,7 @@ CONTAINS
 !   Convert from ml/l to mmol/m^3
 !---------------------------------------------------------------------------
 
-      O2SAT = O2SAT / 0.0223916_dbl_kind
+      O2SAT = O2SAT / 0.0223916_r8
 
 !-----------------------------------------------------------------------
 
@@ -3428,19 +3429,19 @@ CONTAINS
 !     result & argument declarations
 !-----------------------------------------------------------------------
 
-      real(kind=dbl_kind), dimension(imt,jmt) :: SCHMIDT_CO2
+      real(r8), dimension(imt,jmt) :: SCHMIDT_CO2
 
-      real(kind=dbl_kind), dimension(imt,jmt), intent(in) :: SST
+      real(r8), dimension(imt,jmt), intent(in) :: SST
 
 !-----------------------------------------------------------------------
 !     coefficients in expansion
 !-----------------------------------------------------------------------
 
-      real(kind=dbl_kind), parameter :: &
-        a = 2073.1_dbl_kind &
-      , b = 125.62_dbl_kind &
-      , c = 3.6276_dbl_kind &
-      , d = 0.043219_dbl_kind
+      real(r8), parameter :: &
+        a = 2073.1_r8 &
+      , b = 125.62_r8 &
+      , c = 3.6276_r8 &
+      , d = 0.043219_r8
 
 !-----------------------------------------------------------------------
 
