@@ -1,7 +1,7 @@
 """Smoke tests for the f2py extension (`f90.kei`).
 
-Build the extension first: ``make -C f90 kei`` (Python 3.11 + NumPy still use
-the classic distutils-style f2py path by default).
+Build with the same interpreter you test under, e.g. ``make -C f90 kei PYTHON=python3.13``.
+NumPy 2.x wraps Fortran via Meson-backed ``numpy.f2py`` (stdlib ``distutils`` is gone on 3.12+).
 """
 
 from __future__ import annotations

@@ -4,10 +4,33 @@ Integration test mirroring `kei.py` ``if __name__ == '__main__':`` (MACMODS / ls
 Requires ``test_data/kf_200_100_2000.nc``, reference ``test_data/test_output.nc``,
 and a built ``f90.kei`` extension. The run is lengthy (~768 hourly steps); use
 ``pytest -m slow`` to run only this module or ``pytest -m 'not slow'`` to skip it.
+
+Cross-environment fidelity (why e.g. py311 can match ``test_output.nc`` but py313
+does not):
+
+- **Committed reference**: ``test_output.nc`` is a frozen run. Bit-level or tight
+  float agreement across Python/OS/BLAS stacks is not guaranteed for a nonlinear
+  month-long integration (`T` couples ice, KPP, tracers).
+
+- **Fortran extension link**: Py311 vs py313 builds often link **different LAPACK**
+  (e.g. macOS Accelerate vs conda-forge OpenBLAS / ``liblapack``). ``SGTSV`` and related
+  solvers accumulate small differences each step (~10³ steps ⇒ order 0.1–1 °C).
+
+- **Threading**: OpenBLAS / MKL can reorder work; set ``OPENBLAS_NUM_THREADS=1``,
+  ``OMP_NUM_THREADS=1``, ``MKL_NUM_THREADS=1`` when debugging drift.
+
+- **Python stack**: Newer pandas/xarray/cftime may shift **time resampling**
+  (``compute`` ``resample(…).interpolate()`` → ``nt`` or boundary forcing). If
+  ``nt`` or the last ``f_time`` label differs between envs, fix the upstream grid
+  first.
+
+To refresh the reference after changing toolchains: rerun once in your canonical env
+and replace ``test_data/test_output.nc``.
 """
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -18,6 +41,26 @@ _REPO = Path(__file__).resolve().parent.parent
 _TEST_DATA = _REPO / "test_data"
 _INPUT_NC = _TEST_DATA / "kf_200_100_2000.nc"
 _REF_NC = _TEST_DATA / "test_output.nc"
+
+
+def _env_digest_for_comparison() -> str:
+    bits = [
+        f"Python {sys.version.split()[0]}",
+        f"numpy {np.__version__}",
+    ]
+    try:
+        import pandas as pd  # noqa: PLC0415
+
+        bits.append(f"pandas {pd.__version__}")
+    except ImportError:
+        pass
+    try:
+        import xarray as xr  # noqa: PLC0415
+
+        bits.append(f"xarray {xr.__version__}")
+    except ImportError:
+        pass
+    return ", ".join(bits)
 
 
 def _run_main_block_workflow(out_base: Path) -> tuple[Path, Path]:
@@ -107,9 +150,18 @@ def _array_last_time_close(
             bad = int(np.size(ok) - np.count_nonzero(ok))
             abs_err = np.abs(x - y)
             max_err = float(np.nanmax(abs_err))
+            n_ref = ref.sizes["f_time"]
+            n_run = run.sizes["f_time"]
+            t_ref_last = np.asarray(ref["f_time"].isel(f_time=-1).values)
+            t_run_last = np.asarray(run["f_time"].isel(f_time=-1).values)
+            hint = (
+                f"Diagnostics: {_env_digest_for_comparison()}; "
+                f"f_time len ref={n_ref} run={n_run}; last ref={t_ref_last!r} run={t_run_last!r}. "
+                "See module docstring: BLAS/threading/resample vs pinned reference NC."
+            )
             raise AssertionError(
                 f"{var}: {bad} / {ok.size} entries differ (last f_time slice); "
-                f"max abs diff {max_err:g} (rtol={rtol}, atol={atol})"
+                f"max abs diff {max_err:g} (rtol={rtol}, atol={atol}). {hint}"
             )
 
 

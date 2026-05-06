@@ -655,7 +655,7 @@ if __name__ == '__main__':
     kf_ds['swh'] = ('f_time'), np.full(f_time_dim,0.5) # add swell height [m]
     kf_ds['mwp'] = ('f_time'), np.full(f_time_dim,30.) # add mean wave period [s]
     kf_ds['cmag'] = ('f_time'), np.full(f_time_dim,0.05) # add current speed  [m/s]
-    k = kei_simulation(kf_ds,t_start='2000-01-15',t_end='2000-02-15',lon=-71.53101,lat=-67.11383)
+    k = kei_simulation(kf_ds,t_start='2000-01-15',t_end='2000-08-15',lon=-71.53101,lat=-67.11383)
     k.compute(params,r'/Users/blsaenz/temp/keipy_output',run_name='keipytest_macmods')
 
 
