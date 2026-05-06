@@ -11,6 +11,11 @@ dependencies:
   - compilers              # conda-forge C/C++/Fortran toolchain for current platform
   - numpy                  # owns ``python -m numpy.f2py``
   - liblapack              # netlib LAPACK ABI (conda-forge -> OpenBLAS); ``Makefile`` links ``-llapack``
+  - pandas                 # used by kei.py + tests
+  - xarray                 # used by forcing + output + tests
+  - cftime                 # used for xr.date_range(..., use_cftime=True)
+  - netcdf4                # used by kei_util (date2num) + xarray engine
+  - numba                  # used by kei_util (jit)
   - meson
   - ninja
   - charset-normalizer     # Fortran sources with UTF-8 comments (NumPy Meson parses as text)

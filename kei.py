@@ -75,19 +75,23 @@ month_doy = [1,32,60,91,121,152,182,213,244,274,305,335]
 
 
 class kei_parameters(object):
-    #default params
-    p = {
+    # default params (copied per-instance; do not mutate at class level)
+    _defaults = {
       'dt'  :           3600.0,  # [seconds] 1 Hour default time step
       'lice':           1,     # ice model enabled
       'leco':           1,     # ecosystem model enabled
       'lsw':            0,     # seaweed model enabled
     }
 
-    def __init__(self, params={}):
+    def __init__(self, params=None):
+        # each simulation/test gets isolated parameter state
+        self.p = dict(self._defaults)
+        if params is None:
+            params = {}
         self.update(params)
 
     def defaults(self):
-        return self.p
+        return dict(self._defaults)
 
     def update(self,params):
         self.p.update(params)
@@ -655,7 +659,7 @@ if __name__ == '__main__':
     kf_ds['swh'] = ('f_time'), np.full(f_time_dim,0.5) # add swell height [m]
     kf_ds['mwp'] = ('f_time'), np.full(f_time_dim,30.) # add mean wave period [s]
     kf_ds['cmag'] = ('f_time'), np.full(f_time_dim,0.05) # add current speed  [m/s]
-    k = kei_simulation(kf_ds,t_start='2000-01-15',t_end='2000-08-15',lon=-71.53101,lat=-67.11383)
+    k = kei_simulation(kf_ds,t_start='2000-01-15',t_end='2000-02-15',lon=-71.53101,lat=-67.11383)
     k.compute(params,r'/Users/blsaenz/temp/keipy_output',run_name='keipytest_macmods')
 
 
