@@ -1,7 +1,7 @@
-module sia2_types
+module siesta_types
   use kei_kinds, only: i4, r4, r8, log_kind
-  use sia2_constants
-  use sia2_parameters
+  use siesta_constants
+  use siesta_parameters
   
   implicit none
 
@@ -567,4 +567,4 @@ module sia2_types
   
   contains
   
-end module sia2_types
+end module siesta_types

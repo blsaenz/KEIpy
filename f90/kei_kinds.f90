@@ -1,4 +1,4 @@
-! Central numeric and logical kinds for KEI / sia2 / macmods.
+! Central numeric and logical kinds for KEI / siesta / macmods.
 module kei_kinds
 
   use, intrinsic :: iso_fortran_env, only: int32, real32, real64

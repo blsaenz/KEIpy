@@ -43,21 +43,13 @@ module kei_eco
        rho_sw = 4.1_r8/3.996_r8,      & ! density of salt water (g/cm^3)
        T0_Kelvin = 273.15_r8
   !-----------------------------------------------------------------------------
-  !   Redfield Ratios, dissolved & particulate
+  !   Ecosystem stoichiometry (bound from kei_ecocommon in ecosys_init_apply).
   !-----------------------------------------------------------------------------
 
-  real(r8), PARAMETER :: &
-       parm_Red_D_C_P  = 117.0_r8,                 & ! carbon:phosphorus
-       parm_Red_D_N_P  =  16.0_r8,                 & ! nitrogen:phosphorus
-       parm_Red_D_O2_P = 170.0_r8,                 & ! oxygen:phosphorus
-       parm_Red_P_C_P  = parm_Red_D_C_P,                 & ! carbon:phosphorus
-       parm_Red_D_C_N  = parm_Red_D_C_P/parm_Red_D_N_P,  & ! carbon:nitrogen
-       parm_Red_P_C_N  = parm_Red_D_C_N,                 & ! carbon:nitrogen
-       parm_Red_D_C_O2 = parm_Red_D_C_P/parm_Red_D_O2_P, & ! carbon:oxygen
-       parm_Red_P_C_O2 = parm_Red_D_C_O2,                & ! carbon:oxygen
-       parm_Red_Fe_C   = 3.0e-6_r8,                & ! iron:carbon
-       parm_Red_D_C_O2_diaz = parm_Red_D_C_P/150.0_r8! carbon:oxygen
-                                                           ! for diazotrophs
+  real(r8) :: &
+       parm_Red_D_C_P, parm_Red_D_N_P, parm_Red_D_O2_P, &
+       parm_Red_P_C_P, parm_Red_D_C_N, parm_Red_P_C_N, &
+       parm_Red_D_C_O2, parm_Red_P_C_O2, parm_Red_Fe_C, parm_Red_D_C_O2_diaz
 
   !----------------------------------------------------------------------------
   !   ecosystem parameters accessible via input file
@@ -99,179 +91,49 @@ module kei_eco
        parm_diaz_umax_0         ! max. zoo growth rate on diazotrophs at tref (1/sec)
 
   !----------------------------------------------------------------------------
-  !   ecosystem parameters not (yet?) accessible via input file
+  !   ecosystem tuning (coefficients editable in module kei_ecocommon; bound in
+  !   subroutine ecosys_init_apply_ecocommon_parms).
   !----------------------------------------------------------------------------
 
-  !----------------------------------------------------------------------------
-  !     Parameters previously hardcoded in main body of bio_subs code
-  !---------------------------------------------------------------------------
+  real(r8) :: &
+      PCref, PCrefSp, PCrefDiat, PCrefDiaz, &
+      sp_mort, sp_mort2, diat_mort, diat_mort2, diaz_mort, &
+      diaz_kPO4, diaz_kFe
 
-  real(r8), parameter ::      &
-      PCref = 3.0_r8 * dps, & !max phyto C-spec. grth rate at tref (1/sec)
-      PCrefSp = 4.5_r8 * dps, & !max phyto C-spec. grth rate at tref (1/sec)
-      PCrefDiat = 4.5_r8 * dps, & !max phyto C-spec. grth rate at tref (1/sec)
-      sp_mort    = 0.1_r8   * dps, & !sphyto mort rate (1/sec)
-!      sp_mort2   = 0.009_r8 * dps, & !sphyto quad. mort rate (1/sec/((mmol C/m3))
-      diat_mort  = 0.1_r8   * dps, & !diatom mort rate (1/sec)
-!      diat_mort2 = 0.009_r8 * dps, & !diatom quad mort rate (1/sec/((mmol C/m3))
+  real(r8) :: &
+      sp_agg_rate_max, diat_agg_rate_max, diat_agg_rate_min, &
+      fe_scavenge_rate0, fe_scavenge_thres1, fe_scavenge_thres2, &
+      dust_fescav_scale, thres_fe, fe_max_scale1, fe_max_scale2, &
+      fe_diff_rate, f_fescav_P_iron
 
-      sp_mort2   = 0.0009_r8 * dps, & !sphyto quad. mort rate (1/sec/((mmol C/m3))
-      diat_mort2   = 0.0009_r8 * dps, & !sphyto quad. mort rate (1/sec/((mmol C/m3))
+  real(r8) :: dust_to_Fe
 
+  real(r8) :: &
+      z_ingest, caco3_poc_min, spc_poc_fac, f_graze_sp_poc_lim, &
+      f_prod_sp_CaCO3, f_photosp_CaCO3, f_graze_sp_doc, f_graze_sp_dic, &
+      f_z_grz_sqr_diat, &
+      f_graze_diat_poc, f_graze_diat_doc, f_graze_diat_dic, &
+      f_diat_loss_poc, f_diat_loss_dc, &
+      f_graze_diaz_zoo, f_graze_diaz_poc, f_graze_diaz_doc, f_graze_diaz_dic, &
+      f_sp_zoo_detr, f_diat_zoo_detr, f_diaz_zoo_detr, &
+      f_graze_CaCO3_remin, f_graze_si_remin
 
-!      sp_mort    = 0.17_r8   * dps, & !sphyto mort rate (1/sec)
-!      sp_mort2   = 0.0035_r8 * dps, & !sphyto quad. mort rate (1/sec/((mmol C/m3))
-!      diat_mort  = 0.17_r8   * dps, & !diatom mort rate (1/sec)
-!      diat_mort2 = 0.0035_r8 * dps, & !diatom quad mort rate (1/sec/((mmol C/m3))
-      PCrefDiaz  = 0.4_r8  * dps,  & !max Diaz C-specific growth rate at tref (1/sec)
-      diaz_mort  = 0.16_r8 * dps,  & !diaz mort rate (1/sec)
-      diaz_kPO4  = 0.005_r8,      & !diaz half-sat. const. for P (diatom value)
-      diaz_kFe   = 0.1e-3_r8        !diaz half-sat. const. for Fe
+  real(r8) :: r_Nfix_photo
 
-  !---------------------------------------------------------------------
-  !     Misc. Rate constants
-  !---------------------------------------------------------------------
-  real(r8), parameter :: &
-!       sp_agg_rate_max   = 0.2_r8, & !max agg. rate for small phyto (1/d)
-!       diat_agg_rate_max = 0.2_r8, & !max agg. rate for diatoms (1/d)
-       sp_agg_rate_max   = 0.75_r8, & !max agg. rate for small phyto (1/d)
-       diat_agg_rate_max = 0.75_r8, & !max agg. rate for diatoms (1/d)
-       diat_agg_rate_min = 0.01_r8,& !min agg. rate for diatoms (1/d)
-       fe_scavenge_rate0 = 0.12_r8,& !init Fe scaveng. rate (% of ambient)
-       fe_scavenge_thres1 = 0.6e-3_r8, & !upper thres. for Fe scavenging
-       fe_scavenge_thres2 = 0.5e-3_r8, & !lower thres. for Fe scavenging
-       dust_fescav_scale  = 0.833e8_r8, & !dust scavenging scale factor
-       thres_fe           = 1.0e5_r8,   & !thres. depth for Fe diff. flux
-       fe_max_scale1      = 3.0_r8,     & !unitless scaling coeff.
-       fe_max_scale2      = 6.0_r8/1.4e-3_r8,& !unitless scaling coeff.
-       fe_diff_rate       = 2.3148e-6_r8,&!fe diffusion rate
-                                                !   (nmolFe/cm2/sec)
-       f_fescav_P_iron    = 0.1_r8        !fraction of Fe scavenging
-                                                !        to particulate Fe
+  real(r8) :: &
+      Q, Qp, Qp_diaz, Qfe_zoo, gQsi_0, gQfe_diat_0, gQfe_sp_0, gQfe_diaz_0, &
+      gQfe_diat_min, gQsi_max, gQsi_min, gQsi_coef, gQfe_sp_min, gQfe_diaz_min, &
+      QCaCO3_max, thetaN_max_sp, thetaN_max_diat, thetaN_max_diaz, &
+      denitrif_C_N
 
-  !---------------------------------------------------------------------
-  !     Compute iron remineralization and flux out.
-  !     dust remin gDust = 0.035 gFe      mol Fe     1e9 nmolFe
-  !                        --------- *  ---------- * ----------
-  !          gDust       55.847 gFe     molFe
-  !
-  !     dust_to_Fe          conversion - dust to iron (nmol Fe/g Dust)
-  !---------------------------------------------------------------------
-  real(r8), parameter :: &
-       dust_to_Fe=0.035_r8/55.847_r8*1.0e9_r8
+  real(r8) :: &
+      thres_z1, thres_z2, loss_thres_sp, loss_thres_diat, loss_thres_zoo, &
+      loss_thres_diaz, loss_thres_diaz2, diaz_temp_thres, &
+      CaCO3_temp_thres1, CaCO3_temp_thres2, CaCO3_sp_thres
 
-  !----------------------------------------------------------------------------
-  !     Partitioning of phytoplankton growth, grazing and losses
-  !
-  !     All f_* variables are fractions and are non-dimensional
-  !----------------------------------------------------------------------------
+  real(r8) :: k_chl, k_h2o, f_qsw_par
 
-  real(r8), parameter ::     &
-      z_ingest         = 0.15_r8,  & !zoo ingestion coefficient (non-dim)
-      caco3_poc_min    = 0.4_r8,  & !minimum proportionality between
-                                          !   QCaCO3 and grazing losses to POC
-                                          !   (mmol C/mmol CaCO3)
-      spc_poc_fac      = 0.22_r8, & !small phyto grazing factor (1/mmolC)
-      f_graze_sp_poc_lim = 0.24_r8, &
-      f_prod_sp_CaCO3  = 0.026_r8, & !fraction of sp prod. as CaCO3 prod.
-      f_photosp_CaCO3  = 0.4_r8,  & !proportionality between small phyto
-                                          !    production and CaCO3 production
-      f_graze_sp_doc   = 0.34_r8, & !fraction sm. phyto. grazing to DOC
-      f_graze_sp_dic   = c1 - z_ingest - f_graze_sp_doc, & !fraction to DIC
-      f_z_grz_sqr_diat = 0.81_r8, &   ! original
-!      f_z_grz_sqr_diat = 3.5_r8, &     ! sevrine recommendation
-      f_graze_diat_poc = 0.26_r8, & !fraction diatom grazing to POC
-      f_graze_diat_doc = 0.13_r8, & !fraction diatom grazing to DOC
-      f_graze_diat_dic = c1 - z_ingest - f_graze_diat_poc &
-                          - f_graze_diat_doc, & !fraction diatom grazing to DIC
-      f_diat_loss_poc  = 0.05_r8, &  !fraction diatom loss to POC
-      f_diat_loss_dc   = c1-f_diat_loss_poc, & !fraction diatom loss to DOC
-      f_graze_diaz_zoo = 0.21_r8, & !fraction diaz. grazing to zoo
-      f_graze_diaz_poc = 0.0_r8, &  !fraction diaz grazing to POC
-      f_graze_diaz_doc = 0.24_r8, & !fraction diaz grazing to DOC
-      f_graze_diaz_dic = c1-f_graze_diaz_zoo-f_graze_diaz_poc &
-                         - f_graze_diaz_doc, & !fraction diaz grazing to DIC
-      f_sp_zoo_detr   = 0.06666_r8,& !fraction of zoo losses to detrital
-                                          !  pool when eating sphyto
-      f_diat_zoo_detr = 0.1333_r8,& !fraction of zoo losses to detrital
-                                          !  pool when eating diatoms
-      f_diaz_zoo_detr = 0.03333_r8,& !fraction of zoo losses to detrital
-                                          !  pool when eating diaz
-      f_graze_CaCO3_remin = 0.33_r8, & !fraction of spCaCO3 grazing
-                                             !          which is remin
-      f_graze_si_remin    = 0.5_r8      !fraction of diatom Si grazing
-                                             !          which is remin
-
-  !----------------------------------------------------------------------------
-  !     fixed ratios
-  !----------------------------------------------------------------------------
-  real(r8), parameter :: &
-       r_Nfix_photo=1.43_r8         ! N fix relative to C fix (non-dim)
-
-  !-----------------------------------------------------------------------
-  !     SET FIXED RATIOS for N/C, P/C, SiO3/C, Fe/C
-  !     assumes C/N/P of 117/16/1 based on Anderson and Sarmiento, 1994
-  !     for diazotrophs a N/P of 45 is assumed based on Letelier & Karl, 1998
-  !-----------------------------------------------------------------------
-
-  real(r8), parameter ::  &
-      Q             = 0.137_r8,  & !N/C ratio (mmol/mmol) of phyto & zoo
-      Qp            = 0.00855_r8,& !P/C ratio (mmol/mmol) sphyto,diat,zoo
-      Qp_diaz       = 0.002735_r8,& !diazotroph P/C ratio
-      Qfe_zoo       = 2.5e-6_r8, & !zooplankton fe/C ratio
-      gQsi_0        = 0.137_r8,  & !initial diatom Si/C ratio
-      gQfe_diat_0   = 6.0e-6_r8, & !initial diatom fe/C ratio
-      gQfe_sp_0     = 6.0e-6_r8, & !initial sphyto fe/C ratio
-      gQfe_diaz_0   = 42.0e-6_r8,& !initial diaz. fe/C ratio
-      gQfe_diat_min = 2.5e-6_r8, & !min diatom fe/C ratio
-      gQsi_max      = 0.685_r8,  & !max diatom Si/C ratio
-      gQsi_min      = 0.0685_r8, & !min diatom Si/C ratio
-      gQsi_coef     = 2.5_r8, &
-      gQfe_sp_min   = 2.5e-6_r8, & !min sphyto fe/C ratio
-      gQfe_diaz_min = 14.0e-6_r8,& !min diaz fe/C ratio
-      QCaCO3_max    = 0.4_r8,    & !max QCaCO3
-      thetaN_max_sp   = 2.5_r8, & !sp max thetaN (Chl/N) (mg Chl/mmol N)
-      thetaN_max_diat = 4.0_r8, & !diat max thetaN (Chl/N) (mg Chl/mmol N)
-!      thetaN_max_sp   = 2.3_r8, & !sp max thetaN (Chl/N) (mg Chl/mmol N)
-!      thetaN_max_diat = 3.0_r8, & !diat max thetaN (Chl/N) (mg Chl/mmol N)
-      thetaN_max_diaz = 3.4_r8, & !diaz max thetaN (Chl/N) (mg Chl/mmol N)
-      ! carbon:nitrogen ratio for denitrification
-      ! net removal of 120 mols NO3 for 117 mols C (136 = 120 + 16)
-      denitrif_C_N  = parm_Red_D_C_P/136.0_r8
-
-  !----------------------------------------------------------------------------
-  !     loss term threshold parameters, chl:c ratios
-  !----------------------------------------------------------------------------
-
-  real(r8), parameter ::    &
-      thres_z1          = 100.0e2_r8, & !threshold = C_loss_thres for z shallower than this (cm)
-      thres_z2          = 200.0e2_r8, & !threshold = 0 for z deeper than this (cm)
-      loss_thres_sp     = 0.003_r8, & !small phyto conc. where losses go to zero
-!      loss_thres_sp     = 0.01_r8, & !small phyto conc. where losses go to zero - ben increased
-      loss_thres_diat   = 0.03_r8, & !diat conc. where losses go to zero
-!      loss_thres_diat   = 0.1_r8, & !diat conc. where losses go to zero - ben increased
-      loss_thres_zoo    = 0.03_r8,  & !zoo conc. where losses go to zero
-      loss_thres_diaz   = 0.01_r8,  & !diaz conc. where losses go to zero
-      loss_thres_diaz2  = 0.001_r8, & !diaz conc. thres at low temp
-      diaz_temp_thres   = 15.0_r8,  & !Temp. where diaz conc thres drops
-      CaCO3_temp_thres1 = 1.0_r8,   & !upper temp threshold for CaCO3 prod
-      CaCO3_temp_thres2 = -2.0_r8,  & !lower temp threshold
-      CaCO3_sp_thres    = 3.0_r8      ! bloom condition thres (mmolC/m3)
-
-  !---------------------------------------------------------------------
-  !     attenuation coefficients for PAR and related parameters
-  !---------------------------------------------------------------------
-  real(r8), parameter :: &
-       k_chl = 0.03e-2_r8, & ! Chl atten. coeff. (1/cm/(mg Chl/m^3))
-       k_h2o = 0.04e-2_r8, & ! water atten. coeff (1/cm)
-       f_qsw_par = 0.45_r8   ! PAR fraction
-
-  !---------------------------------------------------------------------
-  !     Temperature parameters
-  !---------------------------------------------------------------------
-  real(r8), parameter :: &
-       Tref = 30.0_r8, & ! reference temperature (C)
-       Q_10 = 2.0_r8     ! factor for temperature dependence (non-dim)
+  real(r8) :: Tref, Q_10
 
 !-----------------------------------------------------------------------
 !     derived type for implicit handling of sinking particulate matter
@@ -339,6 +201,152 @@ module kei_eco
       2.8603E-02, 3.0369E-02 /)
 
 CONTAINS
+
+!***********************************************************************
+
+      subroutine ecosys_init_apply_ecocommon_parms
+
+        implicit none
+
+        ! --- Redfield ratios (bases from kei_ecocommon eco_* vars; derived here) ---
+        parm_Red_D_C_P = eco_Red_D_C_P
+        parm_Red_D_N_P = eco_Red_D_N_P
+        parm_Red_D_O2_P = eco_Red_D_O2_P
+        parm_Red_Fe_C = eco_Red_Fe_C
+        parm_Red_P_C_P = parm_Red_D_C_P
+        parm_Red_D_C_N = parm_Red_D_C_P / parm_Red_D_N_P
+        parm_Red_P_C_N = parm_Red_D_C_N
+        parm_Red_D_C_O2 = parm_Red_D_C_P / parm_Red_D_O2_P
+        parm_Red_P_C_O2 = parm_Red_D_C_O2
+        parm_Red_D_C_O2_diaz = parm_Red_D_C_P / eco_Red_diaz_C_O2_divisor
+        denitrif_C_N = parm_Red_D_C_P / eco_denitrif_c_n_denominator
+        dust_to_Fe = eco_dust_fe_mass_ratio / eco_dust_fe_molar_mass_g_mol &
+                     * eco_dust_to_fe_nm_scale
+
+        PCref = eco_PCref_pre_dps * dps
+        PCrefSp = eco_PCrefSp_pre_dps * dps
+        PCrefDiat = eco_PCrefDiat_pre_dps * dps
+        PCrefDiaz = eco_PCrefDiaz_pre_dps * dps
+        sp_mort = eco_sp_mort_pre_dps * dps
+        sp_mort2 = eco_sp_mort2_pre_dps * dps
+        diat_mort = eco_diat_mort_pre_dps * dps
+        diat_mort2 = eco_diat_mort2_pre_dps * dps
+        diaz_mort = eco_diaz_mort_pre_dps * dps
+        diaz_kPO4 = eco_diaz_kPO4
+        diaz_kFe = eco_diaz_kFe
+
+        sp_agg_rate_max = eco_sp_agg_rate_max
+        diat_agg_rate_max = eco_diat_agg_rate_max
+        diat_agg_rate_min = eco_diat_agg_rate_min
+        fe_scavenge_rate0 = eco_fe_scavenge_rate0
+        fe_scavenge_thres1 = eco_fe_scavenge_thres1
+        fe_scavenge_thres2 = eco_fe_scavenge_thres2
+        dust_fescav_scale = eco_dust_fescav_scale
+        thres_fe = eco_thres_fe
+        fe_max_scale1 = eco_fe_max_scale1
+        fe_max_scale2 = eco_fe_max_scale2_num / eco_fe_max_scale2_den
+        fe_diff_rate = eco_fe_diff_rate
+        f_fescav_P_iron = eco_f_fescav_P_iron
+
+        z_ingest = eco_z_ingest
+        caco3_poc_min = eco_caco3_poc_min
+        spc_poc_fac = eco_spc_poc_fac
+        f_graze_sp_poc_lim = eco_f_graze_sp_poc_lim
+        f_prod_sp_CaCO3 = eco_f_prod_sp_CaCO3
+        f_photosp_CaCO3 = eco_f_photosp_CaCO3
+        f_graze_sp_doc = eco_f_graze_sp_doc
+        f_graze_sp_dic = c1 - z_ingest - f_graze_sp_doc
+        f_z_grz_sqr_diat = eco_f_z_grz_sqr_diat
+        f_graze_diat_poc = eco_f_graze_diat_poc
+        f_graze_diat_doc = eco_f_graze_diat_doc
+        f_graze_diat_dic = c1 - z_ingest - f_graze_diat_poc - f_graze_diat_doc
+        f_diat_loss_poc = eco_f_diat_loss_poc
+        f_diat_loss_dc = c1 - f_diat_loss_poc
+        f_graze_diaz_zoo = eco_f_graze_diaz_zoo
+        f_graze_diaz_poc = eco_f_graze_diaz_poc
+        f_graze_diaz_doc = eco_f_graze_diaz_doc
+        f_graze_diaz_dic = c1 - f_graze_diaz_zoo - f_graze_diaz_poc - f_graze_diaz_doc
+        f_sp_zoo_detr = eco_f_sp_zoo_detr
+        f_diat_zoo_detr = eco_f_diat_zoo_detr
+        f_diaz_zoo_detr = eco_f_diaz_zoo_detr
+        f_graze_CaCO3_remin = eco_f_graze_CaCO3_remin
+        f_graze_si_remin = eco_f_graze_si_remin
+
+        r_Nfix_photo = eco_r_Nfix_photo
+
+        Q = eco_Q
+        Qp = eco_Qp
+        Qp_diaz = eco_Qp_diaz
+        Qfe_zoo = eco_Qfe_zoo
+        gQsi_0 = eco_gQsi_0
+        gQfe_diat_0 = eco_gQfe_diat_0
+        gQfe_sp_0 = eco_gQfe_sp_0
+        gQfe_diaz_0 = eco_gQfe_diaz_0
+        gQfe_diat_min = eco_gQfe_diat_min
+        gQsi_max = eco_gQsi_max
+        gQsi_min = eco_gQsi_min
+        gQsi_coef = eco_gQsi_coef
+        gQfe_sp_min = eco_gQfe_sp_min
+        gQfe_diaz_min = eco_gQfe_diaz_min
+        QCaCO3_max = eco_QCaCO3_max
+        thetaN_max_sp = eco_thetaN_max_sp
+        thetaN_max_diat = eco_thetaN_max_diat
+        thetaN_max_diaz = eco_thetaN_max_diaz
+
+        thres_z1 = eco_thres_z1
+        thres_z2 = eco_thres_z2
+        loss_thres_sp = eco_loss_thres_sp
+        loss_thres_diat = eco_loss_thres_diat
+        loss_thres_zoo = eco_loss_thres_zoo
+        loss_thres_diaz = eco_loss_thres_diaz
+        loss_thres_diaz2 = eco_loss_thres_diaz2
+        diaz_temp_thres = eco_diaz_temp_thres
+        CaCO3_temp_thres1 = eco_CaCO3_temp_thres1
+        CaCO3_temp_thres2 = eco_CaCO3_temp_thres2
+        CaCO3_sp_thres = eco_CaCO3_sp_thres
+
+        k_chl = eco_k_chl
+        k_h2o = eco_k_h2o
+        f_qsw_par = eco_f_qsw_par
+
+        Tref = eco_Tref_degC
+        Q_10 = eco_Q_10_factor
+
+        parm_Fe_bioavail = eco_parm_Fe_bioavail
+        parm_prod_dissolve = eco_parm_prod_dissolve
+        parm_o2_min = eco_parm_o2_min
+        parm_no3_min = eco_parm_no3_min
+        parm_Rain_CaCO3 = eco_parm_Rain_CaCO3
+        parm_Rain_SiO2 = eco_parm_Rain_SiO2
+        parm_kappa_nitrif = eco_parm_kappa_nitrif_pre_dps * dps
+        parm_nitrif_par_lim = eco_parm_nitrif_par_lim
+        parm_POC_flux_ref = eco_parm_POC_flux_ref
+        parm_rest_prod_tau = eco_parm_rest_prod_tau_days * spd
+        parm_rest_prod_z_c = eco_parm_rest_prod_z_c
+        parm_z_umax_0 = eco_parm_z_umax_0_pre_dps * dps
+        parm_diat_umax_0 = eco_parm_diat_umax_0_pre_dps * dps
+        parm_z_mort_0 = eco_parm_z_mort_0_pre_dps * dps
+        parm_z_mort2_0 = eco_parm_z_mort2_0_pre_dps * dps
+        parm_sd_remin_0 = eco_parm_sd_remin_0_pre_dps * dps
+        parm_sp_kNO3 = eco_parm_sp_kNO3
+        parm_diat_kNO3 = eco_parm_diat_kNO3
+        parm_sp_kNH4 = eco_parm_sp_kNH4
+        parm_diat_kNH4 = eco_parm_diat_kNH4
+        parm_sp_kFe = eco_parm_sp_kFe
+        parm_diat_kFe = eco_parm_diat_kFe
+        parm_diat_kSiO3 = eco_parm_diat_kSiO3
+        parm_sp_kPO4 = eco_parm_sp_kPO4
+        parm_diat_kPO4 = eco_parm_diat_kPO4
+        parm_z_grz = eco_parm_z_grz
+        parm_alphaChl = eco_parm_alphaChl_pre_dps * dps
+        parm_alphaChlsp = eco_parm_alphaChlsp_pre_dps * dps
+        parm_alphaChldiat = eco_parm_alphaChldiat_pre_dps * dps
+        parm_alphaChlphaeo = eco_parm_alphaChlphaeo_pre_dps * dps
+        parm_labile_ratio = eco_parm_labile_ratio
+        parm_alphaDiaz = eco_parm_alphaDiaz_pre_dps * dps
+        parm_diaz_umax_0 = eco_parm_diaz_umax_0_pre_dps * dps
+
+      end subroutine ecosys_init_apply_ecocommon_parms
 
 !***********************************************************************
 
@@ -591,66 +599,10 @@ CONTAINS
       zt_eco = zt*c100
 
 !-----------------------------------------------------------------------
-!     initialize ecosystem parameters
+!     initialize ecosystem parameters (defaults in module kei_ecocommon)
 !-----------------------------------------------------------------------
 
-      parm_Fe_bioavail    = 0.02_r8
-      parm_prod_dissolve  = 0.67_r8
-      parm_o2_min         = 4.0_r8
-      parm_no3_min        = 32.0_r8
-      parm_Rain_CaCO3     = 0.07_r8
-      parm_Rain_SiO2      = 0.03_r8
-      parm_kappa_nitrif   = 0.06_r8 * dps       ! (= 1/( days))
-      parm_nitrif_par_lim = 5.0_r8
-      parm_POC_flux_ref   = 2.0e-3_r8
-      parm_rest_prod_tau  = 30.0_r8 * spd       ! (= 30 days)
-      parm_rest_prod_z_c  = 7500_r8
-      parm_z_umax_0       = 2.75_r8 * dps ! original
-      parm_diat_umax_0    = 2.07_r8 * dps ! original
-!      parm_z_umax_0       = 4.0_r8 * dps
-!      parm_z_umax_0       = 3.1_r8 * dps  ! per wang and moore - standard
-!      parm_z_umax_0       = 1.5_r8 * dps  ! sevrine recommendation
-!      parm_diat_umax_0    = 3.06_r8 * dps
-
-!      parm_z_umax_0    = 0.2_r8 * dps
-!      parm_diat_umax_0    = 0.2_r8 * dps
-
-      parm_z_umax_0    = 1.5_r8 * dps
-      parm_diat_umax_0    = 1.5_r8 * dps
-
-
-!      parm_z_mort_0       = 0.1_r8 * dps
-!      parm_z_mort2_0      = 0.45_r8 * dps
-      parm_z_mort_0       = 0.17_r8 * dps ! wang and moore
-      parm_z_mort2_0      = 0.0035_r8 * dps ! wang and moore
-      parm_sd_remin_0     = 0.01_r8 * dps       ! (= 1/(100 days))
-      parm_sp_kNO3        = 0.5_r8
-      parm_diat_kNO3      = 2.5_r8
-!      parm_sp_kNH4        = 0.005_r8
-!      parm_diat_kNH4      = 0.08_r8
-      parm_sp_kNH4        = 0.01_r8
-      parm_diat_kNH4      = 0.1_r8
-!      parm_sp_kFe         = 0.06e-3_r8
-!      parm_diat_kFe       = 0.15e-3_r8
-      parm_sp_kFe         = 0.035e-3_r8
-      parm_diat_kFe       = 0.08e-3_r8
-      parm_diat_kSiO3     = 1.0_r8
-!      parm_sp_kPO4        = 0.0003125_r8
-!      parm_diat_kPO4      = 0.005_r8
-      parm_sp_kPO4        = 0.01_r8
-      parm_diat_kPO4      = 0.1_r8
-      parm_z_grz          = 1.05_r8     ! original
-!      parm_z_grz          = 0.80_r8
-!      parm_alphaChl       = 0.3_r8 * dps
-      parm_alphaChl       = 0.25_r8 * dps
-!      parm_alphaChlsp     = 0.60_r8 * dps  ! ben playing
-      parm_alphaChlsp     = 0.28_r8 * dps
-!      parm_alphaChldiat   = 0.51_r8 * dps  ! ben playing
-      parm_alphaChldiat   = 0.25_r8 * dps
-      parm_alphaChlphaeo   = 0.68_r8 * dps
-      parm_labile_ratio   = 0.70_r8
-      parm_alphaDiaz      = 0.036_r8 * dps
-      parm_diaz_umax_0    = 1.2_r8 * dps
+      call ecosys_init_apply_ecocommon_parms
 
       PH_PREV = 0.0_r8
 

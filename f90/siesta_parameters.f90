@@ -2,9 +2,22 @@
 ! Global Parameters
 ! ======================================================================
 
-module sia2_parameters
+module siesta_parameters
 
 	use kei_kinds, only: i4, r4, r8, log_kind
+	! Other SIESTA sea-ice tunables (save): defined in kei_icecommon, re-exported here.
+	use kei_icecommon, only: &
+		icecon_mod, grid_model, &
+		ksnow, den_s_dry, den_s_wet, den_s_switch, bb_f, eps0_s, eps0_i, eps_snow, eps_ice, &
+		atan_max, atan_c_i, chw, mu_w_min, Fm_a_switch, mean_floe_diameter, alpha_lateral_melt, melt_f_denom, &
+		desal, bv_conv, f_sk, fb, fi, vb_crit, conv_max, dbvdt_scale, &
+		alb_s_dry, alb_s_wet, alb_i_dry, alb_i_wet, h_snowpatch, par_to_swd, a_ice_ir, par_cf, &
+		iit, iis, iin, iif, s_const, n_f, &
+		ts_is_at, kevin_light, use_pl, ncep_f, pr_on, use_mdiff, no_flooding, flood_brine, woa_depth, &
+		max_it, snow_ridging, snow_in_gaps, &
+		min_sal, nr_tol, gl_max_f, fl_max_f, T_ref, temp_tol, fl_crit, fl_ratio, da_f, snow_min, &
+		gc_offset, snow_fudge, a_factor, p_factor, snow_rd_lim, cv_void_f, cvf_switch, cvf_thin, &
+		ohf_skew, at_skew, snow_skew
 	
 	implicit none
 
@@ -62,18 +75,24 @@ module sia2_parameters
 		z_int_min 						=	1	    				, & !	defines minimum number of model layers	
 		z_sk 									=	2	    				, & !	number of layers in skeletal layer	
 		pl_max 								= 30								! maximum platelet layers
+
+	! ------------------------------------------------------------
+	! vertical grid / thickness (m); compile-time constants
+	! ------------------------------------------------------------
 	real(r4), parameter :: &
-		h_max 								= 10.0_r4 , & ! 1maximum ice thickness (m)
-		pl_th 								= 0.02_r4 , & ! platelet layer thickness (m)
-		bot_th 								= 0.2_r4  ,	&	! thickness of bottom section considered bottom ice (m from bottom)
-		sk_th_min 						=	0.001_r4, & !	minimum height of individual skeletal layer	
-		sk_th_max 						=	0.01_r4	, & !	maximum height of individual skeletal layer	
-		z_th_min 							=	0.02_r4	 ,	& !	minimum height of individual layer	
-		z_th_max 							=	0.3937376_r4,	& !	maximum height of individual layer	
-		z_th_fr 							=	0.01_r4	,	& !	default new consolidated frazil ice thickness
-		z_th_crit 						=	0.02_r4	,	& !	critical height of individual layer, below which a smaller physics timestep mut be used (m)
-		h_crit                = z_th_min*(z_max_ice-z_sk), & ! height where grid shifts to accordion style
-    th_min                = z_th_min*z_int_min
+		h_max     = 10.0_r4,        &  ! maximum ice thickness (m)
+		pl_th     = 0.02_r4,        &  ! platelet layer thickness (m)
+		bot_th    = 0.2_r4,         &  ! bottom ice section thickness (m from bottom)
+		sk_th_min = 0.001_r4,       &  ! minimum height skeletal layer (m)
+		sk_th_max = 0.01_r4,        &  ! maximum height skeletal layer (m)
+		z_th_min  = 0.02_r4,        &  ! minimum ice layer height (m)
+		z_th_max  = 0.3937376_r4,   &  ! maximum height ice layer (m)
+		z_th_fr   = 0.01_r4,        &  ! new consolidated frazil thickness (m)
+		z_th_crit = 0.02_r4            ! critical layer height for sub-stepping (m)
+
+	real(r4), parameter :: &
+		h_crit = z_th_min * real(z_max_ice - z_sk, r4), & ! height where grid shifts to accordion style
+		th_min = z_th_min * real(z_int_min, r4)          ! minimum thickness scale from structural grid
 
 	! ------------------------------------------------------------
 	! adjustable parameters
@@ -101,56 +120,13 @@ module sia2_parameters
 			sw_poc 				=	0.	    ,        & !	seawater detritus concentration (g/m^3)	
 			alg_wc 				=	35	             !	water column algal concentration - used when freezing/flooding/creating new ice (mgC/m^3)	
 
-		! snow & ice
+		! snow & ice (physical ice/snow tunables: kei_icecommon, re-exported via use-list above)
+
 		integer(i4), parameter :: &
 			ic_n 									= 5							, & ! ice thickness categories (between 1 and 10)
 			sc_n 									= 2 						, & ! lognormal snow thickness categories (currently, either 1 or 2) 
 			la 										= 1 						, & ! lognormal light adjustment categories (between 1 and 9)
-			snow_model 		=	1	    ,	&	!	snow model type	
-			icecon_mod 		=	2	    ,	&	!	modify satellite ice concentration (0=no modification, 1=90%->100%, 2=80%->100%)	
-			grid_model 		=	2	    		!	determines how vertical ice grid is constructed (0 = equally spaced grid, 1 = higher resolution at top/bottom, 2 = variable number of layers)	
-		real(r4), parameter :: &
-			ksnow 				=	0.33_r4,        & !	standard snow conductivity (W/m/K) (somewhere i found = 0.0741Cal/m/s/degC)	
-			den_s_dry 		=	0.35_r4,        & !	density dry snow (g/cm^3)	
-			den_s_wet 		=	0.35_r4,        & !	density wet snow (g/cm^3)	
-			den_s_switch 	=	-2.0_r4,        & !	temperature above which wet snow falls, below which dry snow falls	
-			bb_f 					=	0.03_r4,        & !	bubble fraction in sea ice - causes density to be decreased by this amount	
-			eps0_s 				= 0.97_r4,     & ! long-wave emissivity of snow surface - 
-			eps0_i 				= 0.99_r4,     & ! long-wave emissivity of ice surface - 
-			eps_snow 			=	eps0_s	    , 		& !	long wave emissivity of snow (%)	
-			eps_ice 			=	eps0_i	    , 		& !	long wave emissivity of ice (%)	
-			atan_max 			= 1.557407724654902_r4,	&	! = tan(1), used for atan function multiplier			
-      atan_c_i = atan_max/0.5_r4,  &	! 0.5 m is the cutoff for the atan function that describes albedo
-			chw 					=	0.006_r4, 	& !	ocean-ice heat transfer coefficient
-      mu_w_min 			= 0.05_r4,   	&	! minimum friction velocity between ice and ocean, for use in ocean heat flux calc
-      Fm_a_switch 	= 0.90_r4,   	&	! grid cell area above which mixed layer frazil is applied to bottom of ice
-      mean_floe_diameter 	= 30.0_r4,   	&	
-      alpha_lateral_melt 	= 0.66_r4,   		& 
-      melt_f_denom = mean_floe_diameter*alpha_lateral_melt 
-
-		! ice desalination and fluid transfer
-		integer(i4), parameter :: &
-			desal 				=	7	             !	desalination type (0 = normal, 1 = with brine replacement, 2 = dtt brine flux)	
-		real(r4), save :: &
-			bv_conv 			=	200.	   ,        & !	critical brine volume at which desal switches from direct convection to relative conv.	
-			f_sk 					=	0.5	    ,        & !	fraction of skeletal layer open to convection	
-			fb 						=	0.0511	    ,        & !	fraction of brine tube layer that is brine tubes	
-			fi 						=	0.5	    ,        & !	minimum fractional sea ice coverage neccessary for model use	
-			vb_crit 			=	50	    ,        & !	brine volume above which gravity drainage occurs (ppt)	
-			conv_max 			=	1.74E-05	    ,        & !	maximum convective flux for use in desalination (cm^3/cm^2/s)	
-			dbvdt_scale 	=	1.0	             !	scaling factor for desal dilution			
-
-		! irradiance
-		real(r4), parameter :: &
-			alb_s_dry 		=	0.98	    ,        & !	standard albedo dry snow (%)	
-			alb_s_wet 		=	0.88	    ,        & !	standard albedo wet snow (%)	
-			alb_i_dry 		=	0.58	    ,        & !	standard albedo of sea ice (%)	
-			alb_i_wet 		=	0.505	    ,        & !	standard albedo of sea ice (%)	
-			h_snowpatch 	=	0.02	    ,        & !	contant that determines the bare ice/snow covered ice ratio for a given snowdepth	
-			par_to_swd 		=	2	    ,        & !	energy conversion factor between PAR (400-700nm) irradiance to total shortwave downward irradiance (250-4000nm) (energy/energy units) - 2.034 calc clear sky	
-			a_ice_ir 			=	7.18	             !	weighted-mean ice absorption coefficient for near-IR (700-4000nm)	
-		integer(i4), parameter :: &
-			par_cf 				=	0	             !	use climatology could fraction to correct par (0=off (cf already included in par), 1=yes)	
+			snow_model 		=	1	              !	snow model type	
 
 		! biology
 		integer(i4), parameter :: &
@@ -175,53 +151,6 @@ module sia2_parameters
 			alg_dtt 			=	1	    ,        & !	algal model calculation frequency (0=once per time step, 1=same frequency as sub-dt ice physics)	
 			alg_mig_crit 	=	1.5	    ,        & !	maximum growth rate under which algae maintain position (cm/day)	
 			min_alg 			=	3.5	             !	minimum microalgal concentration (mgC/m^3)	
-
-		! initialization
-		integer(i4), parameter :: &
-			iit 					=	1	    ,        & !	intial ice temp (0 = use linear gradient w/ airtemp as inital ice temp, 1 = use water temp)	
-			iis 					=	0	    ,        & !	initial ice salinity (0 = use s_cont constant salinity 1 = use standard 1st year ice "C" curve, 2 = multiyear ice curve)	
-			iin 					=	4	    ,        & !	initial ice nutrients (0 = full nutrients upon ice creation, 1 = linear depleted nutrients, 2=very little nutrients, 4=seawater nutrients in brine)	
-			iif 					=	0	             !	initial snow flooding (m) - used only in validation mode	
-		real(r4), save :: &
-			s_const 			=	9	    ,        & !	salinity constant to use if iis paramater is set to 0	
-			n_f 					=	0.3	             !	nutrient fraction - used to scale inital forcing nutirent concentrations if iin set to 2	
-
-		! other parameters
-		integer(i4), save :: &
-			ts_is_at 			=	0	    ,        & !	short-circuit atmospheric heat transfer by fixing surface temp to air temp (0=off 1=on)	
-			kevin_light 	=	0	    ,        & !	use Kevin's light model instead of gregg&carder 1990 (0=off 1=on)	
-			use_pl 				=	0	    ,        & !	use a platelet layer - only works if validaiton is on (0=off 1=on)	
-			ncep_f 				=	6	    ,        & !	ncep/doe II forcing frequency (6 = every 6 hours, 24 = daily)	
-			pr_on 				=	0	    ,        & !	on/off toggle for causing precipitation to go directly into snow ice formation, if appropriate	
-			use_mdiff 		=	1	    ,        & !	use molecular diffusion to supply nutrients to ice bottom (0=off 1=on)	
-			no_flooding 	=	0	    ,        & !	prevents flooding if non-zero	
-			flood_brine 	=	0	    ,        & !	(1) pushed brine upward or (2) floods directly with seawater	
-			woa_depth 		=	3	    ,        & !	level of World Ocean Altas data to use as forcing (1=surface,2=10m,3=20m,4=30m,5=50m,6=75m,7=100m)	
-			max_it 				=	100	    ,        & !	Newton-Raphson maximum iterations	
-			snow_ridging 	=	0	    ,	&	!	1=conserve snow mass during ridging,0=don't ridge up snow (w/ mass loss)	
-			snow_in_gaps 	=	1	             !	determines whether snow is inserted into ridging gaps, or just seawater	
-		real(r4), save :: &
-			min_sal 			=	0.1	    ,        & !	minimum bulk ice salinity (ppt)	
-			nr_tol 				=	0.005	    ,        & !	Newton-Raphson method tolerance for surface temp (T0)	
-			gl_max_f 			=	0.075	    ,        & !	fraction of minimum layer height that is the trigger for boundary adjustment	
-			fl_max_f 			=	0.075	    ,        & !	fraction of minimum layer height that is the trigger for boundary adjustment for surface flooding	
-			T_ref 				=	-75	    ,        & !	temp from which all heat intergrals are calculated (degC) (hopefully the lower than the lowest ice temp)	
-			temp_tol 			=	0.0000001	    ,        & !	temp difference tolerance for heat methods - if the difference in temp get smaller than this, take corrective action	
-			fl_crit 			=	-0.02	    ,        & !	minimum freeboard required to flood ice surface (m)	
-			fl_ratio 			=	0.5	    ,        & !	ratio of ice/water in flooded snow	
-			da_f 					=	0.4	    ,        & !	distribution adjustment factor - effectively changes the s.d. of the log-normal distribution - value between 1 and 0	
-			snow_min 			=	0.01	    ,        & !	minimum modeled snow depth (m) - below this value, the model assumes no snow for thermodynamic/light/albedo putposes	
-			gc_offset 		=	0	    ,        & !	offset in hours for indexing gc_par_ice file (240*24=5760 for arrigo 1982 sim)	
-			snow_fudge 		=	1.0	    ,        & !	snow depth fudge factor for multiplicatively adjusting the snow depth for light purposes	
-			a_factor 			=	0.3	    ,        & !	wavelength independent snow absorption for delta eddington light routine	
-			p_factor 			=	1	    ,        & !	ice strength scalar, used to compare ice strength to ice momentum during advection refinement	
-			snow_rd_lim 	=	24	    ,        & !	number that determines when snow depth distribution is re-distributed	
-			cv_void_f 		=	0.3	    ,        & !	convergence void fraction (fraction)	
-			cvf_switch 		=	0.6	    ,        & !	ice height below which cv_void_f is affected by cvf_thin (m)
-			cvf_thin			=	0.33333333	    ,        & !		multiplier of cv_void_f when ice is less than cvf_switch (fraction)
-			ohf_skew 			=	0	    ,        & !	ocean heat flux skew.  This number of added to the ocean heat flux (but it is always kept above 0)	
-			at_skew 			=	0	    ,        & !	air temperature flux skew.  This number of added to the air temp	
-			snow_skew 		=	0	             !	snow depth skew - fractional snow depth/precipitation multiplier (0.5 = 50% increase)	
 
 	! ------------------------------------------------------------
 	! tracers
@@ -420,5 +349,5 @@ module sia2_parameters
 			dtt_s_1,dtt_s_2,dtt_s_3,cur_month,ida_d,lda_d,ad_denom, &
 			total_flooded,a_ice_ir_cos
 			
-end module sia2_parameters
+end module siesta_parameters
 	

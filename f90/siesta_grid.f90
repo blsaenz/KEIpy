@@ -1,10 +1,10 @@
-module sia2_grid
+module siesta_grid
   use kei_kinds, only: i4, r4, r8, log_kind
-	use sia2_constants
-	use sia2_parameters
-	use sia2_state
-	use sia2_types
-	use sia2_desalination
+	use siesta_constants
+	use siesta_parameters
+	use siesta_state
+	use siesta_types
+	use siesta_desalination
 	
 	implicit none
 
@@ -16,21 +16,21 @@ module sia2_grid
 	contains
 
 ! **********************************************************************
-! sia2_create_ice: initialize ice type upon ice creation, using minumum
+! siesta_create_ice: initialize ice type upon ice creation, using minumum
 ! values for kpp_eco_ice usage
 !
 ! ----------------------------------------------------------------------
-	subroutine sia2_create_ice(ice,init_is,hi_new,hs_new,af_new,Tair, &
+	subroutine siesta_create_ice(ice,init_is,hi_new,hs_new,af_new,Tair, &
 		t_ocn,s_ocn)
 		
  	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
-		use sia2_constants, only: &
+		use siesta_constants, only: &
 			c0,						& !
 			c_5,					& !
 			c1,						& !
 			c1e6						!
-		use sia2_parameters, only: &
+		use siesta_parameters, only: &
 			z_sk,					& !
 			z_th_min,			& !
 			z_max_snow,		& !
@@ -38,7 +38,7 @@ module sia2_grid
 			s_const,			& !
 			den_s_dry,		& !
 			den_s_wet				!
-		use sia2_types
+		use siesta_types
 
 		implicit none
 
@@ -77,7 +77,7 @@ module sia2_grid
 
 	! Subroutine Code
 	! --------------------------------------------------------------------
-		call sia2_null_ice(ice)
+		call siesta_null_ice(ice)
 		ice%af = af_new
 
 		!ice%pur = c0
@@ -108,7 +108,7 @@ module sia2_grid
 		if (hs_new .gt. c0) then
 			! find new snow grid
 			h_temp = hs_new
-			call sia2_new_grid(h_temp,z_th_min,5.e0,2,1,z_max_snow,.false., &
+			call siesta_new_grid(h_temp,z_th_min,5.e0,2,1,z_max_snow,.false., &
 				th_new,id_new,z_new)
 			ice%snow%depth = hs_new
 			ice%snow%th = th_new(1:z_max_snow)
@@ -123,7 +123,7 @@ module sia2_grid
 				ice%snow%t(ii) = t_interface + hs1*(min(Tair,c0) - &
 					t_interface)/ice%snow%depth
 				ice%snow%d(ii) = snowfall_d
-				ice%snow%heat = sia2_snow_heat(ice%snow%d(ii),ice%snow%t(ii))
+				ice%snow%heat = siesta_snow_heat(ice%snow%d(ii),ice%snow%t(ii))
 				ice%snow%melt = snowfall_melt
 											 
 				! add other half to current layer depth
@@ -133,7 +133,7 @@ module sia2_grid
 		
 		! find new ice grid			
 		h_temp = hi_new
-		call sia2_new_grid(h_temp,z_th_min,10.e0,2,1,z_max_ice-z_sk,.false., &
+		call siesta_new_grid(h_temp,z_th_min,10.e0,2,1,z_max_ice-z_sk,.false., &
 			th_new,id_new,z_new)
 		sk_1 = z_new + 1
 		sk_z = z_new + z_sk
@@ -160,11 +160,11 @@ module sia2_grid
 				else				
 					if (init_is .eq. 2) then
 						! interpolate default new-ice salinity curve to get initial salinity
-						call sia2_interpolate_salinity2( & 
+						call siesta_interpolate_salinity2( & 
 						(ice%id(ii)-ice%th(ii)/c2)/hi_new,ice%s(ii))
 					elseif (init_is .eq. 1) then
 						! interpolate default new-ice salinity curve to get initial salinity
-						call sia2_interpolate_salinity1( & 
+						call siesta_interpolate_salinity1( & 
 						(ice%id(ii)-ice%th(ii)/c2)/hi_new,ice%s(ii))
 					endif
 						! interpolate linearly between t_interface and water temp
@@ -186,21 +186,21 @@ module sia2_grid
 !			endif
 									
 			! set new ice state
-			call sia2_ice_state(ice%t(ii),ice%s(ii),ice%bs(ii),ice%bd(ii), &
+			call siesta_ice_state(ice%t(ii),ice%s(ii),ice%bs(ii),ice%bd(ii), &
 				ice%d(ii),ice%bv(ii),ice%heat(ii))
 				
 		enddo
 								
 		! ignoring nutrients/tracers platelet layer, age, snow distribution for now!
 
-	end subroutine sia2_create_ice
+	end subroutine siesta_create_ice
 
 ! **********************************************************************
 
 
 ! **********************************************************************
 ! ----------------------------------------------------------------------
-! sia2_ice_grid finds new layer heights for a new total ice depth
+! siesta_ice_grid finds new layer heights for a new total ice depth
 !
 ! Requires:
 ! r_depth - the new depth to be assigned
@@ -210,7 +210,7 @@ module sia2_grid
 ! id_new - contains new ice depths for th_new
 ! int_z_new - new count of internal layers
 ! ----------------------------------------------------------------------
-	subroutine sia2_new_grid(r_depth,h_min,h_max,grid_type,z_min,z_max, &
+	subroutine siesta_new_grid(r_depth,h_min,h_max,grid_type,z_min,z_max, &
 		ignore_h_max,th_new,id_new,z_new)
 		
  	! Use Statements and Variables/Globals/Parameters
@@ -279,7 +279,7 @@ module sia2_grid
 !				if (r_depth .lt. h_min) then    
 !						if ((r_depth+0.000001) .lt. h_min) then
 !								print *,'Warning ***** minimum depth exceeded - unknown results may occur'
-!								print *,'mi: ',mi,'in sia2_ice_grid line 26'
+!								print *,'mi: ',mi,'in siesta_ice_grid line 26'
 !						else
 !								r_depth = h_min ! tollerate some floating point slop here, reset to h_min to avoid boundary creep
 !						endif
@@ -335,7 +335,7 @@ module sia2_grid
 !						if (r_depth .lt. h_min .and. (grid_type .eq. 1)) then    
 !								if ((r_depth+c_1e6) .lt. h_min) then
 !										print *,'Warning ***** minimum depth exceeded - unknown results may occur'
-!										print *,'mi: ',mi,'in sia2_ice_grid line 26'
+!										print *,'mi: ',mi,'in siesta_ice_grid line 26'
 !								else
 !										r_depth = h_min ! tollerate some floating point slop here, reset to h_min to avoid boundary creep
 !								endif
@@ -406,23 +406,23 @@ module sia2_grid
            enddo
 		endif
 	
-	end subroutine sia2_new_grid
+	end subroutine siesta_new_grid
 
 ! **********************************************************************
 
 
 ! **********************************************************************
-! sia2_pre_grid: calculate grid surface options, new thickness, and new
+! siesta_pre_grid: calculate grid surface options, new thickness, and new
 ! snow to be added if porous ice was drained above freeboard 
 ! ----------------------------------------------------------------------
 
-	subroutine sia2_pre_grid(ice,ff,m,flooded,rain_fraction,c_gl,s_gl, &
+	subroutine siesta_pre_grid(ice,ff,m,flooded,rain_fraction,c_gl,s_gl, &
 	  snow_gl,r_depth,f_depth,did_flood,flood_1x,t_flood,s_flood_out, &
 		melt_flood,melt_drain,did_drain,sn_depth,new_snow)
 
  	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
-		use sia2_state
+		use siesta_state
 
 		implicit none
 		
@@ -555,14 +555,14 @@ module sia2_grid
 				(ice%snow%t(z_snow)*0.02_r4 + Lf)*IceD*top_f
 			!dz_mean = 1.
 			
-			t_flood = sia2_ice_temp(s_flood_out,d_mean,heat_mean)
+			t_flood = siesta_ice_temp(s_flood_out,d_mean,heat_mean)
 
-			!call sia2_ice_state(t_flood,s_flood_out,bs_flood,bd_flood,d_flood, &
+			!call siesta_ice_state(t_flood,s_flood_out,bs_flood,bd_flood,d_flood, &
 			!	bv_flood,heat_flood		
 
 			!ice%flux(w_flood) = ice%flux(w_flood) - bot_f*f_depth * c1000 * ice%af  ! report kg flood water from ocn
 			!ice%flux(s_flood) = ice%flux(s_flood) - &
-			!sia2_layer_salt(d_before_melt,s_before_melt) * &
+			!siesta_layer_salt(d_before_melt,s_before_melt) * &
 			!ice%af*c_1e3 ! report kg flooded salt from ocn      
 
 
@@ -590,11 +590,11 @@ module sia2_grid
 							 ! all salt goes, but only brine fraction goes (which is density of 1e3kg/m^3)
 								!ice%flux(w_flood) = ice%flux(w_flood) + f_brine * c1000 * ice%af  ! report kg melt water drained -> ocn
 								!ice%flux(s_flood) = ice%flux(s_flood) + &
-								!	sia2_layer_salt(ice%d(ii),ice%s(ii)) * &
+								!	siesta_layer_salt(ice%d(ii),ice%s(ii)) * &
 								!	ice%af*c_1e3 ! report kg salt drained -> ocn
 							 new_snow%th(ii) = ice%th(ii)
 							 new_snow%d(ii) = (c1-ice%bv(jj)*c_001)*IceD
-							 new_snow%heat(ii) = sia2_snow_heat(new_snow%d(ii),ice%t(ii))
+							 new_snow%heat(ii) = siesta_snow_heat(new_snow%d(ii),ice%t(ii))
 					 enddo
 					 new_snow%depth = melt_drain												 
 
@@ -616,7 +616,7 @@ module sia2_grid
 !		(z_snow .gt. 0)) then
 !			snow_melt_now = snow_melt
 !			new_layer_top = c0
-!#include "sia2_env_pond_update.inc.f90"               
+!#include "siesta_env_pond_update.inc.f90"               
 !			 snow_melt = c0			
 !		endif
 		
@@ -636,14 +636,14 @@ module sia2_grid
 		endif
     
 
-	end subroutine sia2_pre_grid
+	end subroutine siesta_pre_grid
 
 ! **********************************************************************
 
 
 ! **********************************************************************
 ! ----------------------------------------------------------------------
-! subroutine: sia2_ice_remap
+! subroutine: siesta_ice_remap
 ! Purpose: maps ice to new boundaries
 !
 ! INPUT VARIALBES:
@@ -701,12 +701,12 @@ module sia2_grid
 !
 ! ----------------------------------------------------------------------
 
-	subroutine sia2_ice_remap(ice,ff,m,int_z_new,th_new,id_new,t_flood, &
+	subroutine siesta_ice_remap(ice,ff,m,int_z_new,th_new,id_new,t_flood, &
 		s_flood,flooded,melt_flood,s_gl,c_gl,c_gl_sal,dhdt_cm_s,f_depth)
 	
  	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
-		use sia2_state
+		use siesta_state
 
 		implicit none
 		
@@ -805,7 +805,7 @@ module sia2_grid
 			! record ice volume change due to snow-ice gain
 			m%snow_growth = m%snow_growth + f_depth* &
 				ice%af*cell_area*c1e6		
-			call sia2_ice_state(t_flood,s_flood,bs_flood,bd_flood, &
+			call siesta_ice_state(t_flood,s_flood,bs_flood,bd_flood, &
 				d_flood,bv_flood,heat_flood)
 		endif
 			
@@ -963,7 +963,7 @@ module sia2_grid
 						jj=jj+1
 						if (jj .eq. 43) then
 	!											print *,'jj exceeded max layers in ice remapping'
-	!												 print *,'mi: ',mi,'layer: ',ii,'in sia2_env_ice_remap line 228'
+	!												 print *,'mi: ',mi,'layer: ',ii,'in siesta_env_ice_remap line 228'
 						endif
 						! old thickness...
 						old_layer_bot = old_layer_bot + ice%th(jj)
@@ -997,7 +997,7 @@ module sia2_grid
 					!			t_mean = ff%t
 					!			s_mean = c_gl_sal
 					!			! find heat_mean
-					!			call sia2_ice_state(t_mean,s_mean,bs_mean,bd_mean,d_mean, &
+					!			call siesta_ice_state(t_mean,s_mean,bs_mean,bd_mean,d_mean, &
 					!				bv_mean,heat_mean)       
 					!		endif
 					!	else
@@ -1006,7 +1006,7 @@ module sia2_grid
 					!		t_mean = ff%t
 					!		s_mean = ff%s/c2
 					!		! find heat_mean
-					!		call sia2_ice_state(t_mean,s_mean,bs_mean,bd_mean,d_mean, &
+					!		call siesta_ice_state(t_mean,s_mean,bs_mean,bd_mean,d_mean, &
 					!			bv_mean,heat_mean)       
 					!	endif
 																			
@@ -1049,7 +1049,7 @@ module sia2_grid
 					!		s_mean = ff%s/c2
 					!	endif			 
 						! fraction seawater concentrations by new brine volume
-						call sia2_ice_state(t_mean,s_mean,bs_mean,bd_mean,d_mean, &
+						call siesta_ice_state(t_mean,s_mean,bs_mean,bd_mean,d_mean, &
 							 bv_mean,heat_mean)       					
 						tmp1 = dz*bv_mean*c_001 
 	
@@ -1096,7 +1096,7 @@ module sia2_grid
 						print *,'Salinity (smean) is less than zero. Layer: ',ii
 					endif								 
 			
-					t_mean = sia2_ice_temp(s_mean,d_mean,heat_mean)
+					t_mean = siesta_ice_temp(s_mean,d_mean,heat_mean)
 		
 					! check to make sure we don't get warmer than the ocean
 					!if (ice%id(ii) .le. ice%fbh) then
@@ -1133,7 +1133,7 @@ module sia2_grid
 				! assign new ice physics
 				ice%t(ii) = t_new(ii)
 				ice%s(ii) = s_new(ii)
-				call sia2_ice_state(t_new(ii),s_new(ii),ice%bs(ii),ice%bd(ii), &
+				call siesta_ice_state(t_new(ii),s_new(ii),ice%bs(ii),ice%bd(ii), &
 					ice%d(ii),ice%bv(ii),ice%heat(ii))
 				
 				! update tracers
@@ -1166,7 +1166,7 @@ module sia2_grid
 			endif
 	
 	!		dz_sk = c0
-	!#include "sia2_env_update_skeletal.inc.f90"
+	!#include "siesta_env_update_skeletal.inc.f90"
 	
 			! adjust surface temp if there was no snow, but flooding occured (to prevent numerical instability)
 			! uh, this can't happen...
@@ -1176,7 +1176,7 @@ module sia2_grid
 							
 		! endif	 ! end of "don't grow if depth will be maxed out by growth"
 	
-	end subroutine sia2_ice_remap
+	end subroutine siesta_ice_remap
 
 ! **********************************************************************
 
@@ -1187,12 +1187,12 @@ module sia2_grid
 	! using snow heat capacity to conserve total heat.  
 	! ------------------------------------------------------------------
 
-	subroutine sia2_snow_remap(ice,ff,new_snow,z_snow_new,th_new, &
+	subroutine siesta_snow_remap(ice,ff,new_snow,z_snow_new,th_new, &
 		flooded,melt_drain)
 	
  	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
-		use sia2_state
+		use siesta_state
 
 		implicit none
 		
@@ -1383,7 +1383,7 @@ module sia2_grid
 					 !t_mean = t_mean + kelvin0 
 					 !heat_mean = d_mean*(heat_snow0 - 0.2309*T_mean - &
 					 !	0.0034*T_mean**2)
-					 heat_mean = sia2_snow_heat(d_mean,t_mean)
+					 heat_mean = siesta_snow_heat(d_mean,t_mean)
 				 
 					 ! record tracers (melt already done above)
 					 d_new(ii) = d_new(ii) + d_mean*dz
@@ -1446,7 +1446,7 @@ module sia2_grid
 							 !T_mean = ice%snow%ts+kelvin0
 							 !heat_mean = snowfall_d*(heat_snow0 - 0.2309*T_mean - &
 							 !0.0034*T_mean**2)
-							 heat_mean = sia2_snow_heat(snowfall_d,ice%snow%ts)
+							 heat_mean = siesta_snow_heat(snowfall_d,ice%snow%ts)
 							 heat_total = heat_total + heat_mean*(th_new(ii) - dz_total)
 							 melt_new(ii) = melt_new(ii) + &
 								snowfall_melt*(th_new(ii) - dz_total)
@@ -1463,7 +1463,7 @@ module sia2_grid
 						 !T_mean = ice%snow%ts+kelvin0
 						 !heat_mean = snowfall_d*(heat_snow0 - 0.2309*T_mean - &
 						 !0.0034*T_mean**2)
-						 heat_mean = sia2_snow_heat(snowfall_d,ice%snow%ts)
+						 heat_mean = siesta_snow_heat(snowfall_d,ice%snow%ts)
 						 heat_total = heat_total + heat_mean*th_new(ii)
 						 melt_new(ii) = melt_new(ii) + snowfall_melt*th_new(ii)
 						 !if (airtemp1c .gt. -1.0) then
@@ -1483,7 +1483,7 @@ module sia2_grid
 			 !t_new(ii) = (0.2309-sqrt(0.05331481+0.0136* &
 			 !	 (heat_snow0-heat_total)))/(-0.0068)
 			 !t_new(ii) = min(t_new(ii) - kelvin0,c0)
-			 t_new(ii) = sia2_snow_temp(d_new(ii),heat_total)
+			 t_new(ii) = siesta_snow_temp(d_new(ii),heat_total)
 			 melt_new(ii) = melt_new(ii)/dz_total
 			enddo
 			
@@ -1495,10 +1495,10 @@ module sia2_grid
 				ice%snow%th(ii) = th_new(ii)
 				ice%snow%t(ii) = t_new(ii)
 				ice%snow%d(ii) = d_new(ii)
-				ice%snow%heat(ii) = sia2_snow_heat(d_new(ii),t_new(ii))
+				ice%snow%heat(ii) = siesta_snow_heat(d_new(ii),t_new(ii))
 	!			 !T_mean = t_new(ii) + kelvin0
 	!			 !d_mean = d_new(ii)					 
-	!		#include "sia2_env_snow_calc.inc.f90"                  
+	!		#include "siesta_env_snow_calc.inc.f90"                  
 			
 	!			ice%snow%heat(ii) = heat_mean
 				ice%snow%melt(ii) = melt_new(ii)
@@ -1518,29 +1518,29 @@ module sia2_grid
 		
 		endif
 
-	end subroutine sia2_snow_remap
+	end subroutine siesta_snow_remap
 
 ! **********************************************************************
 
 
 ! **********************************************************************
-! SUBROUTINE: sia2_melt_subl_ice
+! SUBROUTINE: siesta_melt_subl_ice
 ! melt/sublimate ice down from the surface, with heat flux F_surf
 ! ----------------------------------------------------------------------
-	pure subroutine sia2_melt_subl_ice(ice,F_melt,h_top,h_bot,t_ocn, &
+	pure subroutine siesta_melt_subl_ice(ice,F_melt,h_top,h_bot,t_ocn, &
 		ignore_f,basal,subl,dh_total,s_gl_sal)
 		
 	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
-		use sia2_constants, only: &
+		use siesta_constants, only: &
 			c0,							&	! zero 
 			c_1e3							! 0.001 
-		use sia2_parameters, only: &
+		use siesta_parameters, only: &
 			w_bmelt,				& ! basal ice h2o flux -> ocn (kg/m^2)
 			s_bmelt,				& ! basal ice salt flux -> ocn (kg/m^2)
 			w_smelt,				& ! surface ice h2o flux -> ocn (kg/m^2)
 			s_smelt						! surface ice salt flux -> ocn (kg/m^2)
-		use sia2_types
+		use siesta_types
 
 		implicit none
 
@@ -1622,7 +1622,7 @@ module sia2_grid
 							if (subl) then
 								q_melt = ice%d(i)*(Lf + Lv) ! sublimation, no temperature adjustment
 							else
-								q_melt = sia2_ice_heat_melt(ice%t(i),ice%s(i), &
+								q_melt = siesta_ice_heat_melt(ice%t(i),ice%s(i), &
 									ice%d(i),t_ocn)
 							endif
 
@@ -1642,7 +1642,7 @@ module sia2_grid
 							! record mass fluxes from ice->ocn during melt, salt conservation during sublimation
 							if (subl) then
 								s_gl_sal = s_gl_sal + &
-									sia2_layer_salt(ice%d(i),ice%s(i))*dh_melt    ! record kg salt for incorporation during regridding into top layer
+									siesta_layer_salt(ice%d(i),ice%s(i))*dh_melt    ! record kg salt for incorporation during regridding into top layer
 							else
 								if (basal) then
 									wf = w_bmelt
@@ -1652,10 +1652,10 @@ module sia2_grid
 									sf = s_smelt
 								endif
 								ice%flux(wf) = ice%flux(wf) + &
-									sia2_layer_h2o(ice%d(i),ice%s(i)) * &
+									siesta_layer_h2o(ice%d(i),ice%s(i)) * &
 									dh_melt*ice%af*c_1e3  ! report kg melt water -> ocn
 								ice%flux(sf) = ice%flux(sf) + &
-									sia2_layer_salt(ice%d(i),ice%s(i)) * &
+									siesta_layer_salt(ice%d(i),ice%s(i)) * &
 									dh_melt*ice%af*c_1e3  ! report kg salt -> ocn
 							endif
 							
@@ -1679,23 +1679,23 @@ module sia2_grid
 			endif
 		endif	
 
-	end subroutine sia2_melt_subl_ice
+	end subroutine siesta_melt_subl_ice
 
 ! **********************************************************************
 
 ! **********************************************************************
-! SUBROUTINE: sia2_melt_subl_snow
+! SUBROUTINE: siesta_melt_subl_snow
 ! melt/sublimate ice down from the surface, with heat flux F_surf
 ! ----------------------------------------------------------------------
-	pure subroutine sia2_melt_subl_snow(ice,F_surf,already_melted,t_ocn, &
+	pure subroutine siesta_melt_subl_snow(ice,F_surf,already_melted,t_ocn, &
 		ignore_f,subl,dh_total)
 		
 	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
-		use sia2_constants, only: &
+		use siesta_constants, only: &
 			c0,							&	! zero 
 			c_001							! 0.001
-		use sia2_types
+		use siesta_types
 
 		implicit none
 
@@ -1753,7 +1753,7 @@ module sia2_grid
 							if (subl) then
 								q_melt = ice%snow%d(i)*(Lf + Lv)  ! sublimation heat
 							else
-								q_melt = sia2_snow_heat_melt(ice%snow%t(i), &
+								q_melt = siesta_snow_heat_melt(ice%snow%t(i), &
 									ice%snow%d(i),t_ocn)
 							endif							
 							if (ignore_f) then
@@ -1792,7 +1792,7 @@ module sia2_grid
 					if (dz .gt. c0) then
 						
 						! find height of snow melted
-						q_melt = sia2_snow_heat_melt(ice%snow%ts, &
+						q_melt = siesta_snow_heat_melt(ice%snow%ts, &
 							ice%snow%d_small,t_ocn)
 						dh_total = F_surf/q_melt
 						if (dh_total .gt. dz) then
@@ -1814,27 +1814,27 @@ module sia2_grid
 			
 			endif	
 
-	end subroutine sia2_melt_subl_snow
+	end subroutine siesta_melt_subl_snow
 
 ! **********************************************************************
 
 
 ! **********************************************************************
-! FUNCTION: sia2_basal_growth
+! FUNCTION: siesta_basal_growth
 ! returns the thickness and salinity of basal ice growth from a flux
 ! and a temperature
 ! ----------------------------------------------------------------------	
-	pure subroutine sia2_basal_growth(ice,t_ocn,s_ocn,Fb,dtt_s,dhdt,dhdt_sal, &
+	pure subroutine siesta_basal_growth(ice,t_ocn,s_ocn,Fb,dtt_s,dhdt,dhdt_sal, &
 		dhdt_cm_s)
 	
  	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
-		use sia2_constants, only: &
+		use siesta_constants, only: &
 			c_1e3,						&	! 0.001 	
 			c100								! 100 	
-		use sia2_desalination, only: sia2_dhdt_from_flux,sia2_keff
-		use sia2_state, only: sia2_bs,sia2_bd,sia2_ice_d, &
-			sia2_ice_heat_melt,sia2_layer_h2o,sia2_layer_salt
+		use siesta_desalination, only: siesta_dhdt_from_flux,siesta_keff
+		use siesta_state, only: siesta_bs,siesta_bd,siesta_ice_d, &
+			siesta_ice_heat_melt,siesta_layer_h2o,siesta_layer_salt
 	
 		implicit none
 	
@@ -1862,42 +1862,42 @@ module sia2_grid
 			
 	! Subroutine Code
 	! --------------------------------------------------------------------
-		dhdt_cm_s = sia2_dhdt_from_flux(Fb)		! predicted ice growth rate
-		dhdt_sal = s_ocn*sia2_keff(dhdt_cm_s)          	! predicted new ice salinity
-		bs = sia2_bs(t_ocn,dhdt_sal)                   		! new ice brine salinity
-		bd = sia2_bd(bs)																! new ice brine density
-		d_new = sia2_ice_d(t_ocn,dhdt_sal,bs,bd)						! new ice density
-		q_melt = sia2_ice_heat_melt(t_ocn,dhdt_sal,d_new,t_ocn)	! new ice melting heat
+		dhdt_cm_s = siesta_dhdt_from_flux(Fb)		! predicted ice growth rate
+		dhdt_sal = s_ocn*siesta_keff(dhdt_cm_s)          	! predicted new ice salinity
+		bs = siesta_bs(t_ocn,dhdt_sal)                   		! new ice brine salinity
+		bd = siesta_bd(bs)																! new ice brine density
+		d_new = siesta_ice_d(t_ocn,dhdt_sal,bs,bd)						! new ice density
+		q_melt = siesta_ice_heat_melt(t_ocn,dhdt_sal,d_new,t_ocn)	! new ice melting heat
 		dhdt = Fb/q_melt															! m/s
 		dhdt_cm_s = dhdt*c100													! report actual dhdt_cm_s, not predicted
 		dhdt = dhdt*dtt_s															! new ice growth, using predicted salinity
 		
 		! update fresh water and salt fluxes (ice->ocn)		
 		ice%flux(w_bfreeze) = ice%flux(w_bfreeze) - & 
-			sia2_layer_h2o(d_new,dhdt_sal)*c_1e3*dhdt*ice%af ! kg m-2
+			siesta_layer_h2o(d_new,dhdt_sal)*c_1e3*dhdt*ice%af ! kg m-2
 		ice%flux(s_bfreeze) = ice%flux(s_bfreeze) - &
-			sia2_layer_salt(d_new,dhdt_sal)*c_1e3*dhdt*ice%af ! kg m-2		
+			siesta_layer_salt(d_new,dhdt_sal)*c_1e3*dhdt*ice%af ! kg m-2		
 	 		 	  
-	end subroutine sia2_basal_growth
+	end subroutine siesta_basal_growth
 
 ! **********************************************************************
 
 
 ! **********************************************************************
-! SUBROUTINE: sia2_destroy_ice
+! SUBROUTINE: siesta_destroy_ice
 ! wipe out ice, returning biomass, and salt, and h20 masses contained
 ! ----------------------------------------------------------------------
-	subroutine sia2_destroy_ice(ice,m)
+	subroutine siesta_destroy_ice(ice,m)
 
 	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
-		use sia2_constants, only: &
+		use siesta_constants, only: &
 			c0,							&	! zero 
 			c_001,					& ! 0.001
 			c1e3,						& ! 1000
 			c1e6,						&	! 1,000,000
 			cell_area					! area of grid cell in km^2
-		use sia2_types
+		use siesta_types
 
 		implicit none
 	
@@ -1941,35 +1941,35 @@ module sia2_grid
 			enddo
 
 			! record freshwater and salt fluxes
-			call sia2_ice_mass(ice,fh20,fsalt)
+			call siesta_ice_mass(ice,fh20,fsalt)
 			m%h2o_flux = m%h2o_flux + fh20*ice%af*cell_area*c1e6
 			m%salt_flux = m%salt_flux + fsalt*ice%af*cell_area*c1e6
-			call sia2_snow_mass(ice,fh20)
+			call siesta_snow_mass(ice,fh20)
 			m%h2o_flux = m%h2o_flux + fh20*ice%af*cell_area*c1e6
 				
 		endif
 
 		! nullify ice structure
-		call sia2_null_ice(ice)
+		call siesta_null_ice(ice)
 
 		! nullify associated PUR history					
 		!pur(:,:,:,sc,ic,mi) = pur_0
 
-	end subroutine sia2_destroy_ice
+	end subroutine siesta_destroy_ice
 
 ! **********************************************************************
 
 ! **********************************************************************
-! SUBROUTINE: sia2_null_ice
+! SUBROUTINE: siesta_null_ice
 ! zero ice structure
 ! ----------------------------------------------------------------------
-  pure subroutine sia2_null_ice(ice)
+  pure subroutine siesta_null_ice(ice)
 
 	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
-		use sia2_constants, only: &
+		use siesta_constants, only: &
 			c0								! zero 
-		use sia2_types	
+		use siesta_types	
 
 	! Function Arguments
 	! --------------------------------------------------------------------
@@ -2060,19 +2060,19 @@ module sia2_grid
 		ice%pond%po4 = c0     ! ice layer brine PO4 concentration (µMol)
 		ice%pond%sioh4 = c0    ! ice layer brine SiOH4 concentration (µMol)                  
 
-	end subroutine sia2_null_ice
+	end subroutine siesta_null_ice
 
 ! **********************************************************************
 
 
 ! **********************************************************************
-! SUBROUTINE: sia2_interpolate_salinity
+! SUBROUTINE: siesta_interpolate_salinity
 ! used to find intital conditions from a 10-value distribution
 ! for 1st year ice salinity
 ! ----------------------------------------------------------------------
 
-      PURE SUBROUTINE sia2_interpolate_salinity1(h_rel,value)
-          use sia2_constants
+      PURE SUBROUTINE siesta_interpolate_salinity1(h_rel,value)
+          use siesta_constants
           implicit none
 
           real(r4),intent(in) :: h_rel
@@ -2109,19 +2109,19 @@ module sia2_grid
               value = ss9
           endif
           
-      end SUBROUTINE sia2_interpolate_salinity1
+      end SUBROUTINE siesta_interpolate_salinity1
 
 ! **********************************************************************
 
 
 ! **********************************************************************
-! SUBROUTINE: sia2_interpolate_salinity2
+! SUBROUTINE: siesta_interpolate_salinity2
 ! used to find intital conditions from a 10-value distribution
 ! for multi-year ice salinity
 ! ----------------------------------------------------------------------
 
-      PURE SUBROUTINE sia2_interpolate_salinity2(h_rel,value)
-          use sia2_constants
+      PURE SUBROUTINE siesta_interpolate_salinity2(h_rel,value)
+          use siesta_constants
           implicit none
 
           real(r4),intent(in) :: h_rel
@@ -2158,22 +2158,22 @@ module sia2_grid
               value = ssm9
           endif
                     
-      end SUBROUTINE sia2_interpolate_salinity2
+      end SUBROUTINE siesta_interpolate_salinity2
 
 ! **********************************************************************
 
 
 
-! SUBROUTINE: sia2_env_merge_ice
+! SUBROUTINE: siesta_env_merge_ice
 ! ======================================================================
 ! merges ice conservatively from two categories
 
-    SUBROUTINE sia2_merge_ice(ice_in,ice_out,t_ocn,s_ocn)
+    SUBROUTINE siesta_merge_ice(ice_in,ice_out,t_ocn,s_ocn)
 
 	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
-      USE sia2_constants
-      USE sia2_state
+      USE siesta_constants
+      USE siesta_state
       IMPLICIT NONE
 
     ! FUNCTION ARGUMENTS
@@ -2235,7 +2235,7 @@ module sia2_grid
           heat_mean = (ice_out%heat(ii)*z1 + ice_in%heat(ii)*z2)/vf_total
           d_mean = (ice_out%d(ii)*z1 + ice_in%d(ii)*z2)/vf_total
           s_new(ii) = (ice_out%s(ii)*z1 + ice_in%s(ii)*z2)/vf_total
-          t_new(ii) = sia2_ice_temp(s_new(ii),d_mean,heat_mean)
+          t_new(ii) = siesta_ice_temp(s_new(ii),d_mean,heat_mean)
            
           ! check to make sure we don't get warmer than the ocean
           !if (ice_out%id(ii) .le. ice_out%fbh) then
@@ -2319,7 +2319,7 @@ module sia2_grid
         ! assign new ice physics
         ice_out%t(ii) = t_new(ii)
         ice_out%s(ii) = s_new(ii)
-        call sia2_ice_state(t_new(ii),s_new(ii),ice_out%bs(ii),ice_out%bd(ii), &
+        call siesta_ice_state(t_new(ii),s_new(ii),ice_out%bs(ii),ice_out%bd(ii), &
           ice_out%d(ii),ice_out%bv(ii),ice_out%heat(ii))
     
         ! update tracers
@@ -2388,7 +2388,7 @@ module sia2_grid
 !
 !          r_depth = ice(sc,ic,mi)%id(int_z)
 !
-!#include "sia2_env_ice_grid.inc.f90"               
+!#include "siesta_env_ice_grid.inc.f90"               
 !    
 !          ! start new layer top at old layer top - don't exclude any ice
 !          new_layer_top = -1.
@@ -2401,7 +2401,7 @@ module sia2_grid
 !          dhdt_cm_s = 0.   ! required in algal migration
 !          maxed_depth = .false.
 !        
-!#include "sia2_env_ice_remap.inc.f90"
+!#include "siesta_env_ice_remap.inc.f90"
 
 
       ! transfer pond paramaters
@@ -2471,8 +2471,8 @@ module sia2_grid
               ice_in%snow%heat(ii)*z2)/vf_total
           ice_out%snow%d(ii) = (ice_out%snow%d(ii)*z1 + &
               ice_in%snow%d(ii)*z2)/vf_total
-          ice_out%snow%t(ii) = sia2_snow_temp(ice_out%snow%d(ii),heat_total)
-          ice_out%snow%heat(ii) = sia2_snow_heat(ice_out%snow%d(ii),ice_out%snow%t(ii))
+          ice_out%snow%t(ii) = siesta_snow_temp(ice_out%snow%d(ii),heat_total)
+          ice_out%snow%heat(ii) = siesta_snow_heat(ice_out%snow%d(ii),ice_out%snow%t(ii))
            
           ! update all other snow parameters
           ice_out%snow%th(ii) = th_new(ii)
@@ -2491,12 +2491,12 @@ module sia2_grid
 !          r_depth = ice(sc,ic,mi)%snow%depth
 !          ice(sc,ic,mi)%sh_prev = r_depth                  
 !
-!#include "sia2_env_snow_grid.inc.f90"               
+!#include "siesta_env_snow_grid.inc.f90"               
 !
 !          flooded = 0.
 !          melt_drain = 0.
 !
-!#include "sia2_env_snow_remap.inc.f90"                                 
+!#include "siesta_env_snow_remap.inc.f90"                                 
 
       tmp1 = ice_in%af + ice_out%af
 
@@ -2521,9 +2521,9 @@ module sia2_grid
       ! update af & nullify old category
       ! --------------------------------------------------------
       ice_out%af = ice_in%af + ice_out%af                  
-      ! call sia2_null_ice(ice_in)
+      ! call siesta_null_ice(ice_in)
 
-    end subroutine sia2_merge_ice
+    end subroutine siesta_merge_ice
 
 
-end module sia2_grid
+end module siesta_grid

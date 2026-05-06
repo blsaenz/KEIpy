@@ -1,5 +1,5 @@
 
-module sia2_flux_heat
+module siesta_flux_heat
 
 	use kei_kinds, only: i4, r4, r8, log_kind
 	
@@ -34,24 +34,24 @@ module sia2_flux_heat
 	contains
 
 ! **********************************************************************
-! subroutine sia2_conductivity 
+! subroutine siesta_conductivity 
 ! Purpose: find thermal conductivity (ki)and inter-layer midpoint distances
 ! (dth) 
 ! NOTE - SNOW PARAMETERS ARE ASSUMED uPSIDE DOWN, WITH THE BOTTOM
 ! SNOW LAYER AS SNOW_TH(1), SNOW_D(1), etc...
 ! ----------------------------------------------------------------------
 
-	subroutine sia2_conductivity(ice_t,ice_s,ice_th,ice_d, &
+	subroutine siesta_conductivity(ice_t,ice_s,ice_th,ice_d, &
 		snow_t,snow_d,snow_th,ice_z,snow_z,ki,dth)
 
  	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
-		use sia2_parameters, only : &
+		use siesta_parameters, only : &
 			z_max_ice,						&	! maximum ice layers
 			z_max_snow,						&	! maximum snow layers
 			z_max_pack,						&	! maximum ice+snow layers
 			ki_min									! minimum ice thermal conductivity J g-1 K-1			
-		use sia2_constants, only : &
+		use siesta_constants, only : &
 			kelvin0, 							&	!	0degC in K			
 			IceD,									&	! density of pure ice (g m-3)
 			c_5,									&	! constant = 0.5
@@ -104,7 +104,7 @@ module sia2_flux_heat
 			! top ice layer conductivity
 			s_mean = ice_s(1) !(ice(sc,ic,mi)%s(1)+s_new(1))*c_5
 			d_mean = ice_d(1) !(ice(sc,ic,mi)%d(1)+d_new(1))*c_5
-			ki1 = sia2_ice_ki(ice_t(1),s_mean,d_mean)
+			ki1 = siesta_ice_ki(ice_t(1),s_mean,d_mean)
 			ki1 = max(ki1,ki_min)
 	
 		  if (snow_z .eq. 0) then
@@ -124,7 +124,7 @@ module sia2_flux_heat
               
               ! top layer conductivity
 			  d_mean = c_1e6*snow_d(snow_z)
-			  ki_down = sia2_snow_ki(d_mean)  ! sturm 1997 + 0.1495
+			  ki_down = siesta_snow_ki(d_mean)  ! sturm 1997 + 0.1495
               !ki_down = ksnow
 			  ki(1) = ki_down
 	
@@ -135,7 +135,7 @@ module sia2_flux_heat
 				      ! snow conductivity
 				      ki_up = ki_down
                       d_mean = c_1e6*snow_d(ii)
-                      ki_down = sia2_snow_ki(d_mean)  ! sturm 1997 + 0.1495				      
+                      ki_down = siesta_snow_ki(d_mean)  ! sturm 1997 + 0.1495				      
                       !ki_down = ksnow
                       ! equate fluxes to find intra-layer ki
                       ki(jj) = ki_up*ki_down/ &
@@ -164,7 +164,7 @@ module sia2_flux_heat
 			  ki_up = ki_down
 			  s_mean = ice_s(ii) !(ice(sc,ic,mi)%s(ii)+s_new(ii))*c_5
 			  d_mean = ice_d(ii) !(ice(sc,ic,mi)%d(ii)+d_new(ii))*c_5
-			  ki_down = sia2_ice_ki(ice_t(ii),s_mean,d_mean)
+			  ki_down = siesta_ice_ki(ice_t(ii),s_mean,d_mean)
 	      ki_down = max(ki_down,ki_min)
 
 			  ! equate fluxes to find inter-layer ki
@@ -178,17 +178,17 @@ module sia2_flux_heat
 		  ki(z+1) = ki_down
 
 
-end subroutine sia2_conductivity
+end subroutine siesta_conductivity
 
 ! **********************************************************************
 
 
 ! **********************************************************************
-! function sia2_snow_ki 
+! function siesta_snow_ki 
 ! Purpose: find snow thermal conductivity (W m-1 K-1)
 ! ----------------------------------------------------------------------
 
-	real(r4) function sia2_snow_ki(d_mean)
+	real(r4) function siesta_snow_ki(d_mean)
 
 		implicit none
 
@@ -196,26 +196,26 @@ end subroutine sia2_conductivity
 		! --------------------------------------------------------------------
  		real(r4), intent(in) :: d_mean   ! snow density
 
-!  	sia2_snow_ki = 0.138_r4 - 1.01_r4*d_mean + &
+!  	siesta_snow_ki = 0.138_r4 - 1.01_r4*d_mean + &
 !    	3.233_r4*d_mean**2 + 0.1495_r4  ! sturm 1997 + 0.1495
     if (d_mean .ge. 0.4_r4) then
-    	sia2_snow_ki = 0.5_r4
+    	siesta_snow_ki = 0.5_r4
     else
-    	sia2_snow_ki = 0.33_r4
+    	siesta_snow_ki = 0.33_r4
 		endif
 
-	end function sia2_snow_ki
+	end function siesta_snow_ki
 
 ! **********************************************************************
 
 ! **********************************************************************
-! function sia2_ice_ki 
+! function siesta_ice_ki 
 ! Purpose: find ice thermal conductivity (W m-1 K-1)
 ! ----------------------------------------------------------------------
 
-	real(r4) function sia2_ice_ki(t_mean,s_mean,d_mean)
+	real(r4) function siesta_ice_ki(t_mean,s_mean,d_mean)
 
-		use sia2_constants, only : &
+		use siesta_constants, only : &
 			c1e6,									&	! constant = 1e6
 			IceD										! density of pure ice (g m-3)
 
@@ -228,28 +228,28 @@ end subroutine sia2_conductivity
  			s_mean,									&   ! ice bulk salinity (psu)
  			d_mean										  ! ice density (g m-3)
 
-  	sia2_ice_ki = (d_mean/IceD)*(2.11_r4-0.011_r4*t_mean + &
+  	siesta_ice_ki = (d_mean/IceD)*(2.11_r4-0.011_r4*t_mean + &
 				0.09_r4*s_mean/t_mean - (d_mean-IceD)/c1e6)  ! pringle et al. 2006?				      
 
-	end function sia2_ice_ki
+	end function siesta_ice_ki
 
 ! **********************************************************************
 
 
 ! **********************************************************************
-! subroutine sia2_heat_solver 
+! subroutine siesta_heat_solver 
 ! Purpose: calculates new temperature forcings given interface heat fluxes
 ! and ice column parameters
 ! ----------------------------------------------------------------------
 
-	subroutine sia2_heat_solver(ts_next,t_next,ts_last,t_last,ki,dth, &
+	subroutine siesta_heat_solver(ts_next,t_next,ts_last,t_last,ki,dth, &
 		ice_s,ice_d,ice_bd,ice_bv,ice_th,snow_d,snow_th, &
 		z_ice,z_snow,ed_w_ice,ed_w_snow,dcheat,F0,dF0,T_bot,T_air, &
 		T_diff,T_step,Fc_top,Fc_bot,dtt_s)
 
 	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
-		use sia2_constants, only : &
+		use siesta_constants, only : &
 			ci0,									&	! heat capacity of pure ice (J g-1 K-1)
 			cw, 									&	! heat capacity of cold seawater (J g-1 K-1)
 			Lf,										&	! latent heat of fusion of water (J g-1)
@@ -259,7 +259,7 @@ end subroutine sia2_conductivity
 			IceD,									&	! density of pure ice (g m-3)
 			mu,										&	! linear liquidus constant for seawater
 			kelvin0 								!	0degC in K
-		use sia2_parameters, only : &
+		use siesta_parameters, only : &
 			z_max_ice,						&	! maximum ice layers
 			z_max_snow,						&	! maximum snow layers
 			z_max_pack,						&	! maximum ice+snow layers
@@ -545,7 +545,7 @@ end subroutine sia2_conductivity
 !             print *,'DL: ',dl
 !             print *,'r_vec: ',r_vec
 
-		if (r4 .eq. r8) then  ! false: sia2 real type is r4; was dbl_kind=4 in sia2_constants
+		if (r4 .eq. r8) then  ! false: siesta real type is r4; was dbl_kind=4 in siesta_constants
 	    call DGTSV(z1,1,DL_calc,DC_calc,DU_calc,r_vec,z1,info)
     else
 	    call SGTSV(z1,1,DL_calc,DC_calc,DU_calc,r_vec,z1,info)
@@ -573,22 +573,22 @@ end subroutine sia2_conductivity
     Fc_bot = ki(z+1)*(T_bot-T_next(z))/dth(z+1) !  flux over sub-dt timestep
     Fc_top = ki(1)*(Ts_next-T_next(1))/dth(1)  !  flux over sub-dt timestep
 
-	end subroutine sia2_heat_solver
+	end subroutine siesta_heat_solver
 
 ! **********************************************************************
 
 ! **********************************************************************
-! subroutine sia2_F0 
+! subroutine siesta_F0 
 ! Purpose: find balance (excepting conductive heat) of surface heat 
 ! flux (F0) and derivative (dF0) 
 ! ----------------------------------------------------------------------
 
-	!pure subroutine sia2_F0(Ts,pc,F0,dF0,Fe)
-	subroutine sia2_F0(Ts,pc,F0,dF0,Fe,F_s,F_little_L)
+	!pure subroutine siesta_F0(Ts,pc,F0,dF0,Fe)
+	subroutine siesta_F0(Ts,pc,F0,dF0,Fe,F_s,F_little_L)
 
 	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
-		use sia2_constants, only : &
+		use siesta_constants, only : &
 			c1e5,										&	! 100,000
 			steph_boltz, 						&	! stephan boltzmann constant
 			qq1,										&	! latent heat constant 1
@@ -604,7 +604,7 @@ end subroutine sia2_conductivity
 			fe_D, 									&	! latent turbulent heat eq. constant
 			fe_E, 									&	! latent turbulent heat eq. constant
 			kelvin0 									!	0degC in K
-		use sia2_parameters, only : &
+		use siesta_parameters, only : &
 			ch,											&	! 
 			Cp,											&	! 
 			atmo											! atmospheric/ice heat flux switch (1 = CICE, 0=kottmeier et al., 2003)
@@ -638,9 +638,9 @@ end subroutine sia2_conductivity
 		
 		if (atmo .eq. 1) then
 	
-			call sia2_env_atmo(Ts-kelvin0,pc%potT,pc%v10,10.,pc%shum, &
+			call siesta_env_atmo(Ts-kelvin0,pc%potT,pc%v10,10.,pc%shum, &
 				pc%rho_air,lhcoef,shcoef)
-			!call sia2_env_atmo_const(Ts-kelvin0,pc%v10,pc%rho_air,lhcoef,shcoef)
+			!call siesta_env_atmo_const(Ts-kelvin0,pc%v10,pc%rho_air,lhcoef,shcoef)
 
 			F_little_L = nc1*pc%eps0*steph_boltz*Ts**4 ! outgoing longwave - W/m^2/K^4 * K^4 = W/m^2		
 			F_s = shcoef*(pc%potT - Ts)		! sensible heat flux
@@ -684,24 +684,24 @@ end subroutine sia2_conductivity
 
 		endif		
 
-	end subroutine sia2_F0
+	end subroutine siesta_F0
 
 ! **********************************************************************
 
 
 
 ! **********************************************************************
-! subroutine sia2_F0 
+! subroutine siesta_F0 
 ! Purpose: find balance (excepting conductive heat) of surface heat 
 ! flux (F0) and derivative (dF0) 
 ! ----------------------------------------------------------------------
 
-	pure subroutine sia2_heat_pre_calc(Tair,v10,pres,shum,rhum,dewpoint, &
+	pure subroutine siesta_heat_pre_calc(Tair,v10,pres,shum,rhum,dewpoint, &
 		sn_depth,fc,Fr,Fl,pc)
 
 	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
-		use sia2_constants, only : &
+		use siesta_constants, only : &
 			c1e5,										&	! 100,000
 			steph_boltz, 						&	! stephan boltzmann constant
 			R_air,									&	! latent heat constant 1
@@ -718,7 +718,7 @@ end subroutine sia2_conductivity
 			fe_C, 									&	! latent turbulent heat eq. constant
 			fe_D, 									&	! latent turbulent heat eq. constant
 			fe_E 											! latent turbulent heat eq. constant
-		use sia2_parameters, only : &
+		use siesta_parameters, only : &
 			Ce,											&	! 
 			ch,											&	! 
 			Cp,											&	! 
@@ -837,7 +837,7 @@ end subroutine sia2_conductivity
 
 
 
-	end subroutine sia2_heat_pre_calc
+	end subroutine siesta_heat_pre_calc
 
 ! **********************************************************************
 
@@ -902,7 +902,7 @@ end subroutine sia2_conductivity
 ! ----------------------------------------------------------------------
 	real(r4) pure function rhoair(T,P,H) 
 		
-		use sia2_constants, only : &
+		use siesta_constants, only : &
 			R_air,				& ! universal gas constant for air
 			R_h2o					! universal gas constant for water vapor
 		
@@ -925,11 +925,11 @@ end subroutine sia2_conductivity
 ! ----------------------------------------------------------------------
 	real(r4) pure function ice_albedo(Ts,ice_depth,f_snow) 
 		
-		use sia2_constants, only : &
+		use siesta_constants, only : &
 			nc1,				& ! -1
 			c_5,				& ! 0.5
 			c1						! 1
-		use sia2_parameters, only : &
+		use siesta_parameters, only : &
 			alb_i_wet,				& ! wet ice albedo
 			alb_i_dry,				& ! dry ice albedo
 			alb_s_wet,				& ! wet snow albedo
@@ -999,7 +999,7 @@ end subroutine sia2_conductivity
 !
 ! !INTERFACE:
 !
-	pure subroutine sia2_env_atmo(Tsf,potT,wind,zlvl,Qa,rhoa,lhcoef,shcoef)
+	pure subroutine siesta_env_atmo(Tsf,potT,wind,zlvl,Qa,rhoa,lhcoef,shcoef)
  
 		implicit none
 
@@ -1220,7 +1220,7 @@ end subroutine sia2_conductivity
 			 lhcoef = rhoa * ustar * Lheat  * re
 
 
-	end subroutine sia2_env_atmo
+	end subroutine siesta_env_atmo
 
 ! **********************************************************************
 
@@ -1235,7 +1235,7 @@ end subroutine sia2_conductivity
 !
 ! !INTERFACE:
 !
-	pure subroutine sia2_env_atmo_const(Tsf,wind,rhoa,lhcoef,shcoef)
+	pure subroutine siesta_env_atmo_const(Tsf,wind,rhoa,lhcoef,shcoef)
 
 ! !DESCRIPTION:
 !
@@ -1293,23 +1293,23 @@ end subroutine sia2_conductivity
 		 shcoef = (1.20e-3)*cp_air*rhoa*wind
 		 lhcoef = (1.50e-3)*Lheat*rhoa*wind
 
-	end subroutine sia2_env_atmo_const
+	end subroutine siesta_env_atmo_const
 
 
 ! **********************************************************************
-! function sia2_ohf 
+! function siesta_ohf 
 ! Purpose: find ocean heat flux to ice, > 0 is melting flux
 ! ----------------------------------------------------------------------
-	pure subroutine sia2_ohf(t_ocn,s_ocn,d_ocn,um_ocn,ud_ocn,um_ice, &
+	pure subroutine siesta_ohf(t_ocn,s_ocn,d_ocn,um_ocn,ud_ocn,um_ice, &
 	ud_ice,fixed_mu,F_io)
 
 	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
-		use sia2_constants, only : &
+		use siesta_constants, only : &
 			nc1,									&	! -1
 			mu,										&	! linear liquidus constant for seawater
 			cw 											! heat capacity of cold seawater (J g-1 K-1)
-		use sia2_parameters, only : &
+		use siesta_parameters, only : &
 			chw, 									&	! ice-ocean heat transfer coefficient
 			mu_w_min								! 
 			
@@ -1359,10 +1359,10 @@ end subroutine sia2_conductivity
 		!print *,d_ocn,cw,chw,mu_w,T_ocn, T_frz
 		!stop
 
-	end subroutine sia2_ohf
+	end subroutine siesta_ohf
 
 
-end module sia2_flux_heat
+end module siesta_flux_heat
 
 	
 	

@@ -1,4 +1,4 @@
-module sia2_constants
+module siesta_constants
 
 	use kei_kinds, only: i4, r4, r8, log_kind
 
@@ -172,6 +172,6 @@ module sia2_constants
 
     real(r4), parameter :: nc1 = -1.0_r4    
 			
-end module sia2_constants
+end module siesta_constants
 
 

@@ -492,7 +492,7 @@ SUBROUTINE calflx(jptr)
 
     print *, 'atm_flux_to_ocn_surface: ',atm_flux_to_ocn_surface
 
-    ! removed - already done in sia2 melting routines ...
+    ! removed - already done in siesta melting routines ...
 !    if (sflux(6,4,jptr) > 0.0) then
 !        sflux(4,5,jptr) = sflux(4,5,jptr) &
 !        +CPo*(Tmlt-Tref)* sflux(6,4,jptr) !*fice   ! change T of melted ice/snow

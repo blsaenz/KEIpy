@@ -47,11 +47,11 @@ endif
 
 BD = build
 
-SIA2_OBJ := kei_kinds.o sia2_constants.o kei_hacks.o sia2_parameters.o sia2_state.o \
-    sia2_types.o sia2_grid.o sia2_flux_heat.o sia2_desalination.o
+SIESTA_OBJ := kei_kinds.o siesta_constants.o kei_hacks.o siesta_parameters.o siesta_state.o \
+    siesta_types.o siesta_grid.o siesta_flux_heat.o siesta_desalination.o
 
-OBJ1D  := kei_kinds.o sia2_constants.o kei_hacks.o sia2_parameters.o sia2_state.o \
-  sia2_types.o sia2_grid.o sia2_flux_heat.o sia2_desalination.o\
+OBJ1D  := kei_kinds.o siesta_constants.o kei_hacks.o siesta_parameters.o siesta_state.o \
+  siesta_types.o siesta_grid.o siesta_flux_heat.o siesta_desalination.o\
   kei_ecocommon.o \
   kei_ice.o kei_eco.o kei_init.o kei_fluxes.o \
   kei_subs1D.o kei_atm.o kei_kpp.o kei_ocn.o \
@@ -68,7 +68,7 @@ FFLAGS :=  $(BUG)
 # compile directives
 # ----------------------------------------------------------------------
 
-# keep ice_common (sia2_routines) and macmods out of f2py linking, since it cannot
+# keep ice_common (siesta_routines) and macmods out of f2py linking, since it cannot
 # handle variables with the same names across different modules
 kei: $(OBJ1D)
 # --link-lapack_opt: final .so link needs LAPACK (e.g. SGTSV); f90flags still pass Accelerate for compiles.
@@ -97,31 +97,31 @@ kei_eco.o	: kei_ecocommon.o kei_parameters.o kei_common.o kei_hacks.o
 	$(FC) -c $(FFLAGS) kei_eco.f90
 kei_ecocommon.o	:
 	$(FC) -c $(FFLAGS) kei_ecocommon.f90
-kei_icecommon.o	: kei_icecommon.f90 $(SIA2_OBJ)
+kei_icecommon.o	: kei_icecommon.f90 kei_kinds.o
 	$(FC) -c $(FFLAGS) kei_icecommon.f90
 kei_common.o	: kei_icecommon.o
 	$(FC) -c $(FFLAGS) kei_common.f90
 kei_parameters.o	: kei_kinds.o
 	$(FC) -c $(FFLAGS) kei_parameters.f90
 
-sia2_flux_heat.o	: sia2_constants.o sia2_parameters.o sia2_types.o
-	$(FC) -c $(FFLAGS) sia2_flux_heat.f90
-sia2_grid.o	: sia2_constants.o sia2_parameters.o sia2_types.o sia2_desalination.o
-	$(FC) -c $(FFLAGS) sia2_grid.f90
-sia2_desalination.o	: sia2_constants.o sia2_parameters.o sia2_state.o sia2_types.o
-	$(FC) -c $(FFLAGS) sia2_desalination.f90
-sia2_state.o	: sia2_parameters.o sia2_types.o
-	$(FC) -c $(FFLAGS) sia2_state.f90
-sia2_types.o	: sia2_constants.o sia2_parameters.o
-	$(FC) -c $(FFLAGS) sia2_types.f90
-sia2_parameters.o	: sia2_constants.o
-	$(FC) -c $(FFLAGS) sia2_parameters.f90
+siesta_flux_heat.o	: siesta_constants.o siesta_parameters.o siesta_types.o
+	$(FC) -c $(FFLAGS) siesta_flux_heat.f90
+siesta_grid.o	: siesta_constants.o siesta_parameters.o siesta_types.o siesta_desalination.o
+	$(FC) -c $(FFLAGS) siesta_grid.f90
+siesta_desalination.o	: siesta_constants.o siesta_parameters.o siesta_state.o siesta_types.o
+	$(FC) -c $(FFLAGS) siesta_desalination.f90
+siesta_state.o	: siesta_parameters.o siesta_types.o
+	$(FC) -c $(FFLAGS) siesta_state.f90
+siesta_types.o	: siesta_constants.o siesta_parameters.o
+	$(FC) -c $(FFLAGS) siesta_types.f90
+siesta_parameters.o	: siesta_constants.o kei_icecommon.o
+	$(FC) -c $(FFLAGS) siesta_parameters.f90
 kei_hacks.o	: kei_parameters.o kei_common.o kei_subs1D.o kei_ecocommon.o
 	$(FC) -c $(FFLAGS) kei_hacks.f90
 kei_kinds.o	: kei_kinds.f90
 	$(FC) -c $(FFLAGS) kei_kinds.f90
-sia2_constants.o	: kei_kinds.o
-	$(FC) -c $(FFLAGS) sia2_constants.f90
+siesta_constants.o	: kei_kinds.o
+	$(FC) -c $(FFLAGS) siesta_constants.f90
 
 kei_sw.o	: $(MACMODS_OBJ)
 	$(FC) -c $(FFLAGS) kei_sw.f90

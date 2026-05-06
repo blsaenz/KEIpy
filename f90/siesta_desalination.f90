@@ -1,4 +1,4 @@
-module sia2_desalination
+module siesta_desalination
 
 	use kei_kinds, only: i4, r4, r8, log_kind
 	
@@ -9,29 +9,29 @@ module sia2_desalination
 	contains
 
 ! **********************************************************************
-! subroutine sia2_desal 
+! subroutine siesta_desal 
 ! Purpose: desalinate either using the SLDM (slush layer desalination 
 ! method - Saenz & Arrigo 2012) or Cox and Weeks (1988) gravity drainage
 
 
-	subroutine sia2_desal(dtt_s,s_ocn,t_ocn,ice,s_new,ed_w_ice,dth,ki, &
+	subroutine siesta_desal(dtt_s,s_ocn,t_ocn,ice,s_new,ed_w_ice,dth,ki, &
 		sldm,dsdt_out,lfheat)
 	
  	! Use Statements and Variables/Globals/Parameters
 	! --------------------------------------------------------------------
-		use sia2_constants, only: &
+		use siesta_constants, only: &
 			c0,					& ! zero
 			c_5,				& !	0.5
 			c1,					& !	1.0
 			c_001,			& !	0.001
 			Lf						! latent heat of fusion of ice
-		use sia2_parameters, only: &
+		use siesta_parameters, only: &
 			z_max_ice, 	&	! maximum ice layers
 			z_max_pack, &	! maximum ice + snow layers
 			vb_crit, 		&	! critical volume of brine below which there is no convection
 			bb_f,				& !	bubble fraction in ice
 			bv_conv				! brine volume cutoff above which the SLDM is used
-		use sia2_types
+		use siesta_types
 	
 		implicit none
 		
@@ -92,7 +92,7 @@ module sia2_desalination
 		sldm = 0				! vector assignment
 		
 		! find highest potentially convecting layer
- 		vb_open = sia2_bv_open(ice%bv,int_z,vb_crit)
+ 		vb_open = siesta_bv_open(ice%bv,int_z,vb_crit)
 
 		do ii=1,int_z
 
@@ -175,7 +175,7 @@ module sia2_desalination
 					! F0 calc from temp gradient 
 					! --------------------------------------------											
 					tmp1 = F0/(c1-bb_f) ! overcompensate F0 to simulate bubble fraction
-					dhdt = sia2_dhdt_from_flux(tmp1)
+					dhdt = siesta_dhdt_from_flux(tmp1)
 							
 					! record instaneous flux-based desal vars
 					ice%dhdt_conv(ii) = dhdt
@@ -200,7 +200,7 @@ module sia2_desalination
 						!endif											
 
 						! keff from petrich
-						keff = sia2_keff(dhdt)
+						keff = siesta_keff(dhdt)
 						!print *,'keffs: ',keff,tmp4
 
 
@@ -268,18 +268,18 @@ module sia2_desalination
 
 		enddo		 ! end of desal calculation loop
 
-	end subroutine sia2_desal
+	end subroutine siesta_desal
 	
 ! **********************************************************************
 
 
 ! **********************************************************************
-! function sia2_vb_open 
+! function siesta_vb_open 
 ! Purpose: find higest layer that is open to brine convection (i.e. 
 ! brine volume greater than bv_crit)
 ! ----------------------------------------------------------------------
 	
-	integer(i4) pure function sia2_bv_open(ice_bv,nz,bv_crit)
+	integer(i4) pure function siesta_bv_open(ice_bv,nz,bv_crit)
 	
 		implicit none
 		
@@ -300,27 +300,27 @@ module sia2_desalination
 						
 		! Function Code
 		! --------------------------------------------------------------------
-		sia2_bv_open = 0
+		siesta_bv_open = 0
 	   do i=1,nz
 			if (ice_bv(i) .lt. bv_crit) then
-				sia2_bv_open = i
+				siesta_bv_open = i
 			endif
     enddo
 
-	end function sia2_bv_open
+	end function siesta_bv_open
 	
 ! **********************************************************************
 
 
 ! **********************************************************************
-! FUNCTION: sia2_dhdt_from_flux (Saenz and Arrigo 2012) 
+! FUNCTION: siesta_dhdt_from_flux (Saenz and Arrigo 2012) 
 ! returns the rate of vertical sea ice formation from the total heat flux
 ! into the layer (cm/s), using a regression of the Petrich et al. (2006) 
 ! interpretation of the Nakawo/Signa 197? stable salinity vs ice growth
 ! rate data (Petrich calculation was a revision of one originally made 
 ! by Cox and Weeks (1988) 
 ! ----------------------------------------------------------------------	
-	real(r4) pure function sia2_dhdt_from_flux(F0)
+	real(r4) pure function siesta_dhdt_from_flux(F0)
 	
 		implicit none
 	
@@ -332,28 +332,28 @@ module sia2_desalination
 	! Function Code
 	! --------------------------------------------------------------------
 		if (F0 .ge. 210.0_r4) then
-			sia2_dhdt_from_flux = 2.e-4_r4
+			siesta_dhdt_from_flux = 2.e-4_r4
 		elseif (F0 .le. 57.316_r4) then
-			sia2_dhdt_from_flux = 1.449e-9_r4*F0**2 &
+			siesta_dhdt_from_flux = 1.449e-9_r4*F0**2 &
 				+ 3.524e-7_r4*F0 &
 				+ 5.212e-8_r4
 		else
-			sia2_dhdt_from_flux = 1.942e-13_r4*F0**4 &
+			siesta_dhdt_from_flux = 1.942e-13_r4*F0**4 &
 				- 6.e-11_r4*F0**3 &
 				+ 7.387e-9_r4*F0**2 &
 				+ 1.755e-7_r4*F0	! (cm/s) dhdt vs. F0 regression at T=-1.88 freezing temp, petrich keff
 		endif
 	  	  
-	end function sia2_dhdt_from_flux
+	end function siesta_dhdt_from_flux
 
 ! **********************************************************************
 
 ! **********************************************************************
-! FUNCTION: sia2_keff
+! FUNCTION: siesta_keff
 ! returns the 'stable salinity' of sea ice at a particular growth rate
 ! according to Petrich et al. 2006.
 ! ----------------------------------------------------------------------	
-	real(r4) pure function sia2_keff(dhdt_cm_s)
+	real(r4) pure function siesta_keff(dhdt_cm_s)
 	
 		implicit none
 	
@@ -364,15 +364,15 @@ module sia2_desalination
 			
 	! Function Code
 	! --------------------------------------------------------------------
-		sia2_keff = &
+		siesta_keff = &
 			0.19_r4*(dhdt_cm_s*7.4074e4_r4)**(0.46_r4)
-		sia2_keff = max(sia2_keff,0.12_r4)
+		siesta_keff = max(siesta_keff,0.12_r4)
 	 
 		 	  
-	end function sia2_keff
+	end function siesta_keff
 
 ! **********************************************************************
 
-end module sia2_desalination
+end module siesta_desalination
 
 

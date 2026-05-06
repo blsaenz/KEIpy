@@ -1,6 +1,6 @@
-module sia2_common
+module siesta_common
   use kei_kinds, only: i4, r4, r8, log_kind
-	use sia2_parameters
+	use siesta_parameters
 
 	public
 	
@@ -40,4 +40,4 @@ module sia2_common
 				ic_h_med, &
 				ic_h_min              
 
-end module sia2_common
+end module siesta_common
