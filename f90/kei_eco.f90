@@ -535,7 +535,7 @@ CONTAINS
                 dz_eco,              &  ! dz = layer thickness
                 dzr_eco,            & ! dzr = reciprocal of dz
                 zt_eco,             & ! zt = vert dist from sfc to midpoint of layer
-                eco_inject , par_phyto(k))
+                eco_inject , par_phyto(k), fice_eco)
 
                 ! write out ecosys data
                 tot_prod(k) = tot_prod_tavg(i,j)
@@ -551,6 +551,19 @@ CONTAINS
                 graze_diat(k) = graze_diat_tavg(i,j)
                 graze_sp(k) = graze_sp_tavg(i,j)
                 graze_tot(k) = graze_tot_tavg(i,j)
+                sp_loss(k) = sp_loss_tavg(i,j)
+                diat_loss(k) = diat_loss_tavg(i,j)
+                diaz_loss(k) = diaz_loss_tavg(i,j)
+                sp_agg(k) = sp_agg_tavg(i,j)
+                diat_agg(k) = diat_agg_tavg(i,j)
+                FG_CO2(k) = FG_CO2_tavg(i,j)
+                POC_PROD(k) = POC_PROD_tavg(i,j)
+                POC_REMIN(k) = POC_REMIN_tavg(i,j)
+                DOC_prod(k) = DOC_prod_tavg(i,j)
+                DOC_remin(k) = DOC_remin_tavg(i,j)
+                CaCO3_PROD(k) = CaCO3_PROD_tavg(i,j)
+                CaCO3_REMIN(k) = CaCO3_REMIN_tavg(i,j)
+                PAR_out_km(k) = par_phyto(k)
 
               enddo
           enddo
@@ -761,7 +774,7 @@ CONTAINS
 !***********************************************************************
 
       subroutine ecosys_set_interior(k,TEMP,SHF_QSW_Wpm2,TRACER_MODULE, &
-          DTRACER_MODULE, KMT, dz, dzr, zt, eco_inject, par_phyto)
+          DTRACER_MODULE, KMT, dz, dzr, zt, eco_inject, par_phyto, fice_eco)
 
 !-----------------------------------------------------------------------
 !     arguments
@@ -789,6 +802,7 @@ CONTAINS
       real(r8), dimension (ecosys_tracer_cnt) :: &
           eco_inject
        real(r8) :: par_phyto ! PAR that this layer experiences
+       real(r8), dimension(imt,jmt), intent(in) :: fice_eco ! sea-ice fraction
 
 !-----------------------------------------------------------------------
 !     local variables
@@ -835,7 +849,8 @@ CONTAINS
         diazFe_loc,   & ! local copy of model diazFe
         DON_loc,      & ! local copy of model DON
         DOFe_loc,     & ! local copy of model DOFe
-        DOP_loc       ! local copy of model DOP
+        DOP_loc,      & ! local copy of model DOP
+        POC_loc         ! local copy of model POC
 
       real(r8) :: &
         z_grz_sqr,    & ! square of parm_z_grz (mmol C/m^3)^2
@@ -924,7 +939,8 @@ CONTAINS
         zoo_loss_doc,  & ! zoo_loss routed to doc (mmol C/m^3/sec)
         zoo_loss_dic,  & ! zoo_loss routed to dic (mmol C/m^3/sec)
         WORK,          & ! intermediate value in photsyntheis computation (1/sec)
-        light_lim,     & ! light limitation factor
+        light_lim,     & ! light limitation factor (open water)
+        light_lim_ice, & ! light limitation factor under ice (5 % PAR transmittance)
         Qsi,           & ! Diatom initial Si/C ratio (mmol Si/mmol C)
         gQsi,          & ! diatom Si/C ratio for growth (new biomass)
         Qfe_sp,        & ! small phyto init fe/C ratio (mmolFe/mmolC)
@@ -1023,6 +1039,7 @@ CONTAINS
       DON_loc      = max(c0, TRACER_MODULE(:,:,don_ind))
       DOFe_loc     = max(c0, TRACER_MODULE(:,:,dofe_ind))
       DOP_loc      = max(c0, TRACER_MODULE(:,:,dop_ind))
+      POC_loc      = max(c0, TRACER_MODULE(:,:,poc_ind))
 
       where (.not. LAND_MASK .or. k > KMT)
         PO4_loc      = c0
@@ -1047,6 +1064,7 @@ CONTAINS
         DON_loc      = c0
         DOFe_loc     = c0
         DOP_loc      = c0
+        POC_loc      = c0
       endwhere
 
 !-----------------------------------------------------------------------
@@ -1240,9 +1258,11 @@ CONTAINS
 
       PCmax = PCrefSp * f_nut * Tfunc
 
-      light_lim = (c1 - exp((-c1 * parm_alphaChlsp * thetaC_sp * PAR_avg) &
+      light_lim = (c1 - exp((-c1 * parm_alphaChlsp * thetaC_sp * PAR_out) &
         / (PCmax + epsTinv)))
-      PCphoto_sp = PCmax * light_lim
+      light_lim_ice = (c1 - exp((-c1 * parm_alphaChlsp * thetaC_sp * PAR_out * 0.05_r8) &
+        / (PCmax + epsTinv)))
+      PCphoto_sp = PCmax * (light_lim * (c1 - fice_eco) + light_lim_ice * fice_eco)
       sp_light_lim_tavg = light_lim
 
       photoC_sp = PCphoto_sp * spC_loc
@@ -1272,7 +1292,7 @@ CONTAINS
 !     GD 98 Chl. synth. term
 !-----------------------------------------------------------------------
 
-      WORK = parm_alphaChlsp * thetaC_sp * PAR_avg
+      WORK = parm_alphaChlsp * thetaC_sp * (PAR_out * (c1 - fice_eco) + PAR_out * fice_eco * 0.05_r8)
       where (WORK > c0)
         pChl = thetaN_max_sp * PCphoto_sp / WORK
         photoacc_sp = (pChl * VNC_sp / thetaC_sp) * spChl_loc
@@ -1342,9 +1362,12 @@ CONTAINS
       PCmax = PCrefDiat * f_nut * Tfunc
 
       light_lim = &
-        (c1 - exp((-c1 * parm_alphaChldiat * thetaC_diat * PAR_avg) / &
+        (c1 - exp((-c1 * parm_alphaChldiat * thetaC_diat * PAR_out) / &
         (PCmax + epsTinv)))
-      PCphoto_diat = PCmax * light_lim
+      light_lim_ice = &
+        (c1 - exp((-c1 * parm_alphaChldiat * thetaC_diat * PAR_out * 0.05_r8) / &
+        (PCmax + epsTinv)))
+      PCphoto_diat = PCmax * (light_lim * (c1 - fice_eco) + light_lim_ice * fice_eco)
       diat_light_lim_tavg = light_lim
 
       photoC_diat = PCphoto_diat * diatC_loc
@@ -1376,7 +1399,7 @@ CONTAINS
 !     GD 98 Chl. synth. term
 !-----------------------------------------------------------------------
 
-      WORK = parm_alphaChldiat * thetaC_diat * PAR_avg  ! (mmol C m^2/(mg Chl W sec)) * mg Chl/(mmol C) * W --> m^2/sec
+      WORK = parm_alphaChldiat * thetaC_diat * (PAR_out * (c1 - fice_eco) + PAR_out * fice_eco * 0.05_r8)  ! (mmol C m^2/(mg Chl W sec)) * mg Chl/(mmol C) * W --> m^2/sec
       where (WORK > c0)
         pChl = thetaN_max_diat * PCphoto_diat / WORK    ! mg Chl/mmol N * mmol C / (m^2/s) = mmol C * sec / (mmol N m^2)
         photoacc_diat = (pChl * VNC_diat / thetaC_diat) * diatChl_loc  ! mmol C * sec / (mmol N m^2) * mmol N * / (mg Chl / mmol C) * mmol C =
@@ -1858,6 +1881,8 @@ CONTAINS
       DTRACER_MODULE(:,:,dop_ind)  = DOP_prod  - DOP_remin
 
       DTRACER_MODULE(:,:,dofe_ind) = DOFe_prod - DOFe_remin
+
+      DTRACER_MODULE(:,:,poc_ind) = POC%prod - POC%remin
 
 !-----------------------------------------------------------------------
 !     small phyto Fe
@@ -2502,11 +2527,11 @@ CONTAINS
 !-----------------------------------------------------------------------
 
 !      POC_FLUX_IN_tavg     = POC%sflux_in + POC%hflux_in
-!      POC_PROD_tavg        = POC%prod
-!      POC_REMIN_tavg       = POC%remin
+      POC_PROD_tavg        = POC%prod
+      POC_REMIN_tavg       = POC%remin
 !      CaCO3_FLUX_IN_tavg   = P_CaCO3%sflux_in + P_CaCO3%hflux_in
-!      CaCO3_PROD_tavg      = P_CaCO3%prod
-!      CaCO3_REMIN_tavg     = P_CaCO3%remin
+      CaCO3_PROD_tavg      = P_CaCO3%prod
+      CaCO3_REMIN_tavg     = P_CaCO3%remin
 !      SiO2_FLUX_IN_tavg    = P_SiO2%sflux_in + P_SiO2%hflux_in
 !      SiO2_PROD_tavg       = P_SiO2%prod
 !      SiO2_REMIN_tavg      = P_SiO2%remin

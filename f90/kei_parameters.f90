@@ -14,7 +14,7 @@ MODULE kei_parameters
   INTEGER(i4), PARAMETER :: NX = 1
   INTEGER(i4), PARAMETER :: NY = 1
   INTEGER(i4), PARAMETER :: NVEL = 2
-  INTEGER(i4), PARAMETER :: NSCLR = 2+24
+  INTEGER(i4), PARAMETER :: NSCLR = 2+25  ! +1 for POC ecosystem tracer
   INTEGER(i4), PARAMETER :: NVP1 = NVEL+1
   INTEGER(i4), PARAMETER :: NSP1 = NSCLR+1
 
@@ -57,7 +57,7 @@ MODULE kei_parameters
 
   INTEGER(i4), PARAMETER :: maxmodeadv = 6
 
-  INTEGER(i4), PARAMETER :: forcing_var_cnt = 19
+  INTEGER(i4), PARAMETER :: forcing_var_cnt = 21  ! +2 for runoff and icefe iron forcing
   ! (forcing field names were in a CHARACTER PARAMETER array; f2py's parser
   ! cannot split that constructor reliably. Names match *_f_ind below.)
 
@@ -78,9 +78,11 @@ MODULE kei_parameters
       ic_f_ind = 14,      &  ! ice concentration (fraction 0-1)
       ain_f_ind = 15,     &  ! ice advection in (fraction 0-1)
       aout_f_ind = 16,    &  ! ice advection out (fraction 0-1)
-      swh_f_ind = 17,    &  ! swell height (seaweed module) (m)
-      mwp_f_ind = 18,    &  ! mean wave period (seaweed_module) (s)
-      cmag_f_ind = 19       ! horizonotal current magnitude (seaweed_module) (m/s)
+      swh_f_ind = 17,     &  ! swell height (seaweed module) (m)
+      mwp_f_ind = 18,     &  ! mean wave period (seaweed_module) (s)
+      cmag_f_ind = 19,    &  ! horizonotal current magnitude (seaweed_module) (m/s)
+      runoff_f_ind = 20,  &  ! glacial runoff iron forcing field (mmol Fe/m2/s)
+      icefe_f_ind = 21       ! sea-ice iron forcing field (mmol Fe/m2/s)
 
 !   TYPE kei_forcing_type
 !     INTEGER :: &

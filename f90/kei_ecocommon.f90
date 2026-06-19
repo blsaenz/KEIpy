@@ -7,7 +7,7 @@ module kei_ecocommon
 	Public
 	Save
      integer(i4), parameter :: &
-          ecosys_tracer_cnt = 24
+          ecosys_tracer_cnt = 25
 
      ! number of vertical layers
      ! sourced using equivalence to kei_parameters, for code compatibility
@@ -47,7 +47,8 @@ module kei_ecocommon
       diazFe_ind  = 21,  & ! diazotroph iron
       don_ind     = 22,  & ! dissolved organic nitrogen
       dofe_ind    = 23,  & ! dissolved organic iron
-      dop_ind     = 24     ! dissolved organic phosphorus
+      dop_ind     = 24,  & ! dissolved organic phosphorus
+      poc_ind     = 25     ! particulate organic carbon
 
     character (len = 8), dimension(ecosys_tracer_cnt), &
       parameter :: eco_tracer_name = (/ &
@@ -74,7 +75,8 @@ module kei_ecocommon
         'diazFe  ', &
         'DON     ', &
         'DOFe    ', &
-        'DOP     ' /)
+        'DOP     ', &
+        'POC     ' /)
 
 !-----------------------------------------------------------------------
 !     Ecosystem tunables used by module kei_eco (applied in ecosys_init_apply_ecocommon_parms).
@@ -95,12 +97,12 @@ module kei_ecocommon
 	!   Parameters previously hardcoded in ecosystem code (coef × dps -> 1/sec)
 	!
 	real(r8) :: eco_PCref_pre_dps = 3.0_r8    ! coef; → max phyto C-spec. growth rate at Tref (1/sec)
-	real(r8) :: eco_PCrefSp_pre_dps = 4.5_r8    ! coef; → small-phyto C-spec. growth at Tref (1/sec)
-	real(r8) :: eco_PCrefDiat_pre_dps = 4.5_r8  ! coef; → diatom C-spec. growth at Tref (1/sec)
-	real(r8) :: eco_sp_mort_pre_dps = 0.1_r8    ! coef; → small-phyto linear mort rate (1/sec)
-	real(r8) :: eco_sp_mort2_pre_dps = 0.0009_r8 ! coef; → small-phyto quad. mort (1/sec/(mmol C/m3)^2 order)
-	real(r8) :: eco_diat_mort_pre_dps = 0.1_r8  ! coef; → diatom linear mort rate (1/sec)
-	real(r8) :: eco_diat_mort2_pre_dps = 0.0009_r8 ! coef; → diatom quad. mort (1/sec/(mmol C/m3)^2 order)
+	real(r8) :: eco_PCrefSp_pre_dps = 4.0_r8    ! coef; → small-phyto C-spec. growth at Tref (1/sec) [Czajka et al. exp54; was 4.5]
+	real(r8) :: eco_PCrefDiat_pre_dps = 3.4_r8  ! coef; → diatom C-spec. growth at Tref (1/sec) [Czajka et al. exp54; was 4.5]
+	real(r8) :: eco_sp_mort_pre_dps = 0.17_r8   ! coef; → small-phyto linear mort rate (1/sec) [Czajka et al. exp20; was 0.1]
+	real(r8) :: eco_sp_mort2_pre_dps = 0.0035_r8 ! coef; → small-phyto quad. mort (1/sec/(mmol C/m3)^2 order) [Czajka et al. exp20; was 0.0009]
+	real(r8) :: eco_diat_mort_pre_dps = 0.17_r8  ! coef; → diatom linear mort rate (1/sec) [Czajka et al. exp20; was 0.1]
+	real(r8) :: eco_diat_mort2_pre_dps = 0.0035_r8 ! coef; → diatom quad. mort (1/sec/(mmol C/m3)^2 order) [Czajka et al. exp20; was 0.0009]
 	real(r8) :: eco_PCrefDiaz_pre_dps = 0.4_r8    ! coef; → diaz C-spec. growth at Tref (1/sec)
 	real(r8) :: eco_diaz_mort_pre_dps = 0.16_r8   ! coef; → diaz mort rate (1/sec)
 	real(r8) :: eco_diaz_kPO4 = 0.005_r8           ! diaz half-sat. P (diatom value)
@@ -189,9 +191,9 @@ module kei_ecocommon
 	!
 	real(r8) :: eco_thres_z1 = 100.0e2_r8        ! threshold depth z: shallow (cm): C_loss full
 	real(r8) :: eco_thres_z2 = 200.0e2_r8         ! threshold depth z: deep (cm): losses → 0
-	real(r8) :: eco_loss_thres_sp = 0.003_r8       ! small phyto conc. cutoff for losses → 0 (mmol C/m3 scale)
-	real(r8) :: eco_loss_thres_diat = 0.03_r8       ! diatom conc. cutoff (-)
-	real(r8) :: eco_loss_thres_zoo = 0.03_r8        ! zoo conc. cutoff (-)
+	real(r8) :: eco_loss_thres_sp = 0.1_r8         ! small phyto conc. cutoff for losses → 0 (mmol C/m3 scale) [Czajka et al. final; was 0.003]
+	real(r8) :: eco_loss_thres_diat = 0.5_r8        ! diatom conc. cutoff (-) [Czajka et al. final; was 0.03]
+	real(r8) :: eco_loss_thres_zoo = 0.3_r8         ! zoo conc. cutoff (-) [Czajka et al. final; was 0.03]
 	real(r8) :: eco_loss_thres_diaz = 0.01_r8      ! diaz conc. cutoff (-)
 	real(r8) :: eco_loss_thres_diaz2 = 0.001_r8    ! diaz conc. threshold low temperature (-)
 	real(r8) :: eco_diaz_temp_thres = 15.0_r8       ! °C where diaz conc. threshold transitions
@@ -283,7 +285,10 @@ module kei_ecocommon
        real(r4), dimension(km) :: &
           tot_prod, diat_Fe_lim, diat_light_lim, graze_diat, graze_tot, &
           diat_N_lim, diat_P_lim, diat_Si_lim, sp_N_lim, sp_P_lim, sp_Fe_lim, &
-          graze_sp, sp_light_lim
+          graze_sp, sp_light_lim, &
+          sp_loss, diat_loss, diaz_loss, sp_agg, diat_agg, &
+          FG_CO2, POC_PROD, POC_REMIN, DOC_prod, DOC_remin, &
+          CaCO3_PROD, CaCO3_REMIN, PAR_out_km
 
 !-----------------------------------------------------------------------
 !     forcing variables required for ecosys module

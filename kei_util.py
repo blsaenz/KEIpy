@@ -194,7 +194,8 @@ ecosys_output_meta_block = {
     'diazFe': {'idx': 20, 'units': 'nmol Fe m-3', 'long_name': 'diazotroph phytoplankton Fe','dim': None},
     'DON': {'idx': 21, 'units': 'mmol N m-3', 'long_name': 'dissolved organic N','dim': None},
     'DOFe': {'idx': 22, 'units': 'nmol Fe m-3', 'long_name': 'dissolved organic Fe','dim': None},
-    'DOP': {'idx': 23, 'units': 'mmol P m-3', 'long_name': 'dissolved organic P','dim': None}
+    'DOP': {'idx': 23, 'units': 'mmol P m-3', 'long_name': 'dissolved organic P','dim': None},
+    'POC': {'idx': 24, 'units': 'mmol C m-3', 'long_name': 'particulate organic C','dim': None}
 }
 
 
@@ -219,7 +220,9 @@ forcing_output_meta_block =  {
     'aout': {'idx': 15, 'units': 'fractional', 'long_name': 'sea-ice coverage outflux','dim': None},
     'swh': {'idx': 16, 'units': 'm', 'long_name': 'swell height','dim': None},
     'mwp': {'idx': 17, 'units': 's', 'long_name': 'mean wave period','dim': None},
-    'cmag': {'idx': 18, 'units': 'm s-1', 'long_name': 'current magnitude (speed)','dim': None}
+    'cmag': {'idx': 18, 'units': 'm s-1', 'long_name': 'current magnitude (speed)','dim': None},
+    'runoff': {'idx': 19, 'units': 'mmol Fe m-2 s-1', 'long_name': 'glacial iron runoff flux','dim': None},
+    'icefe': {'idx': 20, 'units': 'mmol Fe m-2 s-1', 'long_name': 'sea-ice iron flux','dim': None}
 }
 
 ocn_output_meta = {
@@ -256,6 +259,19 @@ ecosys_output_meta = {
     'graze_sp': {'units': '', 'dim': nz_dim, 'long_name': 'grazing of small phytos'},
     'graze_diat': {'units': '', 'dim': nz_dim, 'long_name': 'grazing of diatoms'},
     'graze_tot': {'units': '', 'dim': nz_dim, 'long_name': 'total grazing'},
+    'sp_loss': {'units': 'mmol C m-3 s-1', 'dim': nz_dim, 'long_name': 'small phytoplankton loss rate'},
+    'diat_loss': {'units': 'mmol C m-3 s-1', 'dim': nz_dim, 'long_name': 'diatom loss rate'},
+    'diaz_loss': {'units': 'mmol C m-3 s-1', 'dim': nz_dim, 'long_name': 'diazotroph loss rate'},
+    'sp_agg': {'units': 'mmol C m-3 s-1', 'dim': nz_dim, 'long_name': 'small phytoplankton aggregation rate'},
+    'diat_agg': {'units': 'mmol C m-3 s-1', 'dim': nz_dim, 'long_name': 'diatom aggregation rate'},
+    'FG_CO2': {'units': 'mmol C m-2 s-1', 'dim': nz_dim, 'long_name': 'air-sea CO2 flux (surface value at all levels)'},
+    'POC_PROD': {'units': 'mmol C m-2 s-1', 'dim': nz_dim, 'long_name': 'particulate organic C production (sflux)'},
+    'POC_REMIN': {'units': 'mmol C m-2 s-1', 'dim': nz_dim, 'long_name': 'particulate organic C remineralization (sflux)'},
+    'DOC_prod': {'units': 'mmol C m-3 s-1', 'dim': nz_dim, 'long_name': 'dissolved organic carbon production'},
+    'DOC_remin': {'units': 'mmol C m-3 s-1', 'dim': nz_dim, 'long_name': 'dissolved organic carbon remineralization'},
+    'CaCO3_PROD': {'units': 'mmol CaCO3 m-2 s-1', 'dim': nz_dim, 'long_name': 'calcium carbonate production (sflux)'},
+    'CaCO3_REMIN': {'units': 'mmol CaCO3 m-2 s-1', 'dim': nz_dim, 'long_name': 'calcium carbonate remineralization (sflux)'},
+    'PAR_out': {'units': 'W m-2', 'dim': nz_dim, 'long_name': 'photosynthetically available radiation (per layer)'},
 }
 
 

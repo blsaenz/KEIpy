@@ -115,12 +115,12 @@ kei_common:
 #   #   Parameters previously hardcoded (coef x dps -> 1/sec)
 
 #   eco_PCref_pre_dps: 3.0  # coef; → max phyto C-spec. growth rate at Tref (1/sec)
-#   eco_PCrefSp_pre_dps: 4.5  # coef; → small-phyto C-spec. growth at Tref (1/sec)
-#   eco_PCrefDiat_pre_dps: 4.5  # coef; → diatom C-spec. growth at Tref (1/sec)
-#   eco_sp_mort_pre_dps: 0.1  # coef; → small-phyto linear mort rate (1/sec)
-#   eco_sp_mort2_pre_dps: 0.0009  # coef; → small-phyto quad. mort (1/sec/(mmol C/m3)^2 order)
-#   eco_diat_mort_pre_dps: 0.1  # coef; → diatom linear mort rate (1/sec)
-#   eco_diat_mort2_pre_dps: 0.0009  # coef; → diatom quad. mort (1/sec/(mmol C/m3)^2 order)
+#   eco_PCrefSp_pre_dps: 4.0  # coef; → small-phyto C-spec. growth at Tref (1/sec)  [Czajka et al. exp54; was 4.5]
+#   eco_PCrefDiat_pre_dps: 3.4  # coef; → diatom C-spec. growth at Tref (1/sec)  [Czajka et al. exp54; was 4.5]
+#   eco_sp_mort_pre_dps: 0.17  # coef; → small-phyto linear mort rate (1/sec)  [Czajka et al. exp20; was 0.1]
+#   eco_sp_mort2_pre_dps: 0.0035  # coef; → small-phyto quad. mort (1/sec/(mmol C/m3)^2 order)  [Czajka et al. exp20; was 0.0009]
+#   eco_diat_mort_pre_dps: 0.17  # coef; → diatom linear mort rate (1/sec)  [Czajka et al. exp20; was 0.1]
+#   eco_diat_mort2_pre_dps: 0.0035  # coef; → diatom quad. mort (1/sec/(mmol C/m3)^2 order)  [Czajka et al. exp20; was 0.0009]
 #   eco_PCrefDiaz_pre_dps: 0.4  # coef; → diaz C-spec. growth at Tref (1/sec)
 #   eco_diaz_mort_pre_dps: 0.16  # coef; → diaz mort rate (1/sec)
 #   eco_diaz_kPO4: 0.005  # diaz half-sat. P (diatom value)
@@ -197,9 +197,9 @@ kei_common:
 
 #   eco_thres_z1: 10000.0  # threshold depth z: shallow (cm): C_loss full
 #   eco_thres_z2: 20000.0  # threshold depth z: deep (cm): losses → 0
-#   eco_loss_thres_sp: 0.003  # small phyto conc. cutoff for losses → 0 (mmol C/m3 scale)
-#   eco_loss_thres_diat: 0.03  # diatom conc. cutoff (-)
-#   eco_loss_thres_zoo: 0.03  # zoo conc. cutoff (-)
+#   eco_loss_thres_sp: 0.1  # small phyto conc. cutoff for losses → 0 (mmol C/m3 scale)  [Czajka et al. final; was 0.003]
+#   eco_loss_thres_diat: 0.5  # diatom conc. cutoff (-)  [Czajka et al. final; was 0.03]
+#   eco_loss_thres_zoo: 0.3  # zoo conc. cutoff (-)  [Czajka et al. final; was 0.03]
 #   eco_loss_thres_diaz: 0.01  # diaz conc. cutoff (-)
 #   eco_loss_thres_diaz2: 0.001  # diaz conc. threshold low temperature (-)
 #   eco_diaz_temp_thres: 15.0  # °C where diaz conc. threshold transitions

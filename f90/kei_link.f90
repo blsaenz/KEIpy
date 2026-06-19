@@ -370,6 +370,32 @@ CONTAINS
       nzp1_data = graze_diat
     elseif (param == 'graze_tot') then
       nzp1_data = graze_tot
+    elseif (param == 'sp_loss') then
+      nzp1_data = sp_loss
+    elseif (param == 'diat_loss') then
+      nzp1_data = diat_loss
+    elseif (param == 'diaz_loss') then
+      nzp1_data = diaz_loss
+    elseif (param == 'sp_agg') then
+      nzp1_data = sp_agg
+    elseif (param == 'diat_agg') then
+      nzp1_data = diat_agg
+    elseif (param == 'FG_CO2') then
+      nzp1_data = FG_CO2
+    elseif (param == 'POC_PROD') then
+      nzp1_data = POC_PROD
+    elseif (param == 'POC_REMIN') then
+      nzp1_data = POC_REMIN
+    elseif (param == 'DOC_prod') then
+      nzp1_data = DOC_prod
+    elseif (param == 'DOC_remin') then
+      nzp1_data = DOC_remin
+    elseif (param == 'CaCO3_PROD') then
+      nzp1_data = CaCO3_PROD
+    elseif (param == 'CaCO3_REMIN') then
+      nzp1_data = CaCO3_REMIN
+    elseif (param == 'PAR_out') then
+      nzp1_data = PAR_out_km
     elseif (param == 'km') then
       nzp1_data = difm(1:NZ)
     elseif (param == 'ks') then
