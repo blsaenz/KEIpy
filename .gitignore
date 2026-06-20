@@ -131,5 +131,7 @@ dmypy.json
 *.o
 *.mod
 .DS_Store
+**/.DS_Store
 
 .vscode/
+.claude/
