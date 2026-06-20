@@ -15,7 +15,7 @@
 
 
 '''
-import os, sys, shutil, csv, copy, pickle, math, time, datetime
+import os, sys, shutil, csv, copy, pickle, math, time, datetime, zipfile
 from calendar import isleap
 import numpy as np
 from numpy import asfortranarray, ascontiguousarray
@@ -571,7 +571,8 @@ class Simulation(object):
             raise ValueError('Forcing dataset validation failed:\n  ' + '\n  '.join(errors))
 
     def compute(self, output_path, out_vars=None, run_name='keipy',
-                *, runtime_yaml=None, yaml_overrides=None):
+                *, runtime_yaml=None, yaml_overrides=None,
+                forcing_interp='linear'):
 
         _require_fortran_kei()
 
@@ -616,7 +617,15 @@ class Simulation(object):
         dt_str = '%is' % int(round(dtsec_val))
         Finterp = self.F0[list(forcing_idx.keys()) + ['f_time']]
         Finterp = Finterp.sel(f_time=slice(self.t_start, self.t_end))
-        Finterp = Finterp.resample({'f_time': dt_str}).interpolate()
+        _resamp = Finterp.resample({'f_time': dt_str})
+        if forcing_interp == 'ffill':
+            Finterp = _resamp.ffill()
+        elif forcing_interp == 'bfill':
+            Finterp = _resamp.bfill()
+        elif forcing_interp == 'nearest':
+            Finterp = _resamp.nearest()
+        else:
+            Finterp = _resamp.interpolate('linear')
         nt = Finterp.sizes['f_time']
 
         Fcomp = np.zeros((nf, nt), order='F', dtype=np.float32)
@@ -662,7 +671,23 @@ class Simulation(object):
         output = Output(self.out_vars, Finterp['f_time'].data, self.F0['zm'].data, nsflxs,
                         nni=nni, nns=nns)
 
-        shutil.copytree(os.path.dirname(__file__), os.path.join(self.output_path, 'code'))
+        _repo_root = os.path.dirname(os.path.dirname(__file__))
+        _zip_items = ['docs', 'environment.yml', 'f90', 'keipy', 'matlab',
+                      'pyproject.toml']
+        _zip_path = os.path.join(self.output_path, 'KEIpy_run_code.zip')
+        with zipfile.ZipFile(_zip_path, 'w', zipfile.ZIP_DEFLATED) as _zf:
+            for _item in _zip_items:
+                _src = os.path.join(_repo_root, _item)
+                if not os.path.exists(_src):
+                    continue
+                if os.path.isdir(_src):
+                    for _dp, _dns, _fns in os.walk(_src):
+                        _dns[:] = [d for d in _dns if d not in ('__pycache__', '.git')]
+                        for _fn in _fns:
+                            _fp = os.path.join(_dp, _fn)
+                            _zf.write(_fp, os.path.relpath(_fp, _repo_root))
+                else:
+                    _zf.write(_src, _item)
 
         _, yaml_name = os.path.split(self.runtime_yaml)
         shutil.copy(self.runtime_yaml, os.path.join(self.output_path, yaml_name))

@@ -5,6 +5,10 @@ The Python package installs normally via pip, but the Fortran extension requires
 compiler and LAPACK library that must come from **conda-forge** — they cannot be
 installed by pip alone.
 
+NOTE: The number of vertical grid cells is set to 400 in code. To change this number, currently you must edit the `NZ` parameter in `f90\kei_parameters.f90` and recompile (Step 2 below). We hope to change this in a future release to vaoid re-compilation. (The dimensions of the cells are set via forcing data.)
+
+See the `examples` folder for usage after installation.
+
 ## Prerequisites
 
 - [Miniforge](https://github.com/conda-forge/miniforge) or Mamba (recommended)
@@ -17,8 +21,8 @@ installed by pip alone.
 From the repo root:
 
 ```bash
-mamba env create -f environment.yml
-mamba activate py313
+mamba env create -n keipy_env -f environment.yml
+mamba activate keipy_env
 ```
 
 This installs all compiler toolchain and Python dependencies in one step.

@@ -1,4 +1,4 @@
-=====================
+===================== Work Notes: 2026-06-19
 
 I am getting an error with apply_runtime_yaml(), where is seems kei_ecocommon is not exposesed. "Runtime YAML: unknown section 'kei_ecocommon' (no kei.kei_ecocommon)" Can you understand this?  I am running the code at the bottom of kei.py, under __main__
 
@@ -32,7 +32,7 @@ After that, apply_runtime_yaml() and the eco_common: block in kei_runtime_params
 
 (Local make kei failed here only because the default python3 had no NumPy; your conda env should be fine.)
 
-=====================
+=====================  Work Notes: 2026-06-18
 
 Inside kei_simulation.compute(), kei.kei_common.dtsec seems to always be 0.0, even after calling kei.link.kei_param_init(). Can you infer why? dtsec is commented out in my yaml parameter file, so it should be using the default.
 
