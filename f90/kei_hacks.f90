@@ -1,67 +1,67 @@
 MODULE kei_hacks
-
-  USE kei_ecocommon, ONLY: log_kind,int_kind,real_kind,dbl_kind
+  use kei_kinds, only: i4, r4, r8, log_kind
+  USE kei_kinds, only: i4, r4, r8, log_kind
 
   IMPLICIT NONE
 
   ! overwrite in some eddy heat at depth during certain periods
-  LOGICAL, SAVE :: assimilate_ts_hack    ! assimilate deep t profile (LTER mooring data)
-  LOGICAL, SAVE :: assimilate_ts_stop   ! only assimilate deep t profile for 1st X steps simulation
-  LOGICAL, SAVE :: assimilate_ts_fixed  ! restore deep t profile to a single fixed profile
-  LOGICAL, SAVE :: eddy_hack           ! use this to do some temporary deep heating - this is sort of a old hack, need to carefully figure out what it does
+  logical(kind=log_kind), SAVE :: assimilate_ts_hack    ! assimilate deep t profile (LTER mooring data)
+  logical(kind=log_kind), SAVE :: assimilate_ts_stop   ! only assimilate deep t profile for 1st X steps simulation
+  logical(kind=log_kind), SAVE :: assimilate_ts_fixed  ! restore deep t profile to a single fixed profile
+  logical(kind=log_kind), SAVE :: eddy_hack           ! use this to do some temporary deep heating - this is sort of a old hack, need to carefully figure out what it does
 
   ! fraction precipitation adjustment OVER ICE ONLY
-  REAL, PARAMETER :: snow_fraction = 1.00  ! multiply snow precip by this
-  REAL, PARAMETER :: rain_fraction = 0.0   ! multiply rain precip by this
+  real(r4), PARAMETER :: snow_fraction = 1.00  ! multiply snow precip by this
+  real(r4), PARAMETER :: rain_fraction = 0.0   ! multiply rain precip by this
 
   ! fraction shortwave irradiance
-  REAL, PARAMETER :: shortwave_multiplier = 0.80  ! multiply shortwave irradiance by this
+  real(r4), PARAMETER :: shortwave_multiplier = 0.80  ! multiply shortwave irradiance by this
 
   ! conform to ice concentration found in forcing (0=no, 1=yes)
-  INTEGER, PARAMETER :: ic_conform = 1         ! conform to ic forcing observations
-  INTEGER, PARAMETER :: ignore_divergence = 1  ! don't raft up ice
-  INTEGER, PARAMETER :: zero_ice_before = -1
+  integer(i4), PARAMETER :: ic_conform = 1         ! conform to ic forcing observations
+  integer(i4), PARAMETER :: ignore_divergence = 1  ! don't raft up ice
+  integer(i4), PARAMETER :: zero_ice_before = -1
 
   ! lateral ice growth/melt hacks
-  LOGICAL, PARAMETER :: melt_lateral_complete = .true.  ! use all extra available mixed layer heat to melt laterally (.true. is standard)
-  LOGICAL, PARAMETER :: mixed_layer_freezing_in_leads_only  = .true.  ! direct all mixed layer freezing flux to new ice growth (.true. is standard)
+  logical(kind=log_kind), PARAMETER :: melt_lateral_complete = .true.  ! use all extra available mixed layer heat to melt laterally (.true. is standard)
+  logical(kind=log_kind), PARAMETER :: mixed_layer_freezing_in_leads_only  = .true.  ! direct all mixed layer freezing flux to new ice growth (.true. is standard)
 
   ! new ice thickness
-  REAL, PARAMETER :: initial_ice_thickness = 0.30
+  real(r4), PARAMETER :: initial_ice_thickness = 0.30
 
   ! fixed ctd profiles for assimilation
-  REAL, ALLOCATABLE, SAVE :: fixed_t(:), fixed_s(:)
-  REAL, ALLOCATABLE, SAVE :: warm_shallow_t(:), warm_shallow_s(:)
-  REAL, ALLOCATABLE, SAVE :: warm_deep_t(:), warm_deep_s(:)
-  REAL, ALLOCATABLE, SAVE :: cold_shallow_t(:), cold_shallow_s(:)
-  REAL, ALLOCATABLE, SAVE :: cold_deep_t(:), cold_deep_s(:)
+  real(r4), ALLOCATABLE, SAVE :: fixed_t(:), fixed_s(:)
+  real(r4), ALLOCATABLE, SAVE :: warm_shallow_t(:), warm_shallow_s(:)
+  real(r4), ALLOCATABLE, SAVE :: warm_deep_t(:), warm_deep_s(:)
+  real(r4), ALLOCATABLE, SAVE :: cold_shallow_t(:), cold_shallow_s(:)
+  real(r4), ALLOCATABLE, SAVE :: cold_deep_t(:), cold_deep_s(:)
 
 
-  INTEGER, PARAMETER :: assimilate_at_start = 0  ! 0=none,1=warm shallow,2=warm deep,3=cold shallow,4=cold deep
-  INTEGER, PARAMETER :: assimilate_step_depth_start = 60         ! vertical index of top-most assimilation depth
-  INTEGER, PARAMETER :: assimilate_step_hours = 12         ! assimilate over how many hours?
-  INTEGER, PARAMETER :: assimilate_1_step = 0! 3160         ! 0=none,>0=step number
-  INTEGER, PARAMETER :: assimilate_1_profile = 1         ! 0=none,1=warm shallow,2=warm deep,3=cold shallow,4=cold deep
-  INTEGER, PARAMETER :: assimilate_2_step = 0!4600         ! 0=none,>0=step number
-  INTEGER, PARAMETER :: assimilate_2_profile = 2         ! 0=none,1=warm shallow,2=warm deep,3=cold shallow,4=cold deep
+  integer(i4), PARAMETER :: assimilate_at_start = 0  ! 0=none,1=warm shallow,2=warm deep,3=cold shallow,4=cold deep
+  integer(i4), PARAMETER :: assimilate_step_depth_start = 60         ! vertical index of top-most assimilation depth
+  integer(i4), PARAMETER :: assimilate_step_hours = 12         ! assimilate over how many hours?
+  integer(i4), PARAMETER :: assimilate_1_step = 0! 3160         ! 0=none,>0=step number
+  integer(i4), PARAMETER :: assimilate_1_profile = 1         ! 0=none,1=warm shallow,2=warm deep,3=cold shallow,4=cold deep
+  integer(i4), PARAMETER :: assimilate_2_step = 0!4600         ! 0=none,>0=step number
+  integer(i4), PARAMETER :: assimilate_2_profile = 2         ! 0=none,1=warm shallow,2=warm deep,3=cold shallow,4=cold deep
 
 
-  INTEGER :: assim_counter
-  INTEGER :: assimilate_step_limit ! number of time steps after which ts assimilation is stopped
+  integer(i4) :: assim_counter
+  integer(i4) :: assimilate_step_limit ! number of time steps after which ts assimilation is stopped
 
 !-----------------------------------------------------------------------
 !     initial fe/bio profile adjustments
 !-----------------------------------------------------------------------
-  LOGICAL, PARAMETER :: assimilate_fe_from_ts = .true.
+  logical(kind=log_kind), PARAMETER :: assimilate_fe_from_ts = .true.
 
-  real (kind=dbl_kind), parameter :: &
+  real(r8), parameter :: &
     fe_multiplier = 1.0, &
     fe_offset = 0., &    ! negative to use pre-estimated pycnocline fe levels below, positive for m lower
     bio_offset = 0., &    ! m lower
     alk_spike_value = 3000.0, &
     meltwater_fe = 0.0      ! nm
 !      meltwater_fe = 12.0e-9
-  INTEGER, PARAMETER :: &
+  integer(i4), PARAMETER :: &
     alk_spike_timestep = 480+4344, &
     alk_spike_level_start = 0, &
     alk_spike_level_end = 8
@@ -70,10 +70,10 @@ MODULE kei_hacks
 !     sea ice fe/algal profile concentrations during ice melt
 !-----------------------------------------------------------------------
 
-    LOGICAL, PARAMETER :: use_year_ice_advance = .false.
+    logical(kind=log_kind), PARAMETER :: use_year_ice_advance = .false.
 
     ! Fixed ice chla & Fe concentrations, for dumping into ocean during melt
-    real (kind=dbl_kind), parameter :: &
+    real(r8), parameter :: &
       ice_diatChl = 0.  , &      ! mgchla/m^2 (meiners et al 2012) / 0.6 m = mg/m^3
 !      ice_diatChl = 25.6  / 0.6, &     ! mg chla/m^2 (meiners et al 2012) / 0.6 m = mmol/m^3
 !      ice_fe = 6.              ! nm
@@ -83,10 +83,10 @@ MODULE kei_hacks
 !     variables used in adding a static krill grazer (not yet implemented)
 !-----------------------------------------------------------------------
 
-    logical, parameter :: &
+    logical(kind=log_kind), parameter :: &
       use_krill_hack = .false.
 
-    real (kind=dbl_kind), parameter :: &
+    real(r8), parameter :: &
       krillC = 2000.          , &! krill concentration in carbon (mg C m-3)
       krill_sp_umax = 1.0     , &
       krill_diat_umax = 4.0  , &
@@ -105,7 +105,7 @@ MODULE kei_hacks
         assimilate_step_limit = find_assimilate_step_limit()
     END SUBROUTINE hacks_init
 
-    INTEGER FUNCTION find_assimilate_step_limit()
+    integer(i4) FUNCTION find_assimilate_step_limit()
 
       USE kei_common
 
@@ -151,8 +151,8 @@ MODULE kei_hacks
       IMPLICIT NONE
 
        ! Input/Output
-      REAL, INTENT (INOUT) :: X(NZP1,NSCLR)
-      INTEGER, INTENT(IN) :: nt
+      real(r4), INTENT (INOUT) :: X(NZP1,NSCLR)
+      integer(i4), INTENT(IN) :: nt
 
       !IF(nt .eq. 3600 ) then !.or. nt .eq. 4200 .or. nt .eq. 5160) then
       ! write(6,*) 'Hacking in eddy heat'
@@ -178,12 +178,12 @@ MODULE kei_hacks
       IMPLICIT NONE
 
       ! Input/Output
-      real, intent (INOUT) :: X(NZP1,NSCLR)
-      INTEGER, INTENT(IN) :: nt
+      real(r4), intent (INOUT) :: X(NZP1,NSCLR)
+      integer(i4), INTENT(IN) :: nt
 
       ! Local Variables
-      integer :: ii,ii_ft,ii_ud, ii_interp,ii_start, assim_24_counter
-      real :: deltat,sigma_ft,sigma,sigma0,s_slope,intercept,alpha,beta,exppr
+      integer(i4) :: ii,ii_ft,ii_ud, ii_interp,ii_start, assim_24_counter
+      real(r4) :: deltat,sigma_ft,sigma,sigma0,s_slope,intercept,alpha,beta,exppr
 
       ! rectify lower ocean, if enabled
       ii_ft = -1
@@ -349,12 +349,12 @@ MODULE kei_hacks
       IMPLICIT NONE
 
       ! Input/Output
-      real, intent (INOUT) :: X(NZP1,NSCLR)
-      INTEGER, INTENT(IN) :: nt
+      real(r4), intent (INOUT) :: X(NZP1,NSCLR)
+      integer(i4), INTENT(IN) :: nt
 
       ! Local Variables
-      integer :: ii,ii_ft,ii_ud, ii_interp,ii_start, assim_24_counter
-      real :: deltat,sigma_ft,sigma,sigma0,s_slope,intercept,alpha,beta,exppr
+      integer(i4) :: ii,ii_ft,ii_ud, ii_interp,ii_start, assim_24_counter
+      real(r4) :: deltat,sigma_ft,sigma,sigma0,s_slope,intercept,alpha,beta,exppr
 
       ! rectify lower ocean, if enabled
       ii_ft = -1
@@ -478,13 +478,13 @@ MODULE kei_hacks
       IMPLICIT NONE
 
       ! Input/Output
-      REAL, INTENT (INOUT) :: X(NZP1,NSCLR)
-      REAL, INTENT (IN) :: fixed_t(NZP1),fixed_s(NZP1)
-      REAL, INTENT (IN) :: dif_f ! fraction of difference to add to current (1.0 = overwrite)
-      INTEGER, INTENT (in) :: s_depth,end_depth
+      real(r4), INTENT (INOUT) :: X(NZP1,NSCLR)
+      real(r4), INTENT (IN) :: fixed_t(NZP1),fixed_s(NZP1)
+      real(r4), INTENT (IN) :: dif_f ! fraction of difference to add to current (1.0 = overwrite)
+      integer(i4), INTENT (in) :: s_depth,end_depth
       ! Local Variables
-      integer :: ii,ii_ud
-      real :: deltat,sigma_ft,sigma,sigma0,s_slope,intercept,alpha,beta,exppr
+      integer(i4) :: ii,ii_ud
+      real(r4) :: deltat,sigma_ft,sigma,sigma0,s_slope,intercept,alpha,beta,exppr
 
       do ii=s_depth,end_depth
           X(ii,1) = X(ii,1) + (fixed_t(ii) - X(ii,1)) * dif_f
@@ -541,10 +541,10 @@ MODULE kei_hacks
 
       ! Input/Output
 
-      INTEGER, intent (in) :: profile_num
-      real, intent (INOUT) :: X(NZP1,NSCLR)
-      real, intent (IN) :: dif_f ! fraction of difference to add to current (1.0 = overwrite)
-      INTEGER, intent (in) :: s_depth,end_depth
+      integer(i4), intent (in) :: profile_num
+      real(r4), intent (INOUT) :: X(NZP1,NSCLR)
+      real(r4), intent (IN) :: dif_f ! fraction of difference to add to current (1.0 = overwrite)
+      integer(i4), intent (in) :: s_depth,end_depth
 
       if (profile_num == 1) then
         call do_assim_ts(X,warm_shallow_t,warm_shallow_s,dif_f,s_depth,end_depth)
@@ -568,12 +568,12 @@ MODULE kei_hacks
       IMPLICIT NONE
 
       ! Input/Output
-      real, intent (INOUT) :: X(NZP1,NSCLR)
-      INTEGER, INTENT(IN) :: nt
+      real(r4), intent (INOUT) :: X(NZP1,NSCLR)
+      integer(i4), INTENT(IN) :: nt
 
       ! Local Variables
-      integer :: ii,ii_ft,ii_ud, ii_interp,ii_start, assim_24_counter
-      real :: deltat,sigma_ft,sigma,sigma0,s_slope,intercept,alpha,beta,exppr
+      integer(i4) :: ii,ii_ft,ii_ud, ii_interp,ii_start, assim_24_counter
+      real(r4) :: deltat,sigma_ft,sigma,sigma0,s_slope,intercept,alpha,beta,exppr
 
       ii_ft = -1
       deltat = 1.0/assimilate_step_hours
@@ -645,8 +645,8 @@ MODULE kei_hacks
 
       IMPLICIT NONE
 
-      INTEGER(KIND=int_kind), INTENT(IN) :: start_year
-      REAL, INTENT(OUT) :: ice_fe_yearly
+      integer(i4), INTENT(IN) :: start_year
+      real(r4), INTENT(OUT) :: ice_fe_yearly
 
       IF (use_year_ice_advance) THEN
 
@@ -707,10 +707,10 @@ MODULE kei_hacks
 
       IMPLICIT NONE
 
-      real, intent (INOUT) :: X(NZP1,NSCLR)
-      integer(KIND=int_kind), INTENT(IN) :: nt, start_year
+      real(r4), intent (INOUT) :: X(NZP1,NSCLR)
+      integer(i4), INTENT(IN) :: nt, start_year
 
-      integer(KIND=int_kind) :: fe_offset_local, bio_offset_i
+      integer(i4) :: fe_offset_local, bio_offset_i
 
       ! testing the addition of lots of alkalinity in top layers
       if (alk_spike_level_start > 0) then

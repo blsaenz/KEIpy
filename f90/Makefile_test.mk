@@ -1,7 +1,7 @@
 
 # set compile environment
 # ----------------------------------------------------------------------
-FC = "gfortran-9"
+FC = "gfortran"
 
 # determine compile options from environment set above
 # ----------------------------------------------------------------------
@@ -16,45 +16,55 @@ ifeq ($(FC),ifort)
   LAPACK = -L$(MKL_LIB) -I$(MKL_INC) -lmkl_lapack95_lp64 $(MKL_LIB)/libmkl_intel_lp64.a $(MKL_LIB)/libmkl_sequential.a $(MKL_LIB)/libmkl_core.a $(MKL_LIB)/libmkl_sequential.a $(MKL_LIB)/libmkl_core.a $(MKL_LIB)/libmkl_sequential.a $(MKL_LIB)/libmkl_core.a -lpthread
 
 endif
-ifeq ($(FC),"gfortran-9")
+ifeq ($(FC),"gfortran")
 
   # mac debug:
   # lldb <executable>
   # >> process launch -i <file>
   # where <file> is std/carrot pipe in
 
-	COMP_SWITCH :=
-	BUG := -gdwarf-2 -O0 -m64 -fbounds-check -ffpe-trap=invalid,overflow
-	#BUG := -gdwarf-2 -O2 -m64 -funsafe-math-optimizations
-	#BUG := -gdwarf-2 -O2 -m64 -ffpe-trap=invalid,overflow
+  COMP_SWITCH :=
+  BUG := -gdwarf-2 -O0 -fbounds-check -ffpe-trap=invalid,overflow
+  #BUG := -gdwarf-2 -O2 -funsafe-math-optimizations
+  #BUG := -gdwarf-2 -O2 -ffpe-trap=invalid,overflow
 
-	# for gfortran on 10.9 macs
-	#LAPACK = -L/System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Versions/Current/ -lBLAS -lLAPACK
-	#LAPACK = -framework Accelerate
+  # for gfortran on 10.9 macs
+  #LAPACK = -L/System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Versions/Current/ -lBLAS -lLAPACK
+  #LAPACK = -framework Accelerate
 
-	#
-	MKL_INC = /usr/local/opt/lapack/include
-	MKL_LIB = /usr/local/opt/lapack/lib
-  LAPACK = -L$(MKL_LIB) -I$(MKL_INC) -lblas -llapack
+  #
+  #MKL_INC = /usr/local/opt/lapack/include
+  #MKL_LIB = /usr/local/opt/lapack/lib
+  #LAPACK = -L$(MKL_LIB) -I$(MKL_INC) -lblas -llapack
+
+  # Ubuntu linux, installed apt packages: libblas-dev, liblapack-dev
+  BLAS_LIB = /usr/lib/aarch64-linux-gnu/blas
+  LAPACK_LIB = /usr/lib/aarch64-linux-gnu/lapack
+  LAPACK = -L$(BLAS_LIB) -L$(LAPACK_LIB) -lblas -llapack
 
 endif
 
 
-SIA2_OBJ := sia2_constants.o kei_hacks.o sia2_parameters.o sia2_state.o \
-    sia2_types.o sia2_grid.o sia2_flux_heat.o sia2_desalination.o
+BD = build
 
+SIESTA_OBJ := siesta_constants.o kei_hacks.o siesta_parameters.o siesta_state.o \
+    siesta_types.o siesta_grid.o siesta_flux_heat.o siesta_desalination.o
 
-OBJ1D  := sia2_constants.o kei_hacks.o sia2_parameters.o sia2_state.o \
-  sia2_types.o sia2_grid.o sia2_flux_heat.o sia2_desalination.o\
-  kei_ocncommon.o \
-  kei_icecommon.o kei_ecocommon.o \
+OBJ1D  := siesta_constants.o kei_hacks.o siesta_parameters.o siesta_state.o \
+  siesta_types.o siesta_grid.o siesta_flux_heat.o siesta_desalination.o\
+  kei_ecocommon.o \
+  kei_icecommon.o \
   kei_ice.o kei_eco.o kei_init.o kei_fluxes.o \
-  kei_subs1D.o kei_atm.o kei_ocn.o kei_kpp.o
+  kei_subs1D.o kei_atm.o kei_kpp.o kei_ocn.o \
+  kei_sw.o macmods_kinds_mod.o macmods_param_mod.o macmods_util_mod.o \
+  macmods_calc.o macmods_mod.o
 
-F901D  := kei_parameters.f90 kei_common.f90 kei_link.f90
+F901D  := kei_parameters.f90 kei_common.f90 kei_icecommon.f90 kei_link.f90
 
+MACMODS_OBJ := macmods_mod.o macmods_param_mod.o macmods_kinds_mod.o \
+  macmods_util_mod.o macmods_calc.o
 
-FFLAGS :=  $(BUG)
+FFLAGS := $(BUG)
 
 
 # compile directives
@@ -69,10 +79,10 @@ kei_link_test.o: $(OBJ1D) kei_parameters.o kei_common.o kei_link.o
 	$(FC) -c $(FFLAGS) kei_link_test.f90
 kei_fluxes.o: kei_hacks.o
 	$(FC) -c $(FFLAGS) kei_fluxes.f90
-kei_ocn.o	:
-	$(FC) -c $(FFLAGS) kei_ocn.f90
-kei_kpp.o   :
+kei_kpp.o: kei_subs1D.o kei_common.o kei_parameters.o kei_kinds.o kei_icecommon.o
 	$(FC) -c $(FFLAGS) kei_kpp.f90
+kei_ocn.o: kei_kpp.o kei_common.o kei_parameters.o kei_kinds.o
+	$(FC) -c $(FFLAGS) kei_ocn.f90
 kei_subs1D.o:
 	$(FC) -c $(FFLAGS) kei_subs1D.f90
 kei_atm.o	: kei_atm.f90
@@ -89,37 +99,50 @@ kei_eco.o	: kei_ecocommon.o kei_parameters.o kei_common.o kei_hacks.o
 	$(FC) -c $(FFLAGS) kei_eco.f90
 kei_ecocommon.o	:
 	$(FC) -c $(FFLAGS) kei_ecocommon.f90
-kei_icecommon.o	: kei_icecommon.f90 $(SIA2_OBJ)
+kei_icecommon.o	: kei_icecommon.f90 kei_kinds.o
 	$(FC) -c $(FFLAGS) kei_icecommon.f90
-kei_ocncommon.o	:
-	$(FC) -c $(FFLAGS) kei_ocncommon.f90
 kei_common.o	: kei_icecommon.o
 	$(FC) -c $(FFLAGS) kei_common.f90
 kei_parameters.o	:
 	$(FC) -c $(FFLAGS) kei_parameters.f90
 
-sia2_flux_heat.o	: sia2_constants.o sia2_parameters.o sia2_types.o
-	$(FC) -c $(FFLAGS) sia2_flux_heat.f90
-sia2_grid.o	: sia2_constants.o sia2_parameters.o sia2_types.o sia2_desalination.o
-	$(FC) -c $(FFLAGS) sia2_grid.f90
-sia2_desalination.o	: sia2_constants.o sia2_parameters.o sia2_state.o sia2_types.o
-	$(FC) -c $(FFLAGS) sia2_desalination.f90
-sia2_state.o	: sia2_parameters.o sia2_types.o
-	$(FC) -c $(FFLAGS) sia2_state.f90
-sia2_types.o	: sia2_constants.o sia2_parameters.o
-	$(FC) -c $(FFLAGS) sia2_types.f90
-sia2_parameters.o	: sia2_constants.o
-	$(FC) -c $(FFLAGS) sia2_parameters.f90
+siesta_flux_heat.o	: siesta_constants.o siesta_parameters.o siesta_types.o
+	$(FC) -c $(FFLAGS) siesta_flux_heat.f90
+siesta_grid.o	: siesta_constants.o siesta_parameters.o siesta_types.o siesta_desalination.o
+	$(FC) -c $(FFLAGS) siesta_grid.f90
+siesta_desalination.o	: siesta_constants.o siesta_parameters.o siesta_state.o siesta_types.o
+	$(FC) -c $(FFLAGS) siesta_desalination.f90
+siesta_state.o	: siesta_parameters.o siesta_types.o
+	$(FC) -c $(FFLAGS) siesta_state.f90
+siesta_types.o	: siesta_constants.o siesta_parameters.o
+	$(FC) -c $(FFLAGS) siesta_types.f90
+siesta_parameters.o	: siesta_constants.o kei_icecommon.o
+	$(FC) -c $(FFLAGS) siesta_parameters.f90
 kei_hacks.o	: kei_parameters.o kei_common.o kei_subs1D.o kei_ecocommon.o
 	$(FC) -c $(FFLAGS) kei_hacks.f90
-sia2_constants.o	:
-	$(FC) -c $(FFLAGS) sia2_constants.f90
+kei_kinds.o	: kei_kinds.f90
+	$(FC) -c $(FFLAGS) kei_kinds.f90
+siesta_constants.o	: kei_kinds.o
+	$(FC) -c $(FFLAGS) siesta_constants.f90
 
 
+kei_sw.o	: $(MACMODS_OBJ)
+	$(FC) -c $(FFLAGS) kei_sw.f90
+macmods_mod.o    : macmods_param_mod.o macmods_kinds_mod.o macmods_util_mod.o macmods_calc.o
+	$(FC) -c $(FFLAGS) macmods_mod.f90
+macmods_calc.o    : macmods_param_mod.o macmods_kinds_mod.o macmods_util_mod.o
+	$(FC) -c $(FFLAGS) macmods_calc.f90
+macmods_util_mod.o    : macmods_param_mod.o macmods_kinds_mod.o
+	$(FC) -c $(FFLAGS) macmods_util_mod.f90
+macmods_param_mod.o    : macmods_kinds_mod.o
+	$(FC) -c $(FFLAGS) macmods_param_mod.f90
+macmods_kinds_mod.o    :
+	$(FC) -c $(FFLAGS) macmods_kinds_mod.f90
 
 #	-------
 #	CLEANUP
 #	-------
+
 clean :
 	rm -f *.o
 	rm -f *.mod

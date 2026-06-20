@@ -1,37 +1,39 @@
 	module kei_common
+  use kei_kinds, only: i4, r4, r8, log_kind
 
 		use kei_parameters
 
     implicit none
 
-		logical, parameter :: write_output = .true.
+		logical(kind=log_kind), parameter :: write_output = .true.
 
 		! constants
-		real, save :: &
+		real(r4), save :: &
 			grav,vonk,sbc,twopi,onepi,TK0,spd,dpy,CPo
 
-		! times
-		double precision, save :: &
-			time,dtsec
-		real, save :: &
+		! times — declare ``time`` and ``dtsec`` on separate lines (NumPy f2py can map
+		! consecutive ``real(r8)`` module scalars incorrectly for Python ``kei.kei_common``).
+		REAL(r8), save :: time
+		REAL(r8), save :: dtsec
+		real(r4), save :: &
 			startt,finalt
-		integer, save :: &
+		integer(i4), save :: &
 			ntime,nstart,nend,startyear
 
 		! timocn
-		real, save :: &
+		real(r4), save :: &
 			dto
-		integer, save :: &
+		integer(i4), save :: &
 			ndtocn
 
 		! timatm
-		real, save :: &
+		real(r4), save :: &
 			dta
-		integer, save :: &
+		integer(i4), save :: &
 			ndtatm
 
 		! vert pgrid
-		real, save :: &
+		real(r4), save :: &
 			DMAX, &
 			zm(NZP1), &    ! midpoint layer depth (negative below srf)
 			zmp(NZP1), &   ! positive distance from srf to layer midpoint
@@ -39,137 +41,141 @@
 			dm(0:NZ)       ! layer bounardies (positive from srf)
 
 		! vert tgrid
-		integer, save :: &
+		integer(i4), save :: &
 			NZDIV,NZT,NZP1t,last_wct_ii
 
 		! location
-		real, save :: &
+		real(r4), save :: &
 			dlat,dlon,rlat,rlon,f
 
 		! proc switches
-		logical, save :: &
-			LKPP  , LRI, LDD, LICE, LBIO, LNBFLX, LTGRID, &
+		logical(kind=log_kind), save :: &
+			LKPP  , LRI, LDD, LICE, LECO, LNBFLX, LTGRID, &
+      LSW, & ! seaweed switch
     	lsaveaverages, lstretchgrid, lrepeatdat, &
     	lradtq, lfluxSSTdat, &
     	lLWupSSTdat, lrhdat, lclddat, &
     	LKPROF     ! added 7/2011 by ben saenz, to enable compilation, does not appear to be used
-    logical, save :: dlLWupSSTdat
+    logical(kind=log_kind), save :: dlLWupSSTdat
 
     ! proc pars
-    integer, save :: &
+    integer(i4), save :: &
     	jerlov
 
+    ! ecosys additions
+    REAL(r8), save :: &
+      absorp_baseline           ! shortwave absorption to be added to ecosys absorption
+
     ! ocn inital cond
-    integer, save :: &
+    integer(i4), save :: &
     		mu,mx
     character (len=40) :: ncf_file
-    integer, save :: ncf_id
-  	real, save :: &
+    integer(i4), save :: ncf_id
+  	real(r4), save :: &
 			hu,SSU(NVEL),hx,SSX(NSCLR)
 
 		! ocn state
-		real, save :: &
+		real(r4), save :: &
 			focn,Tref,SSref,uref,vref,Qs,ug0,vg0,albocn
 
 		! ocn paras
-		real, save :: &
+		real(r4), save :: &
 			CP(0:NZP1tmax),rho(0:NZP1tmax), &
     	rhofrsh,rhoh2o,rhob,rhosw,Sref,epsw, &
     	talpha(0:NZP1tmax),sbeta(0:NZP1tmax)
-    real, save :: &
+    real(r4), save :: &
       sal_correction_rate, & ! (kg/s)
       sw_scale_factor
 
     ! ocn energy
-    real, save :: &
+    real(r4), save :: &
     	eflx,esnk,Tmke,Ptke,rmke(NZP1)
-   real, save :: &
-      qsw_absorped(NZ)
+    ! ``qsw_absorbed`` lives in module ``kei_ocn`` (merged from former ``kei_ocncommon``).
     ! atm advec
-    integer, save :: &
+    integer(i4), save :: &
     	modatm
-    real, save :: &
+    real(r4), save :: &
       atmad
 
     ! atm state
-    integer, save :: &
+    integer(i4), save :: &
     	LAFLX
-    real, save :: &
+    real(r4), save :: &
       u10a
 
     ! atm paras
-    real, save :: &
+    real(r4), save :: &
       az,azeta,psima,psisa,ustara,bp,cpa,rhoa
 
     ! lnd state
-    real, save :: &
+    real(r4), save :: &
       flnd,alblnd,alblndlnd,alblndsnw
 
     ! flx calc
-    integer, save :: &
+    integer(i4), save :: &
       ndtflx,ndtld
-    real, save :: &
+    real(r4), save :: &
       deltax(NJDT),xbar,denom
 
 		! flx sfc
-    real, save :: &
+    real(r4), save :: &
       sflux(NSFLXS,5,0:NJDT),VAF(NFDATAP1)
 
 		! flx profs
-    real, save :: &
+    real(r4), save :: &
       wU(0:NZtmax,NVP1),wX(0:NZtmax,NSP1), &
     	wXNT(0:NZtmax,NSCLR), &
     	wtI(0:NZ,0:NJDT),wsI(0:NZ,0:NJDT)
 
 		! x coeff
-    real, save :: &
+    real(r4), save :: &
       cdw,ctw,cqw,cdi,cti,cqi
 
 		! kprof in
-    real, save :: &
+    real(r4), save :: &
       ustar,B0,buoy(NZP1tmax)
 
 		! kprof out
-    integer, save :: &
+    integer(i4), save :: &
       kmix
-    real, save :: &
+    real(r4), save :: &
       hmix,difm(0:NZtmax),difs(0:NZtmax),ghat(NZtmax),V2(NZP1tmax)
 
 		! Ri mixing
-    logical, save :: &
+    logical(kind=log_kind), save :: &
     	firstF
-    real, save :: &
+    real(r4), save :: &
       deltaRi, &
     	Ri(NZtmax), &
     	Fint(NZtmax), &
     	F_of_Ri(0:MRp1) ! changed from weird 'F of Ri' variable, not sure how this ever compiled! - saenz 7/2001
 
   	! dble diff
-    real, save :: &
+    real(r4), save :: &
       dift(0:NZtmax),Rp(NZtmax)
 
     ! forcing
-    integer, save :: &
+    integer(i4), save :: &
       nharm(NSFLXS)
-    real, save :: &
+    real(r4), save :: &
       harm0(NSFLXS),areg(NSFLXS), &
     	ampharm(0:NDHARM,NSFLXS), &
     	freharm(NDHARM,NSFLXS), &
     	phharm(NDHARM,NSFLXS),xnoise(NSFLXS)
 
 		! forcread
-    integer, save :: &
+    integer(i4), save :: &
     	idataold,idatanew
-    real, save :: &
+    real(r4), save :: &
       fdata(nfdata,0:1),delfdata(nfdata)
  !   character (len=40) :: fdatafile
 
 		! forcrepeat
-    double precision, save :: &
+    REAL(r8), save :: &
       repeatdatdays,offdatday,startdatday
 
 		! forc data
-    real, save :: &
+    real(r4), save :: &
       TZdat,Tdewdat,clddat,SSTdat
 
 		! in/output
@@ -177,35 +183,35 @@
     !  inct,incz,incx,incy
     !real, save :: &
     ! buffer(NBUFF),dout(NDOUT)
-    logical, save :: &
+    logical(kind=log_kind), save :: &
     	LSTORE
 
 		! run info
-    integer, save :: &
+    integer(i4), save :: &
 			ntitle
-    real, save :: &
+    real(r4), save :: &
       runseq
     character (len=52) :: dirname
     character (len=52) :: outdirname
     character (len=50), dimension(4) :: title
 
 		! averaging of output arrays
-    real, save :: &
+    real(r4), save :: &
       Uav(NZP1,NVEL),Xav(NZP1,NSCLR), & !doutav(NDOUT), &
     	sfluxav(NSFLXS,5),rmkeav(NZ),eflxav,esnkav, &
     	Ptkeav
 
-    INTEGER, SAVE :: &
+    integer(i4), SAVE :: &
       nmodeadv(2), &  ! number of advection types : temp(1), salinity(2)
       modeadv(1:maxmodeadv,1:2) ! modes for tracers additions/subtractions
-    REAL, SAVE :: &
+    real(r4), SAVE :: &
       advection(1:maxmodeadv,2) ! modes for tracer advection
 
-		real, save :: &
+		real(r4), save :: &
 			uZ, vZ, QSWins, QLWdwn, TZ, qZ, Prain, Psnow, DivU, SSTvaf, &
 			QSWup,QLWup, msl, hum
 
-    real, save :: atm_flux_to_ocn_surface
+    real(r4), save :: atm_flux_to_ocn_surface
 
     equivalence &
 			(vaf(1),uZ), &   ! U windspeed (m/s)
@@ -223,8 +229,8 @@
 			(vaf(nfdata),QSWup), &
 			(vaf(nfdatap1),QLWup)
 
-    integer, save :: f_wct   ! switch for water column temperature data assimilation
-    real, save :: wct_interp(NZP1) ! water column assimilation temperatures
+    integer(i4), save :: f_wct   ! switch for water column temperature data assimilation
+    real(r4), save :: wct_interp(NZP1) ! water column assimilation temperatures
 
 
 	CONTAINS
@@ -240,21 +246,22 @@
       startt    = 0.0    ! (days) - from 0:00z 1 Jan
       nstart    = 0      ! pretty sure this will always be zero - no need to restart runs with modern computers
       nend      = 13140  ! number total time steps
-      dtsec     = 3600.0 ! time step in seconds
+      dtsec     = 3600.0_r8 ! time step in seconds
       ndtatm    = 1      ! sub-dt atm steps
-      ndtice    = 1      ! sub-dt ice steps, likely not used b/s SIESTA
+      ndtice    = 1      ! sub-dt ice steps, likely not used b/c SIESTA does internal stepping
       ndtocn    = 1      ! sub-dt ocean/kpp steps
 
       LKPP      = .true.
       LRI       = .true.
       LDD       = .true.
       LICE      = .false.
-      LBIO      = .true.
+      LECO      = .true.
+      LSW       = .true.
       LTGRID    = .true.
       NZDIV     = 4
       LNBFLX    = .true.
 
-      DMAX      = 200.  ! dunno, hopefully get rid of me
+      !DMAX      = 200.  ! dunno, hopefully get rid of me
       dlon      = -66.0  ! degrees E
       dlat      = -63.0  ! degrees N
 
@@ -366,15 +373,19 @@
       f_wct = 0 ! default no data assimilation
       wct_interp = -999.
 
+      ! ecosys extras
+      absorp_baseline = 0.
+
       RETURN
     END SUBROUTINE init_constants_params
 
 !**********************************************************************
-    REAL FUNCTION TfrzC(S,Db)
+    ! Literal kind(4) so f2py-generated wrappers do not reference r4 from kei_kinds.
+    real(4) FUNCTION TfrzC(S,Db)
 
 			implicit none
 
-			real, intent(in) :: S, Db
+			real(4), intent(in) :: S, Db
 !     Freezing point of water in degrees C at salinity S in PSU
 !                                         and pressure Db in decibars
     !TfrzC = (-0.0575 +1.710523e-3 *sqrt(S) -2.154996e-4 *S) *S &
@@ -388,7 +399,7 @@
 
 ! ******************************************************************
 
-    REAL FUNCTION CPSW(S,T1,P0)
+    real(4) FUNCTION CPSW(S,T1,P0)
 
 ! ******************************************************************
 ! UNITS:
@@ -406,10 +417,10 @@
 ! T = 40 DEG C, P0= 10000 DECIBARS
 
 		! inputs
-    real :: S,T1,P0
+    real(4) :: S,T1,P0
 
     ! local
-    real :: T,P,SR,A,B,C,CP0,CP1,CP2
+    real(4) :: T,P,SR,A,B,C,CP0,CP1,CP2
 
 !   check that temperature is above -2
     T = T1

@@ -1,3 +1,6 @@
+!  Column-profile arrays for full CCM ``atmrad`` coupling were only in the
+!  unused fragment ``kei_atmradcommon.f90`` (duplicate of old ``kei_radcommon``).
+!  This driver uses ``kei_common`` / forcing only; see comments in ``kei_radcommon``.
 
     SUBROUTINE atm_step(kforce)
 
@@ -7,8 +10,8 @@
       implicit none
 
       ! Input
-      real :: kforce(forcing_var_cnt)
-      DOUBLE PRECISION :: &
+      real(r4) :: kforce(forcing_var_cnt)
+      REAL(r8) :: &
         day_of_year,ros,sza,rod,romean,ws,d_lat,d_lon
 
       ! determine shortwave surface reflectance

@@ -1,21 +1,30 @@
- 
-    SUBROUTINE calflx(jptr)
+module kei_fluxes
+  use kei_kinds, only: i4, r4, r8, log_kind
+  use kei_parameters
+  use kei_common
+  use kei_icecommon
+  use kei_hacks, only: ic_conform
+  implicit none
+  private
+  public :: calflx, atmflx, o2iflx, topflx, ntflx, init_flx, swdk, qsat
+
+contains
+
+SUBROUTINE calflx(jptr)
 
 !     Calculate atm fluxes at dtcal/2  into sflux(n,i,0), i=1,3
 !     from flux computations at ndtld in sflux(n,i,j=1,NJDT)
 ! NB  for NJDT = 1, sflux(n,i,0) = sflux(n,i,1)
 
-    use kei_parameters
-    use kei_common
 
     implicit none
 
     ! inputs
-    integer :: jptr
+    integer(i4) :: jptr
 
     ! local vars
-    integer :: n,i,j,jx
-    real :: bnum
+    integer(i4) :: n,i,j,jx
+    real(r4) :: bnum
 
 !             OPTION I  Find linear regression extrapolation
 
@@ -59,36 +68,25 @@
 !     timed : time (days) to evaluate SW in "swokta" and Jerlov water
 !             type in "SWDK"
 
-    use kei_parameters
-    use kei_common
-    use kei_icecommon
 
     implicit none
 
-    interface
-     real pure function qsat(mode, TK)
-     implicit none
-     integer, intent(in) :: mode
-     real, intent(in) :: TK
-     end function qsat
-    end interface
-
     ! Input
-    integer :: jptr
-    DOUBLE PRECISION :: timed
+    integer(i4) :: jptr
+    REAL(r8) :: timed
 
     ! local vars
-    integer :: n
-    real :: diurnal, Us, Vs, Ts1, du, dv, umag, Tk, To, psim10, psis10, &
+    integer(i4) :: n
+    real(r4) :: diurnal, Us, Vs, Ts1, du, dv, umag, Tk, To, psim10, psis10, &
       zoz0, zozt, zozq, rtcd, rtct, rtcq, cloudf, ea, Tdew, fofc, &
       tairk, QSWocn, QSWice, QSWdn, Tsst, QLWdown, DQDTice, Tice
 
-    real :: ak = 0.0027
-    real :: bk = 0.000142
-    real :: ck1 = 0.0000764
-    real :: f1 = 0.174
-    real :: umin = 0.10
-    real :: ustrmin = 1.e4
+    real(r4) :: ak = 0.0027
+    real(r4) :: bk = 0.000142
+    real(r4) :: ck1 = 0.0000764
+    real(r4) :: f1 = 0.174
+    real(r4) :: umin = 0.10
+    real(r4) :: ustrmin = 1.e4
 
     !data ak,bk,ck1 / 0.0027  , 0.000142 , 0.0000764 /
     !data f1, umin, ustrmin / 0.174, 0.10, 1.E-4/
@@ -340,27 +338,16 @@
 
 !      find frocn for ice fraction calculations
 
-    use kei_parameters
-    use kei_common
-    use kei_icecommon
 
     implicit none
 
-    interface
-     FUNCTION SWDK(z,ftime)
-     implicit none
-     REAL :: z,ftime
-     REAL :: SWDK
-     end function SWDK
-    end interface
-
     ! inputs
-    real :: X(NZP1,NSCLR)
-    integer :: jptr
+    real(r4) :: X(NZP1,NSCLR)
+    integer(i4) :: jptr
 
     ! locals var
-    integer :: NS1,k
-    real :: rhoCP, Szero, rhof, rhoocn, fk
+    integer(i4) :: NS1,k
+    real(r4) :: rhoCP, Szero, rhof, rhoocn, fk
 
 
 
@@ -458,20 +445,16 @@
 !**************************************
     subroutine TOPFLX(jptr,kforce)
 
-    use kei_parameters
-    use kei_common
-    use kei_icecommon
-    use kei_hacks, only: ic_conform
 
     implicit none
 
     ! inputs
-    integer :: jptr
-    real :: kforce(forcing_var_cnt)
+    integer(i4) :: jptr
+    real(r4) :: kforce(forcing_var_cnt)
 
     ! local vars
-    integer :: n
-    real :: aice,focn1
+    integer(i4) :: n
+    real(r4) :: aice,focn1
 
 !           Once all i=1,4 levels are loaded in jptr=0
 !       load top of ocean fluxes (sflux level 5 inputs)
@@ -509,7 +492,7 @@
 
     print *, 'atm_flux_to_ocn_surface: ',atm_flux_to_ocn_surface
 
-    ! removed - already done in sia2 melting routines ...
+    ! removed - already done in siesta melting routines ...
 !    if (sflux(6,4,jptr) > 0.0) then
 !        sflux(4,5,jptr) = sflux(4,5,jptr) &
 !        +CPo*(Tmlt-Tref)* sflux(6,4,jptr) !*fice   ! change T of melted ice/snow
@@ -552,25 +535,15 @@
 !     - the vertical profile of non-turb salt flux at interfaces equals
 !       brine rejection due to deep ice formation.
 
-    use kei_parameters
-    use kei_common
 
     implicit none
 
-    interface
-     FUNCTION SWDK(z,ftime)
-     implicit none
-     REAL, intent(IN) :: z,ftime
-     REAL :: SWDK
-     end function SWDK
-    end interface
-
     ! inputs
-    integer :: jptr
+    integer(i4) :: jptr
 
     ! local vars
-    integer :: k
-    real :: temp_s,temp_wxnt
+    integer(i4) :: k
+    real(r4) :: temp_s,temp_wxnt
 
 !    calculate surface kinematic solar heat flux (C m/s)
 
@@ -598,32 +571,30 @@
 
 !*************************************************************
 
-    REAL FUNCTION SWDK(z,ftime)
+    real(r4) FUNCTION SWDK(z,ftime)
 !     Compute SW exponential decay factor parameters
 !     for given Jerlov water types.
 !     Process parameter jerlov (in "common.inc") is set in "CAOIM.f":
 !     it specifies the water type to be used.  If jerlov=0, local array
 !     jerl is used to get different water type for each month.
 
-    use kei_parameters
-    use kei_common
 
     implicit none
 
     ! Input
-    real, intent(IN) :: z, ftime               ! time in days for solar flux
+    real(r4), intent(IN) :: z, ftime               ! time in days for solar flux
 
     ! Local
-    integer :: mon,j
-    real :: swtime
-    integer, parameter :: nmax=5
+    integer(i4) :: mon,j
+    real(r4) :: swtime
+    integer(i4), parameter :: nmax=5
 !         types =  I       IA      IB      II      III
 !             j =  1       2       3       4       5
-    real :: Rfac(nmax) = (/  0.58 ,  0.62 ,  0.67 ,  0.77 ,  0.78 /)
-    real :: a1(nmax) = (/  0.35 ,  0.6  ,  1.0  ,  1.5  ,  1.4  /)
-    real :: a2(nmax) = (/ 23.0  , 20.0  , 17.0  , 14.0  ,  7.9  /)
+    real(r4) :: Rfac(nmax) = (/  0.58 ,  0.62 ,  0.67 ,  0.77 ,  0.78 /)
+    real(r4) :: a1(nmax) = (/  0.35 ,  0.6  ,  1.0  ,  1.5  ,  1.4  /)
+    real(r4) :: a2(nmax) = (/ 23.0  , 20.0  , 17.0  , 14.0  ,  7.9  /)
 !          month  1   2   3   4   5   6   7   8   9   10  11  12
-    integer :: jerl(12) = &
+    integer(i4) :: jerl(12) = &
       (/ 2 , 2 , 2 , 3 , 3 , 3 , 4 , 4 , 4 , 4 , 3 , 2 /)
 
     swtime = ftime
@@ -633,7 +604,7 @@
     mon = int(dble(swtime/dpy)*12.) + 1 !(swtime/30.147) with dpy=365.
     mon = MIN0(mon,12)
 
-    if ( jerlov < 1. ) then
+    if ( jerlov < 1 ) then
         j = jerl(mon)
     else
         j = jerlov
@@ -655,21 +626,19 @@
 !     intermediate values computed every ndtld
 !     common deltax(NJDT), xbar, denom
 
-    use kei_parameters
-    use kei_common
 
     implicit none
 
 ! Input
-    real ::   X(NZP1,NSCLR)
-    real :: kforce(forcing_var_cnt)
-    integer :: jptr
+    real(r4) ::   X(NZP1,NSCLR)
+    real(r4) :: kforce(forcing_var_cnt)
+    integer(i4) :: jptr
 
-    DOUBLE PRECISION :: timed
+    REAL(r8) :: timed
 ! Local
-    integer :: j,itemp
-    real :: dt,bnum
-    real ::   xv(NJDT)
+    integer(i4) :: j,itemp
+    real(r4) :: dt,bnum
+    real(r4) ::   xv(NJDT)
 
 ! extrapolation parameters for fluxes
     if ( NJDT == 1 ) then
@@ -737,11 +706,11 @@
     implicit none
 
     ! inputs
-    real, intent(in) :: ZOL
-    real, intent(out) :: PSIM,PSIG
+    real(r4), intent(in) :: ZOL
+    real(r4), intent(out) :: PSIM,PSIG
 
     ! local
-    real :: X
+    real(r4) :: X
 
     IF(ZOL < 0.0) then
 !           UNSTABLE
@@ -759,15 +728,15 @@
 
 !***********************************************************************
 
-    REAL PURE FUNCTION qsat(mode, TK)
+    real(r4) PURE FUNCTION qsat(mode, TK)
 !     calculate saturation humidity in (kg/m3) for given
 !     temperature in (K), over either water mode = 0,
 !                                or   ice   mode = 1.
     implicit none
 
-    integer, intent(in) :: mode
-    real, intent(in) :: TK
-    real :: p_h2o
+    integer(i4), intent(in) :: mode
+    real(r4), intent(in) :: TK
+    real(r4) :: p_h2o
 
     if(mode == 1) THEN
         qsat  =  11637800./exp(5897.8/TK)
@@ -791,34 +760,34 @@
     implicit none
 
 ! input
-    real :: rlat,     &  ! latitude                          (radians)
+    real(r4) :: rlat,     &  ! latitude                          (radians)
     rlon,              &  ! longitude (+=east)                (radians)
     cloudf,           &   ! cloud fraction from 0 to 1.0
     dpy
-    DOUBLE PRECISION :: timed ! time in Julian days, G.M.T.    (days)
-    integer :: jokta       ! cloud cover                       (oktas)
+    REAL(r8) :: timed ! time in Julian days, G.M.T.    (days)
+    integer(i4) :: jokta       ! cloud cover                       (oktas)
 
 ! output
-    real :: sw             ! sw flux                           (W/m2)
+    real(r4) :: sw             ! sw flux                           (W/m2)
 
 ! local
-    real :: day,  & !   integer of time
+    real(r4) :: day,  & !   integer of time
     hour,         & !   fraction of day                   (0. to 1.)
     ror0,         & !   (r/r0)**2 eccentricity factor
     ds,           & !   declination of the earth          (radians)
     h,            & !   loc, hour angle since solar noon  (radians)
     sinphi,       & !   sine of solar elevation (phi)
     trans           !   atm. transmission factor
-    integer :: mokta       ! cloud cover = MIN(1,jokta)        (oktas)
+    integer(i4) :: mokta       ! cloud cover = MIN(1,jokta)        (oktas)
 
 !     jokta   =  0    1    2    3    4    5    6    7    8    9
-    real :: a(0:9) = (/ .400,.517,.474,.421,.380,.350,.304,.230,.106,.134 /) !   D&S linear regression coeffs:
-    real :: b(0:9) = (/ .386,.317,.381,.413,.468,.457,.438,.384,.285,.295 /) !   depend on okta(9=sky obscured)
-    real :: s0 = 1368.0 ! solar constant, = 1368            (W/m2)
-    real :: pi = 3.141592653
-    real :: twopi = 6.283185307
+    real(r4) :: a(0:9) = (/ .400,.517,.474,.421,.380,.350,.304,.230,.106,.134 /) !   D&S linear regression coeffs:
+    real(r4) :: b(0:9) = (/ .386,.317,.381,.413,.468,.457,.438,.384,.285,.295 /) !   depend on okta(9=sky obscured)
+    real(r4) :: s0 = 1368.0 ! solar constant, = 1368            (W/m2)
+    real(r4) :: pi = 3.141592653
+    real(r4) :: twopi = 6.283185307
 
-    real :: dss,cosphi,sws,phids,timelat,phid,transcl,swcl
+    real(r4) :: dss,cosphi,sws,phids,timelat,phid,transcl,swcl
 
     jokta = int(cloudf*8. + 0.5)
 ! set time variables
@@ -872,5 +841,4 @@
     return
     end subroutine swokta
 
-
-
+end module kei_fluxes

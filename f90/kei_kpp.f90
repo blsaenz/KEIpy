@@ -1,19 +1,27 @@
+module kei_kpp
+  use kei_kinds, only: i4, r4, r8, log_kind
+  use kei_parameters
+  use kei_common
+  use kei_icecommon
+  use kei_subs1D
+  implicit none
+  private
+  public :: vmix, swfrac, swfrac_imt
+
+contains
+
 !********************************************************************
     subroutine vmix(U,X,hmixn,kmixn)
 !  Interface between 1-d model and vertical mixing
 
-    use kei_parameters
-    use kei_common
-		use kei_icecommon
-		use kei_subs1D
 
 		implicit none
 
-    integer, parameter :: imt = NX*NY
+    integer(i4), parameter :: imt = NX*NY
 
 
 ! inputs including those from common.inc and parameter.inc
-    real :: U(nzp1,nvel),X(nzp1,nsclr)
+    real(r4) :: U(nzp1,nvel),X(nzp1,nsclr)
 !     real zm(nzp1) ! vertical layer grid                  (m)
 !     real hm(nzp1) ! layer thicknesses                    (m)
 !     real sflux(NSFLXS,5,0:NJDT)  !  surface flux array
@@ -29,8 +37,8 @@
 !     real difs(0:kmp1)  ! vertical scalar diffusivity     (m^2/s)
 !     real dift(0:kmp1)  ! vertical temperature diffusivity(m^2/s)
 !     real ghat(km)     ! nonlocal transport              (s/m^2)
-    real :: hmixn          ! boundary layer depth (m)
-    integer :: kmixn
+    real(r4) :: hmixn          ! boundary layer depth (m)
+    integer(i4) :: kmixn
 !     real talpha(0:nzp1)   ! alpha
 !     real sbeta(0:nzp1)    ! beta
 !     real wU(0,1),wU(0,2)  ! kinematic surface momintum fluxes
@@ -40,35 +48,35 @@
 !     real rhoh2o, rhob     ! density of freshwater and of brine (kg/m^3)
 
 ! local
-    real :: Shsq(nzp1)    ! (local velocity shear)^2       (m/s)^2
-    real :: dVsq(nzp1)    ! (velocity shear re sfc)^2      (m/s)^2
-    real :: dbloc(nz)     ! local delta buoyancy            (m/s^2)
-    real :: Ritop(nz)     ! numerator of bulk Richardson Number (m/s)^2
+    real(r4) :: Shsq(nzp1)    ! (local velocity shear)^2       (m/s)^2
+    real(r4) :: dVsq(nzp1)    ! (velocity shear re sfc)^2      (m/s)^2
+    real(r4) :: dbloc(nz)     ! local delta buoyancy            (m/s^2)
+    real(r4) :: Ritop(nz)     ! numerator of bulk Richardson Number (m/s)^2
 !          Ritop = (-z - -zref)* delta buoyancy w/ respect to sfc(m/s^2)
-    real :: alphaDT(nz)   ! alpha * DT across interfaces
-    real :: betaDS(nz)    ! beta  * DS across interfaces
+    real(r4) :: alphaDT(nz)   ! alpha * DT across interfaces
+    real(r4) :: betaDS(nz)    ! beta  * DS across interfaces
 !     logical LKPP       ! kpp boundary layer mixing switch
 !          month  1   2   3   4   5   6   7   8   9   10  11  12
-    integer :: jerl(12) = &
+    integer(i4) :: jerl(12) = &
     	(/ 2 , 2 , 2 , 3 , 3 , 3 , 4 , 4 , 4 , 4 , 3 , 2 /)
 
-		integer :: n,k,kl,mon,jwtype(imt),kmixn1(imt)
-		real :: epsilon, epsln,swtime,alpha,beta,exppr,sigma,sigma0,tau, &
+		integer(i4) :: n,k,kl,mon,jwtype(imt),kmixn1(imt)
+		real(r4) :: epsilon, epsln,swtime,alpha,beta,exppr,sigma,sigma0,tau, &
 			Bo,Bosol,zref,wz,bref,del,dlimit,vlimit,ustar1(imt),Bo1(imt),&
 			Bosol1(imt),hmixn1(imt)
 
-    real :: Shsq1(imt,nzp1)    ! (local velocity shear)^2       (m/s)^2
-    real :: dVsq1(imt,nzp1)    ! (velocity shear re sfc)^2      (m/s)^2
-    real :: dbloc1(imt,nz)     ! local delta buoyancy            (m/s^2)
-    real :: Ritop1(imt,nz)     ! numerator of bulk Richardson Number (m/s)^2
+    real(r4) :: Shsq1(imt,nzp1)    ! (local velocity shear)^2       (m/s)^2
+    real(r4) :: dVsq1(imt,nzp1)    ! (velocity shear re sfc)^2      (m/s)^2
+    real(r4) :: dbloc1(imt,nz)     ! local delta buoyancy            (m/s^2)
+    real(r4) :: Ritop1(imt,nz)     ! numerator of bulk Richardson Number (m/s)^2
 !          Ritop = (-z - -zref)* delta buoyancy w/ respect to sfc(m/s^2)
-    real :: alphaDT1(imt,nzp1)   ! alpha * DT across interfaces
-    real :: betaDS1(imt,nzp1)    ! beta  * DS across interfaces
+    real(r4) :: alphaDT1(imt,nzp1)   ! alpha * DT across interfaces
+    real(r4) :: betaDS1(imt,nzp1)    ! beta  * DS across interfaces
 
-     real :: difm1(imt,0:nzp1)  ! vertical viscosity coefficient  (m^2/s)
-     real :: difs1(imt,0:nzp1)  ! vertical scalar diffusivity     (m^2/s)
-     real :: dift1(imt,0:nzp1)  ! vertical temperature diffusivity(m^2/s)
-     real :: ghat1(imt,nz)     ! nonlocal transport              (s/m^2)
+     real(r4) :: difm1(imt,0:nzp1)  ! vertical viscosity coefficient  (m^2/s)
+     real(r4) :: difs1(imt,0:nzp1)  ! vertical scalar diffusivity     (m^2/s)
+     real(r4) :: dift1(imt,0:nzp1)  ! vertical temperature diffusivity(m^2/s)
+     real(r4) :: ghat1(imt,nz)     ! nonlocal transport              (s/m^2)
 
 ! ------------------------------------------------------
 
@@ -265,53 +273,52 @@
 
 !.......................................................................
 
-    use kei_parameters
 
 		implicit none
 
-    integer, parameter :: km = NZ
-    integer, parameter :: kmp1 = nzp1
-    integer, parameter :: imt = NX*NY
-    integer, parameter :: mdiff = 3  ! number of diffusivities for local arrays
+    integer(i4), parameter :: km = NZ
+    integer(i4), parameter :: kmp1 = nzp1
+    integer(i4), parameter :: imt = NX*NY
+    integer(i4), parameter :: mdiff = 3  ! number of diffusivities for local arrays
 
 ! input
-    real :: zgrid(imt,kmp1)   ! vertical grid (<= 0)            (m)
-    real :: hwide(imt,kmp1)   ! layer thicknesses               (m)
-    real :: Shsq(imt,kmp1)    ! (local velocity shear)^2       (m/s)^2
-    real :: dVsq(imt,kmp1)    ! (velocity shear re sfc)^2      (m/s)^2
-    real :: ustar(imt)        ! surface friction velocity       (m/s)
-    real :: Bo(imt)           ! surface turbulent buoy. forcing (m^2/s^3)
-    real :: Bosol(imt)        ! radiative buoyancy forcing      (m^2/s^3)
-    real :: alphaDT(imt,kmp1) ! alpha * DT  across interfaces
-    real :: betaDS(imt,kmp1)  ! beta  * DS  across interfaces
-    real :: dbloc(imt,km)     ! local delta buoyancy            (m/s^2)
-    real :: Ritop(imt,km)     ! numerator of bulk Richardson Number (m/s)^2
+    real(r4) :: zgrid(imt,kmp1)   ! vertical grid (<= 0)            (m)
+    real(r4) :: hwide(imt,kmp1)   ! layer thicknesses               (m)
+    real(r4) :: Shsq(imt,kmp1)    ! (local velocity shear)^2       (m/s)^2
+    real(r4) :: dVsq(imt,kmp1)    ! (velocity shear re sfc)^2      (m/s)^2
+    real(r4) :: ustar(imt)        ! surface friction velocity       (m/s)
+    real(r4) :: Bo(imt)           ! surface turbulent buoy. forcing (m^2/s^3)
+    real(r4) :: Bosol(imt)        ! radiative buoyancy forcing      (m^2/s^3)
+    real(r4) :: alphaDT(imt,kmp1) ! alpha * DT  across interfaces
+    real(r4) :: betaDS(imt,kmp1)  ! beta  * DS  across interfaces
+    real(r4) :: dbloc(imt,km)     ! local delta buoyancy            (m/s^2)
+    real(r4) :: Ritop(imt,km)     ! numerator of bulk Richardson Number (m/s)^2
 !          Ritop = (-z - -zref)* delta buoyancy w/ respect to sfc(m/s^2)
-    real :: Coriol            ! Coriolis parameter              (s^{-1})
-    integer :: jwtype(imt)    ! Jerlov water type               (1 -- 5)
-    logical :: LRI, LDD, LKPP ! mixing process switches
+    real(r4) :: Coriol            ! Coriolis parameter              (s^{-1})
+    integer(i4) :: jwtype(imt)    ! Jerlov water type               (1 -- 5)
+    logical(kind=log_kind) :: LRI, LDD, LKPP ! mixing process switches
 
 ! output
-    real :: visc(imt,0:kmp1)  ! vertical viscosity coefficient  (m^2/s)
-    real :: difs(imt,0:kmp1)  ! vertical scalar diffusivity     (m^2/s)
-    real :: dift(imt,0:kmp1)  ! vertical temperature diffusivity(m^2/s)
-    real :: ghats(imt,km)     ! nonlocal transport              (s/m^2)
-    real :: hbl(imt)          ! boundary layer depth (m)
-    integer :: kbl(imt)       ! index of first grid level below hbl
+    real(r4) :: visc(imt,0:kmp1)  ! vertical viscosity coefficient  (m^2/s)
+    real(r4) :: difs(imt,0:kmp1)  ! vertical scalar diffusivity     (m^2/s)
+    real(r4) :: dift(imt,0:kmp1)  ! vertical temperature diffusivity(m^2/s)
+    real(r4) :: ghats(imt,km)     ! nonlocal transport              (s/m^2)
+    real(r4) :: hbl(imt)          ! boundary layer depth (m)
+    integer(i4) :: kbl(imt)       ! index of first grid level below hbl
 
 ! local
-    real :: bfsfc(imt)        ! surface buoyancy forcing        (m^2/s^3)
-    real :: ws(imt)           ! momentum velocity scale
-    real :: wm(imt)           ! scalar   velocity scale
-    real :: caseA(imt)        ! = 1 in case A; =0 in case B
-    real :: stable(imt)       ! = 1 in stable forcing; =0 in unstable
-    real :: dkm1(imt,mdiff)   ! boundary layer difs at kbl-1 level
-    real :: gat1(imt,mdiff)   ! shape function at sigma=1
-    real :: dat1(imt,mdiff)   ! derivative of shape function at sigma=1
-    real :: blmc(imt,km,mdiff)! boundary layer mixing coefficients
-    real :: sigma(imt)        ! normalized depth (d / hbl)
-    real :: Rib(imt,2)        ! bulk Richardson number
-		integer :: ki,i
+    real(r4) :: bfsfc(imt)        ! surface buoyancy forcing        (m^2/s^3)
+    real(r4) :: ws(imt)           ! momentum velocity scale
+    real(r4) :: wm(imt)           ! scalar   velocity scale
+    real(r4) :: caseA(imt)        ! = 1 in case A; =0 in case B
+    real(r4) :: stable(imt)       ! = 1 in stable forcing; =0 in unstable
+    real(r4) :: dkm1(imt,mdiff)   ! boundary layer difs at kbl-1 level
+    real(r4) :: gat1(imt,mdiff)   ! shape function at sigma=1
+    real(r4) :: dat1(imt,mdiff)   ! derivative of shape function at sigma=1
+    real(r4) :: blmc(imt,km,mdiff)! boundary layer mixing coefficients
+    real(r4) :: sigma(imt)        ! normalized depth (d / hbl)
+    real(r4) :: Rib(imt,2)        ! bulk Richardson number
+		integer(i4) :: ki,i
 
 
 ! zero the mixing coefficients
@@ -415,47 +422,47 @@
 		implicit none
 
 !  model
-    integer :: km,kmp1      ! number of vertical levels
-    integer :: imt          ! number of horizontal grid points
-    real :: zgrid(imt,kmp1) ! vertical grid (<= 0)              (m)
-    real :: hwide(imt,kmp1) ! layer thicknesses                 (m)
+    integer(i4) :: km,kmp1      ! number of vertical levels
+    integer(i4) :: imt          ! number of horizontal grid points
+    real(r4) :: zgrid(imt,kmp1) ! vertical grid (<= 0)              (m)
+    real(r4) :: hwide(imt,kmp1) ! layer thicknesses                 (m)
 
 !  input
-    real :: dVsq(imt,kmp1)  ! (velocity shear re sfc)^2      (m/s)^2
-    real :: dbloc(imt,km)   ! local delta buoyancy              (m/s^2)
-    real :: Ritop(imt,km)   ! numerator of bulk Richardson Number (m/s)^2
+    real(r4) :: dVsq(imt,kmp1)  ! (velocity shear re sfc)^2      (m/s)^2
+    real(r4) :: dbloc(imt,km)   ! local delta buoyancy              (m/s^2)
+    real(r4) :: Ritop(imt,km)   ! numerator of bulk Richardson Number (m/s)^2
 !          Ritop = (-z - -zref)* delta buoyancy w/ respect to sfc(m/s^2)
-    real :: ustar(imt)      ! surface friction velocity         (m/s)
-    real :: Bo(imt)         ! surface turbulent buoyancy forcing(m^2/s^3)
-    real :: Bosol(imt)      ! radiative buoyancy forcing        (m^2/s^3)
-    real :: Coriol          ! Coriolis parameter                (1/s)
-    integer :: jwtype(imt)  ! Jerlov water type                 (1 to 5)
+    real(r4) :: ustar(imt)      ! surface friction velocity         (m/s)
+    real(r4) :: Bo(imt)         ! surface turbulent buoyancy forcing(m^2/s^3)
+    real(r4) :: Bosol(imt)      ! radiative buoyancy forcing        (m^2/s^3)
+    real(r4) :: Coriol          ! Coriolis parameter                (1/s)
+    integer(i4) :: jwtype(imt)  ! Jerlov water type                 (1 to 5)
 
 !  output
-    real :: hbl(imt)        ! boundary layer depth              (m)
-    real :: bfsfc(imt)      ! Bo+radiation absorbed to d=hbf*hbl(m^2/s^3)
-    real :: stable(imt)     ! =1 in stable forcing; =0 unstable
-    real :: caseA(imt)      ! =1 in case A, =0 in case B
-    integer :: kbl(imt)     ! index of first grid level below hbl
+    real(r4) :: hbl(imt)        ! boundary layer depth              (m)
+    real(r4) :: bfsfc(imt)      ! Bo+radiation absorbed to d=hbf*hbl(m^2/s^3)
+    real(r4) :: stable(imt)     ! =1 in stable forcing; =0 unstable
+    real(r4) :: caseA(imt)      ! =1 in case A, =0 in case B
+    integer(i4) :: kbl(imt)     ! index of first grid level below hbl
 
 !  local
-    real :: Rib(imt,3)      ! Bulk Richardson number
-    real :: sigma(imt)      ! normalized depth (d/hbl)
-    real :: wm(imt),ws(imt) ! turbulent velocity scales         (m/s)
+    real(r4) :: Rib(imt,3)      ! Bulk Richardson number
+    real(r4) :: sigma(imt)      ! normalized depth (d/hbl)
+    real(r4) :: wm(imt),ws(imt) ! turbulent velocity scales         (m/s)
 
-    real, save :: epsln =  1.e-20
-    real, save :: DelVmin =  .005
-    real, save :: Ricr =  0.50
-    real, save :: epsilon =  0.1
-    real, save :: cekman =  0.7
-    real, save :: cmonob =  1.0
-    real, save :: cs = 98.96
-    real, save :: cv =  2.00
-    real, save :: vonk =  0.4
-    real, save :: hbf =  1.0
+    real(r4), save :: epsln =  1.e-20
+    real(r4), save :: DelVmin =  .005
+    real(r4), save :: Ricr =  0.50
+    real(r4), save :: epsilon =  0.1
+    real(r4), save :: cekman =  0.7
+    real(r4), save :: cmonob =  1.0
+    real(r4), save :: cs = 98.96
+    real(r4), save :: cv =  2.00
+    real(r4), save :: vonk =  0.4
+    real(r4), save :: hbf =  1.0
 
-		integer :: i,kl,kupper,kup,kdn,ktmp
-		double precision :: Vtc,z_upper,z_up,bvsq,Vtsq,slope_up,a_co,b_co,c_co, &
+		integer(i4) :: i,kl,kupper,kup,kdn,ktmp
+		REAL(r8) :: Vtc,z_upper,z_up,bvsq,Vtsq,slope_up,a_co,b_co,c_co, &
 			sqrt_Arg,hekman,hmonob,hlimit
 
 ! find bulk Richardson number at every grid level until > Ric
@@ -650,50 +657,50 @@
 
 
 ! lookup table
-    integer, parameter :: ni = 890            !  number of values for zehat
-    integer, parameter :: nj = 48             ! number of values for ustar
+    integer(i4), parameter :: ni = 890            !  number of values for zehat
+    integer(i4), parameter :: nj = 48             ! number of values for ustar
 
-    real, save :: wmt(0:ni+1,0:nj+1)           ! lookup table for wm
-    real, save :: wst(0:ni+1,0:nj+1)           ! lookup table for ws
-    real, save :: deltaz                       ! delta zehat in table
-    real, save :: deltau                       ! delta ustar in table
-    real, save :: zmin = -4.e-7 ! zehat limits for table
-    real, save :: zmax = 0.0  ! m3/s3
-    real, save :: umin = 0.   ! ustar limits for table
-    real, save :: umax = .04  ! m/s
-    logical, save :: firstf = .true.
+    real(r4), save :: wmt(0:ni+1,0:nj+1)           ! lookup table for wm
+    real(r4), save :: wst(0:ni+1,0:nj+1)           ! lookup table for ws
+    real(r4), save :: deltaz                       ! delta zehat in table
+    real(r4), save :: deltau                       ! delta ustar in table
+    real(r4), save :: zmin = -4.e-7 ! zehat limits for table
+    real(r4), save :: zmax = 0.0  ! m3/s3
+    real(r4), save :: umin = 0.   ! ustar limits for table
+    real(r4), save :: umax = .04  ! m/s
+    logical(kind=log_kind), save :: firstf = .true.
 
 !  model
-    integer :: imt          ! number of horizontal grid points
+    integer(i4) :: imt          ! number of horizontal grid points
 
 !  input
-    real :: sigma(imt)      ! normalized depth (d/hbl)
-    real :: hbl(imt)        ! boundary layer depth (m)
-    real :: ustar(imt)      ! surface friction velocity         (m/s)
-    real :: bfsfc(imt)      ! total surface buoyancy flux       (m^2/s^3)
+    real(r4) :: sigma(imt)      ! normalized depth (d/hbl)
+    real(r4) :: hbl(imt)        ! boundary layer depth (m)
+    real(r4) :: ustar(imt)      ! surface friction velocity         (m/s)
+    real(r4) :: bfsfc(imt)      ! total surface buoyancy flux       (m^2/s^3)
 
 !  output
-    real :: wm(imt),ws(imt) ! turbulent velocity scales at sigma
+    real(r4) :: wm(imt),ws(imt) ! turbulent velocity scales at sigma
 
 ! local
-    real :: zehat           ! = zeta *  ustar**3
-    real :: zeta            ! = stability parameter d/L
+    real(r4) :: zehat           ! = zeta *  ustar**3
+    real(r4) :: zeta            ! = stability parameter d/L
 
-    real, save :: epsln =  1.0e-20
-    real, save :: c1 =  5.0
-    real, save :: am = 1.257
-    real, save :: cm = 8.380
-    real, save :: c2 = 16.0
-    real, save :: zetam = - 0.2
-    real, save :: as = -28.86
-    real, save :: cs = 98.96
-    real, save :: c3 = 16.0
-    real, save :: zetas = - 1.0
-    real, save :: vonk = 0.40
+    real(r4), save :: epsln =  1.0e-20
+    real(r4), save :: c1 =  5.0
+    real(r4), save :: am = 1.257
+    real(r4), save :: cm = 8.380
+    real(r4), save :: c2 = 16.0
+    real(r4), save :: zetam = - 0.2
+    real(r4), save :: as = -28.86
+    real(r4), save :: cs = 98.96
+    real(r4), save :: c3 = 16.0
+    real(r4), save :: zetas = - 1.0
+    real(r4), save :: vonk = 0.40
 
-    integer :: i,j,iz,ju,jup1,izp1
-    real :: usta,zdiff,udiff,zfrac,ufrac,fzfrac,wam,wbm,was,wbs,ucube
-    double precision :: temp_iz      ! add 4/24/2012, Saenz, to allow full column mixing with crash
+    integer(i4) :: i,j,iz,ju,jup1,izp1
+    real(r4) :: usta,zdiff,udiff,zfrac,ufrac,fzfrac,wam,wbm,was,wbs,ucube
+    REAL(r8) :: temp_iz      ! add 4/24/2012, Saenz, to allow full column mixing with crash
 
 ! construct the wm and ws lookup tables
 
@@ -791,40 +798,40 @@
 
 
 !  input
-    real :: Shsq(imt,kmp1)    ! (local velocity shear)^2          (m/s)^2
-    real :: dbloc(imt,km)     ! local delta buoyancy              (m/s^2)
-    real :: zgrid(imt,kmp1)   ! vertical grid (<= 0)              (m)
-    integer :: km,kmp1        ! number of vertical levels
-    integer :: imt            ! number of horizontal grid points
+    real(r4) :: Shsq(imt,kmp1)    ! (local velocity shear)^2          (m/s)^2
+    real(r4) :: dbloc(imt,km)     ! local delta buoyancy              (m/s^2)
+    real(r4) :: zgrid(imt,kmp1)   ! vertical grid (<= 0)              (m)
+    integer(i4) :: km,kmp1        ! number of vertical levels
+    integer(i4) :: imt            ! number of horizontal grid points
 
 ! output
-    real :: visc(imt,0:kmp1)  ! vertical viscosivity coefficient  (m^2/s)
-    real :: difs(imt,0:kmp1)  ! vertical scalar diffusivity       (m^2/s)
-    real :: dift(imt,0:kmp1)  ! vertical temperature diffusivity  (m^2/s)
+    real(r4) :: visc(imt,0:kmp1)  ! vertical viscosivity coefficient  (m^2/s)
+    real(r4) :: difs(imt,0:kmp1)  ! vertical scalar diffusivity       (m^2/s)
+    real(r4) :: dift(imt,0:kmp1)  ! vertical temperature diffusivity  (m^2/s)
 
 ! local variables
-		integer :: i,ki
-    real :: Rig,Rigg          ! local richardson number
-    real :: fri               ! function of Rig
+		integer(i4) :: i,ki
+    real(r4) :: Rig,Rigg          ! local richardson number
+    real(r4) :: fri               ! function of Rig
 
     !save epsln,Riinfty,Ricon,difm0,difs0,difmcon,difscon, &
     !difmiw,difsiw,c1
 
-    real, save ::   epsln = 1.e-16    ! a small number
-    real, save ::   Riinfty = 0.8       ! default = 0.7
-    real, save ::   Ricon = -0.2      ! note: exp was repl by multiplication
-    real, save ::   difm0 = 0.005    ! max visc due to shear instability
-    real, save ::   difs0 = 0.005    ! max diff ..  .. ..    ..
-    real, save ::   difmiw = 0.0001    ! background/internal waves visc(m^2/s)
-    real, save ::   difsiw = 0.00001   ! ..         ..       ..    diff(m^2/s)
-    real, save ::   difmcon = 0.0000     ! max visc for convection  (m^2/s)
-    real, save ::   difscon = 0.0000     ! max diff for convection  (m^2/s)
-    real, save ::   c1 = 1.0
-    real, save ::   c0 = 0.0
-    real, save ::   mRi = 2                ! number of vertical smoothing passes
+    real(r4), save ::   epsln = 1.e-16    ! a small number
+    real(r4), save ::   Riinfty = 0.8       ! default = 0.7
+    real(r4), save ::   Ricon = -0.2      ! note: exp was repl by multiplication
+    real(r4), save ::   difm0 = 0.005    ! max visc due to shear instability
+    real(r4), save ::   difs0 = 0.005    ! max diff ..  .. ..    ..
+    real(r4), save ::   difmiw = 0.0001    ! background/internal waves visc(m^2/s)
+    real(r4), save ::   difsiw = 0.00001   ! ..         ..       ..    diff(m^2/s)
+    real(r4), save ::   difmcon = 0.0000     ! max visc for convection  (m^2/s)
+    real(r4), save ::   difscon = 0.0000     ! max diff for convection  (m^2/s)
+    real(r4), save ::   c1 = 1.0
+    real(r4), save ::   c0 = 0.0
+    integer(i4), save ::   mRi = 2                ! number of vertical smoothing passes
 
-    integer :: mr
-    real :: ratio,fcon
+    integer(i4) :: mr
+    real(r4) :: ratio,fcon
 
 !     compute interior gradient Ri at all interfaces, except surface
 
@@ -908,13 +915,17 @@
 ! *********************************************************************
     Subroutine z121 (kmp1,imt,vlo,vhi,V,w)
 
+    implicit none
+
+    integer(i4), intent(in) :: kmp1, imt
+    real(r4), intent(in) :: vlo, vhi
+    real(r4), intent(inout) :: V(imt, 0:kmp1), w(imt, 0:kmp1)
+    integer(i4) :: km, i, k
+    real(r4) :: tmp, wait
+
 !    Apply 121 smoothing in k to 2-d array V(i,k=1,km)
 !     top (0) value is used as a dummy
 !     bottom (kmp1) value is set to input value from above.
-
-!  input
-    real :: V(imt,0:kmp1)  ! 2-D array to be smoothed in kmp1 direction
-    real :: w(imt,0:kmp1)  ! 2-D array of internal weights to be computed
 
     km  = kmp1 - 1
 
@@ -961,26 +972,26 @@
 		implicit none
 
 ! input
-		integer :: km,kmp1,imt
-    real :: alphaDT(imt,kmp1)  ! alpha * DT  across interfaces
-    real :: betaDS(imt,kmp1)   ! beta  * DS  across interfaces
-    real :: zgrid(imt,kmp1)
+		integer(i4) :: km,kmp1,imt
+    real(r4) :: alphaDT(imt,kmp1)  ! alpha * DT  across interfaces
+    real(r4) :: betaDS(imt,kmp1)   ! beta  * DS  across interfaces
+    real(r4) :: zgrid(imt,kmp1)
 
 ! output
-    real :: visc(imt,0:kmp1)  ! interior viscosity           (m^2/s)
-    real :: dift(imt,0:kmp1)  ! interior thermal diffusivity (m^2/s)
-    real :: difs(imt,0:kmp1)  ! interior scalar  diffusivity (m^2/s)
+    real(r4) :: visc(imt,0:kmp1)  ! interior viscosity           (m^2/s)
+    real(r4) :: dift(imt,0:kmp1)  ! interior thermal diffusivity (m^2/s)
+    real(r4) :: difs(imt,0:kmp1)  ! interior scalar  diffusivity (m^2/s)
 
 ! local
-		integer :: ki,i
-    real :: Rrho              ! dd parameter
-    real :: diffdd            ! double diffusion diffusivity scale
-    real :: prandtl           ! prandtl number
+		integer(i4) :: ki,i
+    real(r4) :: Rrho              ! dd parameter
+    real(r4) :: diffdd            ! double diffusion diffusivity scale
+    real(r4) :: prandtl           ! prandtl number
 
     !save Rrho0,dsfmax
 
-    real, save :: Rrho0  =  2.55   ! Rp=(alpha*delT)/(beta*delS)
-    real, save :: dsfmax = 1.0e-4  ! 0.0001 m2/s = 1 cm2/s
+    real(r4), save :: Rrho0  =  2.55   ! Rp=(alpha*delT)/(beta*delS)
+    real(r4), save :: dsfmax = 1.0e-4  ! 0.0001 m2/s = 1 cm2/s
 
     do 100 ki= 1, km
 
@@ -1029,54 +1040,54 @@
 ! UTION if mixing bottoms out at hbl = -zgrid(km) THEN
 !   fictious layer kmp1 is needed with small but finite width (eg. 1.e-10)
 ! model
-    integer :: km,kmp1        ! number of vertical levels
-    integer :: imt            ! number of horizontal grid points
-    integer :: mdiff          ! number of viscosities + diffusivities
-    real :: zgrid(imt,kmp1)   ! vertical grid (<=0)               (m)
-    real :: hwide(imt,kmp1)   ! layer thicknesses                 (m)
+    integer(i4) :: km,kmp1        ! number of vertical levels
+    integer(i4) :: imt            ! number of horizontal grid points
+    integer(i4) :: mdiff          ! number of viscosities + diffusivities
+    real(r4) :: zgrid(imt,kmp1)   ! vertical grid (<=0)               (m)
+    real(r4) :: hwide(imt,kmp1)   ! layer thicknesses                 (m)
 
 ! input
-    real :: ustar(imt)        ! surface friction velocity         (m/s)
-    real :: bfsfc(imt)        ! surface buoyancy forcing        (m^2/s^3)
-    real :: hbl(imt)          ! boundary layer depth              (m)
-    real :: stable(imt)       ! = 1 in stable forcing
-    real :: caseA(imt)        ! = 1 in case A
-    real :: visc(imt,0:kmp1)  ! vertical viscosity coefficient    (m^2/s)
-    real :: difs(imt,0:kmp1)  ! vertical scalar diffusivity       (m^2/s)
-    real :: dift(imt,0:kmp1)  ! vertical temperature diffusivity  (m^2/s)
-    integer :: kbl(imt)       ! index of first grid level below hbl
+    real(r4) :: ustar(imt)        ! surface friction velocity         (m/s)
+    real(r4) :: bfsfc(imt)        ! surface buoyancy forcing        (m^2/s^3)
+    real(r4) :: hbl(imt)          ! boundary layer depth              (m)
+    real(r4) :: stable(imt)       ! = 1 in stable forcing
+    real(r4) :: caseA(imt)        ! = 1 in case A
+    real(r4) :: visc(imt,0:kmp1)  ! vertical viscosity coefficient    (m^2/s)
+    real(r4) :: difs(imt,0:kmp1)  ! vertical scalar diffusivity       (m^2/s)
+    real(r4) :: dift(imt,0:kmp1)  ! vertical temperature diffusivity  (m^2/s)
+    integer(i4) :: kbl(imt)       ! index of first grid level below hbl
 
 ! output
-    real :: gat1(imt,mdiff)
-    real :: dat1(imt,mdiff)
-    real :: dkm1(imt,mdiff)   ! boundary layer difs at kbl-1 level
-    real :: blmc(imt,km,mdiff)! boundary layer mixing coefficients(m^2/s)
-    real :: ghats(imt,km)     ! nonlocal scalar transport
+    real(r4) :: gat1(imt,mdiff)
+    real(r4) :: dat1(imt,mdiff)
+    real(r4) :: dkm1(imt,mdiff)   ! boundary layer difs at kbl-1 level
+    real(r4) :: blmc(imt,km,mdiff)! boundary layer mixing coefficients(m^2/s)
+    real(r4) :: ghats(imt,km)     ! nonlocal scalar transport
 
 !  local
-    real :: sigma(imt)        ! normalized depth (d / hbl)
-    real :: ws(imt), wm(imt)  ! turbulent velocity scales         (m/s)
+    real(r4) :: sigma(imt)        ! normalized depth (d / hbl)
+    real(r4) :: ws(imt), wm(imt)  ! turbulent velocity scales         (m/s)
 
     !save epsln,epsilon,c1,am,cm,c2,zetam,as,cs,c3,zetas, &
     !cstar,grav,vonk
 
-    real, save :: epsln =  1.0e-20
-    real, save :: epsilon =  0.1
-    real, save :: c1 =  5.0
-    real, save :: am = 1.257
-    real, save :: cm = 8.380
-    real, save :: c2 = 16.0
-    real, save :: zetam = - 0.2
-    real, save :: as = -28.86
-    real, save :: cs = 98.96
-    real, save :: c3 = 16.0
-    real, save :: zetas = - 1.0
-    real, save :: cstar = 5.
-    real, save :: grav = 9.816
-    real, save :: vonk = 0.40
+    real(r4), save :: epsln =  1.0e-20
+    real(r4), save :: epsilon =  0.1
+    real(r4), save :: c1 =  5.0
+    real(r4), save :: am = 1.257
+    real(r4), save :: cm = 8.380
+    real(r4), save :: c2 = 16.0
+    real(r4), save :: zetam = - 0.2
+    real(r4), save :: as = -28.86
+    real(r4), save :: cs = 98.96
+    real(r4), save :: c3 = 16.0
+    real(r4), save :: zetas = - 1.0
+    real(r4), save :: cstar = 5.
+    real(r4), save :: grav = 9.816
+    real(r4), save :: vonk = 0.40
 
-		integer :: ki, i,kn
-		real :: cg,delhat,R,dvdzup,dvdzdn,viscp,difsp,diftp,visch,difsh, &
+		integer(i4) :: ki, i,kn
+		real(r4) :: cg,delhat,R,dvdzup,dvdzdn,viscp,difsp,diftp,visch,difsh, &
 			difth,f1,sig,a1,a2,a3,Gm,Gs,Gt
 
 
@@ -1209,28 +1220,28 @@
 		implicit none
 
 ! input
-    integer :: km,kmp1        ! number of vertical levels
-    integer :: imt            ! number of horizontal grid points
-    integer :: mdiff          ! number of viscosities + diffusivities
-    integer :: kbl(imt)       ! grid above hbl
-    real :: hbl(imt)          ! boundary layer depth             (m)
-    real :: dkm1(imt,mdiff)   ! bl diffusivity at kbl-1 grid level
-    real :: zgrid(imt,kmp1)   ! vertical grid (<= 0)             (m)
-    real :: visc(imt,0:kmp1)  ! enhanced viscosity               (m^2/s)
-    real :: difs(imt,0:kmp1)  ! enhanced thermal diffusivity     (m^2/s)
-    real :: dift(imt,0:kmp1)  ! enhanced scalar  diffusivity     (m^2/s)
-    real :: caseA(imt)        ! = 1 in caseA, = 0 in case B
+    integer(i4) :: km,kmp1        ! number of vertical levels
+    integer(i4) :: imt            ! number of horizontal grid points
+    integer(i4) :: mdiff          ! number of viscosities + diffusivities
+    integer(i4) :: kbl(imt)       ! grid above hbl
+    real(r4) :: hbl(imt)          ! boundary layer depth             (m)
+    real(r4) :: dkm1(imt,mdiff)   ! bl diffusivity at kbl-1 grid level
+    real(r4) :: zgrid(imt,kmp1)   ! vertical grid (<= 0)             (m)
+    real(r4) :: visc(imt,0:kmp1)  ! enhanced viscosity               (m^2/s)
+    real(r4) :: difs(imt,0:kmp1)  ! enhanced thermal diffusivity     (m^2/s)
+    real(r4) :: dift(imt,0:kmp1)  ! enhanced scalar  diffusivity     (m^2/s)
+    real(r4) :: caseA(imt)        ! = 1 in caseA, = 0 in case B
 
 ! input/output
-    real :: ghats(imt,km)     ! nonlocal transport               (s/m**2)
+    real(r4) :: ghats(imt,km)     ! nonlocal transport               (s/m**2)
 !                              modified ghats at kbl(i)-1 interface
 ! output
-    real :: blmc(imt,km,mdiff)! enhanced bound. layer mixing coeff.
+    real(r4) :: blmc(imt,km,mdiff)! enhanced bound. layer mixing coeff.
 
 ! local
-		integer :: ki,i
-		real :: dkmp5,dstar
-    real :: delta             ! fraction hbl lies beteen zgrid neighbors
+		integer(i4) :: ki,i
+		real(r4) :: dkmp5,dstar
+    real(r4) :: delta             ! fraction hbl lies beteen zgrid neighbors
 
 
     do 100 ki=1,km-1
@@ -1263,3 +1274,89 @@
     end subroutine enhance
 
 !***********************************************************************
+
+    subroutine swfrac( imt, fact, z, jwtype, swdk )
+!     compute fraction of solar short-wave flux penetrating to specified
+!     depth (times fact) due to exponential decay in  Jerlov water type
+!     reference : two band solar absorption model of simpson and
+!     paulson (1977)
+
+    implicit none
+    integer(i4), parameter :: nwtype = 5
+
+!  model
+    integer(i4) :: imt         ! number of horizontal grid points
+
+!  input
+    real(r4) :: fact           ! scale  factor to apply to depth array
+    real(r4) :: z         ! vertical height ( <0.) for desired sw
+!                           fraction                                 (m)
+    integer(i4) :: jwtype ! index for jerlov water type
+
+!  output
+    real(r4) :: swdk      !  short wave (radiation) fractional decay
+
+!  local
+!     jerlov water type :  I       IA      IB      II      III
+!                jwtype    1       2       3       4       5
+
+    integer(i4) :: i
+    real(r4), save :: rfac(nwtype) = (/  0.58 ,  0.62 ,  0.67 ,  0.77 ,  0.78 /)
+    real(r4), save :: a1(nwtype) = (/  0.35 ,  0.6  ,  1.0  ,  1.5  ,  1.4  /)
+    real(r4), save :: a2(nwtype) = (/ 23.0  , 20.0  , 17.0  , 14.0  ,  7.9  /)
+
+    do 100 i = 1,imt
+
+        swdk =      rfac(jwtype)  * exp(z*fact/a1(jwtype)) &
+        + (1.-rfac(jwtype)) * exp(z*fact/a2(jwtype))
+
+    100 END DO
+
+    return
+    end subroutine swfrac
+
+
+!********************************************************************
+
+!********************************************************************
+    subroutine swfrac_imt( imt, fact, z, jwtype, swdk )
+!     compute fraction of solar short-wave flux penetrating to specified
+!     depth (times fact) due to exponential decay in  Jerlov water type
+!     reference : two band solar absorption model of simpson and
+!     paulson (1977)
+
+    implicit none
+    integer(i4), parameter :: nwtype = 5
+
+!  model
+    integer(i4) :: imt         ! number of horizontal grid points
+
+!  input
+    real(r4) :: fact           ! scale  factor to apply to depth array
+    real(r4) :: z(imt)         ! vertical height ( <0.) for desired sw
+!                           fraction                                 (m)
+    integer(i4) :: jwtype(imt) ! index for jerlov water type
+
+!  output
+    real(r4) :: swdk(imt)      !  short wave (radiation) fractional decay
+
+!  local
+!     jerlov water type :  I       IA      IB      II      III
+!                jwtype    1       2       3       4       5
+
+    integer(i4) :: i
+    real(r4), save :: rfac(nwtype) = (/  0.58 ,  0.62 ,  0.67 ,  0.77 ,  0.78 /)
+    real(r4), save :: a1(nwtype) = (/  0.35 ,  0.6  ,  1.0  ,  1.5  ,  1.4  /)
+    real(r4), save :: a2(nwtype) = (/ 23.0  , 20.0  , 17.0  , 14.0  ,  7.9  /)
+
+    do 100 i = 1,imt
+
+        swdk(i) =      rfac(jwtype(i))  * exp(z(i)*fact/a1(jwtype(i))) &
+        + (1.-rfac(jwtype(i))) * exp(z(i)*fact/a2(jwtype(i)))
+
+    100 END DO
+
+    return
+    end subroutine swfrac_imt
+
+end module kei_kpp

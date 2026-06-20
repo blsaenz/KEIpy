@@ -1,0 +1,45 @@
+# Build ``f90/kei``: ``make -C f90 kei`` (see ``f90/Makefile``).
+#
+# Python >= 3.12: NumPy f2py uses Meson. Fortran + LAPACK binaries (``openblas``, ``compilers``)
+# are not published on PyPI; you should use conda-forge to install them with miniforge/mamba or micromamba:
+#   environment.yml
+# Typical one-liner (conda-forge only):
+#   mamba install --override-channels -c conda-forge compilers liblapack meson ninja charset-normalizer
+# Then just run from code or ``pip install -e .``
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "keipy"
+version = "0.9.0"
+requires-python = ">=3.11"
+description = "KPP-Ecosystem-Ice (KEI) Python driver and Fortran bindings"
+
+[project.optional-dependencies]
+# Pip-installed dev tools only. Fortran toolchain / OpenBLAS / Meson: see ``environment.yml``.
+dev = [
+  "pytest>=7",
+]
+yaml = [
+  "pyyaml>=6",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["keipy*", "f90*"]
+
+[tool.setuptools.package-data]
+keipy = ["kei_runtime_params.yml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = [
+  "fortran: needs compiled `f90.kei` extension",
+  "slow: long integration tests",
+]
+filterwarnings = [
+  "ignore::DeprecationWarning",
+]
