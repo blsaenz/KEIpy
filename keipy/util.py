@@ -515,6 +515,9 @@ def compile_ERA5_met():
     data['tp'][data['tp']<0.0] = 0.0
 
     kdata = {}
+    # ERA5 stores radiation as hourly accumulated integrals (J/m²); divide by
+    # 3600 s/hr to convert to mean flux (W/m²).  This 3600 is the ERA5 data
+    # accumulation period, NOT the model timestep — it is correct regardless of dtsec.
     kdata['qlwdwn'] = ds_irad['strd'][:,yi,xi].values/3600.0
     kdata['qswins'] = ds_irad['ssrd'][:,yi,xi].values/3600.0
     kdata['qlwdwn'][kdata['qlwdwn']<0.0] = 0.0
@@ -524,6 +527,7 @@ def compile_ERA5_met():
         kk = kei_vars[i]
         if k == 'tp':
             # prain == tp - snow
+            # ERA5 tp is hourly accumulated (m); /3600 → m/s, *1000 → mm/s (kg/m²/s)
             kdata[kk] = np.maximum(0.0,data['tp']/3600.0*1000.0 - data['msr'])
         elif k == 'd2m':
             # convert dewpoint to specififc humidity, I think

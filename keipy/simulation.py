@@ -232,11 +232,23 @@ def _matlab_day_hour_from_f_time(f_time_da):
 def load_forcing(nc_file=None, f_dict={}, start_date=None, freq=None, legacy_nc=False):
     '''Reads and assembles forcing data into an XArray dataset for use with Simulation.
 
-    All variables fed into this function should be 1D numpy arrays, except those
-    that come from reading a netcdf file.
-
-    f_time must be a pandas/xarray time series.
-    Currently, all forcing vars must have similar timing.
+    Parameters
+    ----------
+    nc_file : str, optional
+        Path to a NetCDF forcing file.
+    f_dict : dict, optional
+        Dict of numpy arrays keyed by variable name (alternative to nc_file).
+    start_date : str, optional
+        ISO date string for the first forcing record (required for legacy_nc).
+    freq : str, optional
+        Pandas/xarray frequency string for the forcing data's *native* time axis
+        (e.g. ``'h'`` for 1-hour data, ``'3h'`` for 3-hour data).  This describes
+        the **source data** sampling interval, not the model timestep.  The model
+        will resample forcing to ``dtsec`` resolution via interpolation during
+        ``Simulation.compute()``.  Required for ``legacy_nc=True``.
+    legacy_nc : bool
+        If True, reconstruct ``f_time`` from ``start_date`` + ``freq`` (for
+        NetCDF files that store forcing as plain arrays without a time axis).
     '''
 
     if nc_file is not None:
@@ -586,7 +598,22 @@ class Simulation(object):
 
         self.validate_forcing(self.F0)
 
-        dt_str = '%is' % int(round(_resample_dt_seconds(kei)))
+        # Round to integer seconds: get_data_real returns REAL(r4) so 3600.0
+        # can come back as 3600.00048828125; rounding removes that imprecision.
+        dtsec_val = round(_resample_dt_seconds(kei))
+        _dt = self.F0['f_time'].values[1] - self.F0['f_time'].values[0]
+        if hasattr(_dt, 'total_seconds'):
+            _f0_dt_s = _dt.total_seconds()           # Python/cftime timedelta
+        else:
+            _f0_dt_s = float(_dt / np.timedelta64(1, 's'))  # numpy timedelta64
+        if _f0_dt_s > 0 and dtsec_val > _f0_dt_s:
+            raise ValueError(
+                f'dtsec ({dtsec_val:.0f} s) exceeds the forcing data interval '
+                f'({_f0_dt_s:.0f} s). The model interpolates forcing to dtsec '
+                f'resolution but cannot extrapolate beyond the source data. '
+                f'Lower dtsec or provide higher-resolution forcing.'
+            )
+        dt_str = '%is' % int(round(dtsec_val))
         Finterp = self.F0[list(forcing_idx.keys()) + ['f_time']]
         Finterp = Finterp.sel(f_time=slice(self.t_start, self.t_end))
         Finterp = Finterp.resample({'f_time': dt_str}).interpolate()

@@ -642,6 +642,9 @@ CONTAINS
 !-----------------------------------------------------------------------
 
 
+      ! Only allocate once; arrays persist in module memory across simulations in the same process.
+      ! imt=jmt=1 always in KEIPy so reusing the same allocation is safe.
+      if (.not. allocated(SCHMIDT_O2_tavg)) then
       allocate( &
          SCHMIDT_O2_tavg(imt,jmt), &
          XKW_tavg(imt,jmt),             AP_tavg(imt,jmt), &
@@ -684,6 +687,7 @@ CONTAINS
          photoFe_diat_tavg(imt,jmt),    photoFe_sp_tavg(imt,jmt), &
          FvPE_DIC_tavg(imt,jmt),        FvPE_ALK_tavg(imt,jmt), &
          NITRIF_tavg(imt,jmt),          DENITRIF_tavg(imt,jmt))
+      end if  ! .not. allocated(SCHMIDT_O2_tavg)
 
       cnt = 0
 

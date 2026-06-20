@@ -2,7 +2,7 @@
 # Top-level keys name the Fortran module under ``kei`` (``kei_common``, ``ice_common`` → ``kei_icecommon``, etc.).
 
 kei_common:
-  # dtsec: 3600.0  # time step [s], dtsec must be 3600.0 until further updates are made to the code
+  dtsec: 3600.0  # model timestep [s]; must be <= forcing data interval (model interpolates forcing to dtsec resolution)
   lice: 1  # sea-ice model; 1 = use, 0 = disabled in calcs
   leco: 1  # ecosystem model; 1 = use, 0 = disabled in calcs
   lsw: 0  # seaweed model (gMACMODS); 1 = use, 0 = disabled in calcs

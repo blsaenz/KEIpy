@@ -43,6 +43,8 @@ def _todict(matobj):
     return dict
 
 def kei_dn(k,start_yr):
+    # Legacy reader for old MATLAB/pre-xarray NetCDF output — assumes 1-hour timestep.
+    # Not used by the current xarray-based output pipeline (which carries explicit f_time).
     td = datetime.timedelta(hours=1)
     dt = datetime.datetime(start_yr,1,1) + datetime.timedelta(days=k['day'][0])
     dtt = [dt+td*i for i in range(len(k['day']))]

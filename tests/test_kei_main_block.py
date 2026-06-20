@@ -107,7 +107,7 @@ def _run_main_block_workflow(out_base: Path) -> tuple[Path, Path]:
     k.compute(
         str(out_base),
         run_name="test_output",
-        yaml_overrides={"kei_common": {"lsw": 1}},
+        yaml_overrides={},  # lsw is untested; use YAML defaults (lsw=0)
     )
 
     run_dirs = sorted(out_base.glob("test_output_*"))
