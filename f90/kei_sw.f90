@@ -3,9 +3,8 @@ MODULE kei_sw
   use kei_kinds, only: i4, r4, r8, log_kind
     use kei_parameters
     use kei_common
-    use macmods_kinds_mod
-    use macmods_param_mod
-    use macmods_mod
+    use kei_ecocommon, only: imt, jmt  ! IMT/JMT previously supplied by macmods_param_mod
+    ! macmods_kinds_mod, macmods_param_mod, macmods_mod removed — MACMODS not distributed
 
     use kei_ecocommon, only :  po4_ind,  & ! dissolved inorganic phosphate
       no3_ind     ,  & ! dissolved inorganic nitrate
@@ -52,7 +51,11 @@ MODULE kei_sw
 
     SUBROUTINE sw_init()
 
-        CALL macmods_init(.false.) ! read the param file
+        ! MACMODS seaweed module is not available in this build (lsw must be .false.).
+        if (lsw) then
+            write(*,*) 'ERROR: MACMODS seaweed module (lsw=.true.) is not available in this build. Set lsw=0.'
+            stop 1
+        end if
         sw_i = -1
 
     END SUBROUTINE sw_init
@@ -65,7 +68,8 @@ MODULE kei_sw
         real(kind=r8) :: depth
         integer(i4) :: i
 
-        call macmods_get_depth(doy,depth)
+        !MACMODS: call macmods_get_depth(doy,depth)
+        depth = 0.0_r8  ! placeholder; unreachable when lsw=0
         do i=0,NZ
             if (depth < dm(i)) then
                 exit
@@ -90,7 +94,7 @@ MODULE kei_sw
         ! This is important. zero stuff, since we will do accounting and store/write the block
         ! at every step.
         ! -------------------------------------------------------
-        CALL macmods_zero_outputs()
+        !MACMODS: CALL macmods_zero_outputs()
 
         ! find (and store) current depth/grid index of seaweed
         ! for very long kelps, this could be modified to maybe use the max of
@@ -102,65 +106,66 @@ MODULE kei_sw
         endif
 
         sw_lat = dlat
-        CALL macmods_set_forcing('lat',sw_lat) ! degrees latitude
+        !MACMODS: CALL macmods_set_forcing('lat',sw_lat)
         sw_lon = dlon
-        CALL macmods_set_forcing('lon',sw_lon) ! degrees longitude
+        !MACMODS: CALL macmods_set_forcing('lon',sw_lon)
 
         !f_values = X(sw_i,2) + Sref ! don't forget that salinity is not salinity w/out Sref...
-        !CALL macmods_set_forcing('sss',f_values)
+        !MACMODS: CALL macmods_set_forcing('sss',f_values)
         sw_sst = X(sw_i,1)
-        CALL macmods_set_forcing('sst',sw_sst)  ! sea (surface) temperature - legacy name, will be at whatever depth assigned
+        !MACMODS: CALL macmods_set_forcing('sst',sw_sst)
 
         !sw_chl = X(sw_i, Xoffset + diatChl_ind) &
         !           + X(sw_i, Xoffset + diazChl_ind) &
         !           + X(sw_i, Xoffset + spChl_ind)
         ! instead of above, we are using direct par_phyto from ecosys, for consistency
         sw_chl = -1.0 ! set to negative, and macmods_calc will assume par is at depth
-        CALL macmods_set_forcing('chl',sw_chl)  ! phytoplankton chloropyll-a, used for attenuating light at depth, if enabled
+        !MACMODS: CALL macmods_set_forcing('chl',sw_chl)
         sw_par = par_phyto(sw_i)
-        CALL macmods_set_forcing('par',sw_par)  ! photosyntheticaly active radiation (W)
+        !MACMODS: CALL macmods_set_forcing('par',sw_par)
 
         ! these are going to have to come from forcing or invented by KEI based on winds over time?
         sw_swh = swh_in
-        CALL macmods_set_forcing('swh',sw_swh)  ! swell height (m)
+        !MACMODS: CALL macmods_set_forcing('swh',sw_swh)
         sw_mwp = mwp_in
-        CALL macmods_set_forcing('mwp',sw_mwp)  ! mean wave period (s)
+        !MACMODS: CALL macmods_set_forcing('mwp',sw_mwp)
         sw_cmag = cmag_in
-        CALL macmods_set_forcing('cmag',sw_cmag)  ! current magnitude (m/s)
+        !MACMODS: CALL macmods_set_forcing('cmag',sw_cmag)
 
         ! don't use nflux
         !nflux, &  ! maximum vertical NO3-flux at 100m, if used
 
         ! nutrients from ecosys tracers
         sw_no3_ = X(sw_i, Xoffset + no3_ind)
-        CALL macmods_set_forcing('no3',sw_no3_)  ! ambient Nitrate (mmol/m3)
+        !MACMODS: CALL macmods_set_forcing('no3',sw_no3_)
         sw_nh4_ = X(sw_i, Xoffset + nh4_ind)
-        CALL macmods_set_forcing('nh4',sw_nh4_)  ! ambient ammonia (mmol/m3)
+        !MACMODS: CALL macmods_set_forcing('nh4',sw_nh4_)
         sw_po4_ = X(sw_i, Xoffset + po4_ind)
-        CALL macmods_set_forcing('po4',sw_po4_)  ! ambient Nitrate (mmol/m3)
+        !MACMODS: CALL macmods_set_forcing('po4',sw_po4_)
         sw_fe_ = X(sw_i, Xoffset + fe_ind)
-        CALL macmods_set_forcing('fe',sw_fe_)   ! ambient bioavailable iron (mmol/m3)
+        !MACMODS: CALL macmods_set_forcing('fe',sw_fe_)
 
         ! COMPUTE
-        CALL macmods_tendency_compute(dtday,doy)
+        !MACMODS: CALL macmods_tendency_compute(dtday,doy)
 
         ! a guess at absorption from sw biomass?
         ! Currently heat and PAR are calculated differently ... start by
         ! passing this into ecosystem model, but this and chl-a should be incorporated
         ! info sw_frac in kei_ocn soon...  Maybe some fraction should be reflected/disappeared?
-        sw_absorp = macmods_get_output_1(mo_d_B,1,1) / 50._r8
+        !MACMODS: sw_absorp = macmods_get_output_1(mo_d_B,1,1) / 50._r8
+        sw_absorp = 0.0_r8
 
         ! APPLY TENDENCIES
-        X(sw_i, Xoffset + dic_ind) = X(sw_i, Xoffset + dic_ind) + macmods_get_output_1(mo_d_DIC,1,1)
-        X(sw_i, Xoffset + nh4_ind) = X(sw_i, Xoffset + nh4_ind) + macmods_get_output_1(mo_d_NH4,1,1)
-        X(sw_i, Xoffset + no3_ind) = X(sw_i, Xoffset + no3_ind) + macmods_get_output_1(mo_d_NO3,1,1)
-        X(sw_i, Xoffset + po4_ind) = X(sw_i, Xoffset + po4_ind) + macmods_get_output_1(mo_d_PO4,1,1)
-        X(sw_i, Xoffset + fe_ind) = X(sw_i, Xoffset + fe_ind) + macmods_get_output_1(mo_d_Fe,1,1)
+        !MACMODS: X(sw_i, Xoffset + dic_ind)  = X(sw_i, Xoffset + dic_ind)  + macmods_get_output_1(mo_d_DIC,1,1)
+        !MACMODS: X(sw_i, Xoffset + nh4_ind)  = X(sw_i, Xoffset + nh4_ind)  + macmods_get_output_1(mo_d_NH4,1,1)
+        !MACMODS: X(sw_i, Xoffset + no3_ind)  = X(sw_i, Xoffset + no3_ind)  + macmods_get_output_1(mo_d_NO3,1,1)
+        !MACMODS: X(sw_i, Xoffset + po4_ind)  = X(sw_i, Xoffset + po4_ind)  + macmods_get_output_1(mo_d_PO4,1,1)
+        !MACMODS: X(sw_i, Xoffset + fe_ind)   = X(sw_i, Xoffset + fe_ind)   + macmods_get_output_1(mo_d_Fe,1,1)
         !X(sw_i, Xoffset + poc_ind) = X(sw_i, Xoffset + poc_ind) + tend_POC = c0 ! need POC input to ecosys
-        X(sw_i, Xoffset + doc_ind) = X(sw_i, Xoffset + doc_ind) + macmods_get_output_1(mo_d_DOC,1,1)
-        X(sw_i, Xoffset + don_ind) = X(sw_i, Xoffset + don_ind) + macmods_get_output_1(mo_d_DON,1,1)
-        X(sw_i, Xoffset + dofe_ind) = X(sw_i, Xoffset + dofe_ind) + macmods_get_output_1(mo_d_DOFe,1,1)
-        X(sw_i, Xoffset + o2_ind) = X(sw_i, Xoffset + o2_ind) + macmods_get_output_1(mo_d_O2,1,1)
+        !MACMODS: X(sw_i, Xoffset + doc_ind)  = X(sw_i, Xoffset + doc_ind)  + macmods_get_output_1(mo_d_DOC,1,1)
+        !MACMODS: X(sw_i, Xoffset + don_ind)  = X(sw_i, Xoffset + don_ind)  + macmods_get_output_1(mo_d_DON,1,1)
+        !MACMODS: X(sw_i, Xoffset + dofe_ind) = X(sw_i, Xoffset + dofe_ind) + macmods_get_output_1(mo_d_DOFe,1,1)
+        !MACMODS: X(sw_i, Xoffset + o2_ind)   = X(sw_i, Xoffset + o2_ind)   + macmods_get_output_1(mo_d_O2,1,1)
 
     END SUBROUTINE kei_sw_step
 
@@ -171,8 +176,8 @@ MODULE kei_sw
 
       real(kind=r8), dimension(n_sw_output), intent(inout) :: output_array
 
-      ! moved to block copy using get-subroutines
-      CALL macmods_get_output_block_1(output_array,1,1)
+      !MACMODS: CALL macmods_get_output_block_1(output_array,1,1)
+      output_array = 0.0_r8  ! placeholder; unreachable when lsw=0
 
     END SUBROUTINE sw_get_outputs
 

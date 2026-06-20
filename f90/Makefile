@@ -121,8 +121,9 @@ OBJ1D_F2PY := $(filter-out kei_ecocommon.o,$(OBJ1D))
 
 F901D  := kei_parameters.f90 kei_common.f90 kei_icecommon.f90 kei_ecocommon.f90 kei_link.f90
 
-MACMODS_OBJ := macmods_mod.o macmods_param_mod.o macmods_kinds_mod.o \
-  macmods_util_mod.o macmods_calc.o
+# MACMODS_OBJ removed — MACMODS seaweed source not distributed
+# MACMODS_OBJ := macmods_mod.o macmods_param_mod.o macmods_kinds_mod.o \
+#   macmods_util_mod.o macmods_calc.o
 
 # Meson f2py compiles listed .f90 in a temp dir; prebuilt $(OBJ1D) do not expose .mod there.
 # GNU Fortran searches -I paths for module files built by ``make kei`` prerequisites in this dir.
@@ -139,7 +140,7 @@ FFLAGS :=  $(BUG)
 kei: $(OBJ1D)
 # Non-conda: Accelerate inside ``--f90flags`` and numpy ``--link-lapack_opt``. Conda: ``F2PY_EXT_LIBS``.
 	$(PYTHON) -m numpy.f2py -c --f90exec="gfortran" --f90flags="$(FFLAGS) $(LAPACK_F90_PY) $(F2PY_F90_MOD_INC)" \
-		$(F2PY_EXT_LIBS) $(F2PY_LINK_LAPACK) $(OBJ1D_F2PY) $(F901D) $(MACMODS_OBJ) -m kei
+		$(F2PY_EXT_LIBS) $(F2PY_LINK_LAPACK) $(OBJ1D_F2PY) $(F901D) -m kei
 
 # compile routines
 kei_fluxes.o: kei_hacks.o
@@ -190,18 +191,19 @@ kei_kinds.o	: kei_kinds.f90
 siesta_constants.o	: kei_kinds.o
 	$(FC) -c $(FFLAGS) siesta_constants.f90
 
-kei_sw.o	: $(MACMODS_OBJ)
+kei_sw.o	: kei_ecocommon.o
 	$(FC) -c $(FFLAGS) kei_sw.f90
-macmods_mod.o    : macmods_param_mod.o macmods_kinds_mod.o macmods_util_mod.o macmods_calc.o
-	$(FC) -c $(FFLAGS) macmods_mod.f90
-macmods_calc.o    : macmods_param_mod.o macmods_kinds_mod.o macmods_util_mod.o
-	$(FC) -c $(FFLAGS) macmods_calc.f90
-macmods_util_mod.o    : macmods_param_mod.o macmods_kinds_mod.o
-	$(FC) -c $(FFLAGS) macmods_util_mod.f90
-macmods_param_mod.o    : macmods_kinds_mod.o
-	$(FC) -c $(FFLAGS) macmods_param_mod.f90
-macmods_kinds_mod.o    : kei_kinds.o
-	$(FC) -c $(FFLAGS) macmods_kinds_mod.f90
+# MACMODS build rules removed — source not distributed
+# macmods_mod.o    : macmods_param_mod.o macmods_kinds_mod.o macmods_util_mod.o macmods_calc.o
+# 	$(FC) -c $(FFLAGS) macmods_mod.f90
+# macmods_calc.o    : macmods_param_mod.o macmods_kinds_mod.o macmods_util_mod.o
+# 	$(FC) -c $(FFLAGS) macmods_calc.f90
+# macmods_util_mod.o    : macmods_param_mod.o macmods_kinds_mod.o
+# 	$(FC) -c $(FFLAGS) macmods_util_mod.f90
+# macmods_param_mod.o    : macmods_kinds_mod.o
+# 	$(FC) -c $(FFLAGS) macmods_param_mod.f90
+# macmods_kinds_mod.o    : kei_kinds.o
+# 	$(FC) -c $(FFLAGS) macmods_kinds_mod.f90
 
 #	-------
 #	CLEANUP
