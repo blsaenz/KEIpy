@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/blsaenz/Projects/git/KEIPy/keipy/**)",
+      "Read(//Users/blsaenz/Projects/git/KEIPy/tests/**)",
+      "Read(//Users/blsaenz/Projects/git/KEIPy/examples/WAP_LTER/**)"
+    ],
+    "additionalDirectories": [
+      "/Users/blsaenz/Projects/git/KEIPy/tests",
+      "/Users/blsaenz/Projects/git/KEIPy/keipy"
+    ]
+  }
+}

@@ -64,10 +64,10 @@ def _env_digest_for_comparison() -> str:
 
 
 def _run_main_block_workflow(out_base: Path) -> tuple[Path, Path]:
-    """Mirror ``kei.py`` __main__: MACMODS forcing fields + short date range."""
-    import kei as keipy
+    """Mirror ``examples/WAP_LTER.py``: MACMODS forcing fields + short date range."""
+    import keipy
 
-    if keipy.kei is None:
+    if not keipy.kei_available():
         pytest.skip(
             "Fortran extension missing — build with `make -C f90 kei` for this environment."
         )
@@ -77,24 +77,33 @@ def _run_main_block_workflow(out_base: Path) -> tuple[Path, Path]:
     if not _REF_NC.is_file():
         pytest.skip(f"Reference NetCDF not found: {_REF_NC}")
 
-    kf_ds = keipy.kei_forcing(
+    kf_ds = keipy.load_forcing(
         nc_file=str(_INPUT_NC),
         start_date="2000-01-01",
         freq="h",
         legacy_nc=True,
     )
     f_time_dim = kf_ds.sizes["f_time"]
-    kf_ds["swh"] = ("f_time"), np.full(f_time_dim, 0.5)
-    kf_ds["mwp"] = ("f_time"), np.full(f_time_dim, 30.0)
+    nz_dim = kf_ds.sizes["zm"]
+
+    # Seaweed module
+    kf_ds["swh"]  = ("f_time"), np.full(f_time_dim, 0.5)
+    kf_ds["mwp"]  = ("f_time"), np.full(f_time_dim, 30.0)
     kf_ds["cmag"] = ("f_time"), np.full(f_time_dim, 0.05)
 
-    k = keipy.kei_simulation(
+    # Plan C: iron forcing fields (absent from legacy NC)
+    kf_ds["runoff"] = ("f_time"), np.zeros(f_time_dim, dtype=np.float32)
+    kf_ds["icefe"]  = ("f_time"), np.zeros(f_time_dim, dtype=np.float32)
+
+    # Plan B: POC initial condition (absent from legacy NC)
+    kf_ds["POC"] = ("zm"), np.zeros(nz_dim, dtype=np.float32)
+
+    k = keipy.Simulation(
         kf_ds,
         t_start="2000-01-15",
         t_end="2000-02-15",
     )
     out_base.mkdir(parents=True, exist_ok=True)
-    k.apply_runtime_yaml('kei_runtime_params.yml')
     k.compute(
         str(out_base),
         run_name="test_output",

@@ -21,7 +21,7 @@ def test_exposed_parameter_block(fortran_kei):
     # Match `f90/kei_parameters.f90` compile-time values
     assert int(params.nz) == 400
     assert int(params.nvel) == 2
-    assert int(params.nsclr) == 2 + 24
+    assert int(params.nsclr) == 2 + 25
 
 
 @pytest.mark.fortran

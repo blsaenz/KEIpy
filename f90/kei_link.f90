@@ -16,9 +16,7 @@
 !!!                        that greatly facilite use of KEI are MATLAB-based)!!!
 !!!
 !!!     Much of the original input/output code and options from the 1990s have been
-!!!     removed in favor of standardizing on netcdf input/output files.  Some of the
-!!!     code is still probably adaptable - contact Ben Saenz (blsaenz@gmail.com)
-!!!     for older copies and more information.
+!!!     removed in favor of standardizing on netcdf input/output files.
 !!!
 !!!     As of Dec 2013, the atmospheric transfer model and coupling functionality
 !!!     are unknown/likely broken. Currently the model is only being forced
@@ -34,9 +32,9 @@
 !!!                 Apr 17      , jan : implicit integration
 !!!                 Apr 27      , jan : include biology
 !!!                 Jul 20      , jan : new restart from memory dump
-!!!                 Nov 94      , wgl : for new KPP numerics
-!!!                 Jun 04      , wgl : dgm ice model
-!!!                 Dec 13      , BLS : Converted to Fortran 90,
+!!!                 Nov    1994 , wgl : for new KPP numerics
+!!!                 Jun    2004 , wgl : dgm ice model
+!!!                 Dec    2013 , BLS : Converted to Fortran 90,
 !!!                                     SIESTA (Saenz and Arrigo 2012,2014) ice model,
 !!!                                     netcdf data input/output, Los Alamos
 !!!                                     CICE atmospheric/ocean interaction,

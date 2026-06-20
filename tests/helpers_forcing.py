@@ -5,14 +5,11 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-import kei_util as util
+import keipy.util as util
 
 
 def minimal_forcing_dict(*, nz: int = 48, nt: int = 4) -> dict:
-    """Build `f_dict` suitable for `kei.kei_forcing(..., f_dict=...)`.
-
-    Layer midpoints follow KEI convention: negative downward (ocean).
-    """
+    """Build ``f_dict`` suitable for ``keipy.load_forcing(..., f_dict=...)``."""
 
     zm = -np.linspace(1.0, float(nz), nz, dtype=np.float32)
     f_time = pd.date_range("2000-01-01", periods=nt, freq="h")

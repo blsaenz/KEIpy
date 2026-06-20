@@ -1,4 +1,4 @@
-"""Lightweight checks for `kei_util` data structures."""
+"""Lightweight checks for ``keipy.util`` data structures."""
 
 from __future__ import annotations
 
@@ -6,13 +6,13 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-import kei_util as u
+import keipy.util as u
 
 
 def test_forcing_index_alignment():
     """Indices must stay consistent with the Fortran packing order."""
     keys = list(u.forcing_idx.keys())
-    assert len(keys) == 19
+    assert len(keys) == 21
     for i, k in enumerate(keys):
         assert u.forcing_idx[k] == i
 
