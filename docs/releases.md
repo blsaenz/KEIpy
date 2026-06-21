@@ -14,7 +14,7 @@
 ### 2026-06-19: Changes ported from `archive/Czajka_et_al_WAP` and adapted to the `feature/py313` architecture.
 
 ### 2026-05-01: `feature/py313` developed that support build changes and numpy changes in f2py from python >=3.12.
-  - This is breaking change, in the sense that the setup, build, and packaging are different that pervious verions. The underslying model is unchanged.
+  - This is breaking change, in the sense that the setup, build, and packaging are different that previous verions. The underlying KEI model is unchanged.
 
 
 ## v1.1.0: `archive/Czajka_et_al_WAP` - Archive of version used for Czajka et al. 2026 (https://onlinelibrary.wiley.com/doi/abs/10.1029/2025JG009428)
