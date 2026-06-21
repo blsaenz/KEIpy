@@ -63,6 +63,4 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 sim.compute(
     str(OUTPUT_DIR),
     run_name=RUN_NAME,
-    # Uncomment to enable seaweed:
-    # yaml_overrides={'kei_common': {'lsw': 1}},
 )
