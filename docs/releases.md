@@ -6,6 +6,12 @@
 
 ## Current main
 
+### 2026-10-30: Fix surface air-sea gas flux (CO2, O2) applied without top-layer thickness.
+  - This changes results for DIC and O2 (and anything coupled to them).
+  - `ecosys_set_sflux` returns surface fluxes in nmol/cm^2/s, but `ecosys_step` added them to the top-layer tracer as if they were tendencies (nmol/cm^3/s), omitting the 1/dz factor. For a 1 m top layer the air-sea gas tendency was ~100x too large, effectively pinning surface DIC/O2 near equilibrium each step (the O2 saturation clamp masked this for O2). The update now multiplies by `dzr_eco(1)`.
+  - WAP test case (2000-01-15 to 2000-02-15): column DIC change was ~100x the reported `FG_CO2`; after the fix the column change equals integrated `FG_CO2` plus biology. T, ALK, NO3 (the reference-test variables) are unchanged.
+  - Note: `FG_CO2` output is in nmol/cm^2/s (multiply by 0.01 for mmol/m^2/s), not the mmol C m-2 s-1 given in its metadata.
+
 ### 2026-06-20: Python package refactored for proper pip installation, classes renamed, enabled variable time step.
   - This is a breaking change
   - Now the basic usage classes, after installation (see installation.md), are avaiable as: keipy.load_forcing and keipy.Simulation
