@@ -445,8 +445,10 @@ CONTAINS
 
 
            ! update surface tracers, just once since kpp is not 3D
+           ! STF is a surface flux (nmol/cm^2/s); divide by top layer
+           ! thickness (dzr_eco, 1/cm) to get a tendency (nmol/cm^3/s)
           TRACER_MODULE(1,1,:) = TRACER_MODULE(1,1,:) + &
-            DTRACER_MODULE(1,1,:)*dt_sec
+            DTRACER_MODULE(1,1,:)*dzr_eco(1)*dt_sec
           !TRACER_MODULE(1,1,:) = max(c0,TRACER_MODULE(1,1,:))
                 ! O2 flux can go too fast, and oscillate out of range - limit to saturation
         if (TRACER_MODULE(1,1,o2_ind) > O2SAT_tavg(1,1)) then
